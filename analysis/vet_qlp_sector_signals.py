@@ -14,6 +14,8 @@ LEO-Vetter also has pixel-level tests; this script does not run them.
 Run from the repository root, for example for Sector 98:
     .venv/bin/python analysis/vet_qlp_sector_signals.py 98
 
+--workers sets the number of processes. --resume keeps the signals of a stopped run and vets only the others.
+
 Output: results/qlp_sector_<nnnn>_leo_vetting/vetting.csv, one row per vetted signal, with the search values,
 the main LEO-Vetter metrics, passes_false_alarm_tests, passes_false_positive_tests and the names of the failed tests.
 """
@@ -134,33 +136,51 @@ def selected_signals(sector, minimum_snr, minimum_transits):
                 yield signal
 
 
+def complete_vetting_rows(output_path):
+    """Return the rows of an earlier vetting.csv. A stopped run can leave a partial last line, so the script drops it."""
+    if not output_path.exists():
+        return []
+    text = output_path.read_text()
+    if not text.endswith("\n"):
+        text = text[:text.rfind("\n") + 1]
+    return list(csv.DictReader(text.splitlines()))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
     parser.add_argument("--min-snr", type=float, default=7.0)
     parser.add_argument("--min-transits", type=int, default=3)
     parser.add_argument("--workers", type=int, default=max(1, os.cpu_count() - 2))
+    parser.add_argument("--resume", action="store_true",
+                        help="keep the signals in an earlier vetting.csv of this sector and vet only the others")
     arguments = parser.parse_args()
     sector = arguments.sector
 
-    star_rows = {int(row["tic_id"]): row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}
-    tasks = [
-        (sector, signal, star_rows[int(signal["tic_id"])], light_curve_path(sector, int(signal["tic_id"])))
-        for signal in selected_signals(sector, arguments.min_snr, arguments.min_transits)
-    ]
-    print(f"Sector {sector}: {len(tasks)} signals with SNR >= {arguments.min_snr} "
-          f"and >= {arguments.min_transits} transits", flush=True)
-
     output_directory(sector).mkdir(parents=True, exist_ok=True)
     output_path = output_directory(sector) / "vetting.csv"
+    previous_rows = complete_vetting_rows(output_path) if arguments.resume else []
+    vetted = {(row["tic_id"], row["signal_number"]) for row in previous_rows}
+
+    star_rows = {int(row["tic_id"]): row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}
+    signals = list(selected_signals(sector, arguments.min_snr, arguments.min_transits))
+    tasks = [
+        (sector, signal, star_rows[int(signal["tic_id"])], light_curve_path(sector, int(signal["tic_id"])))
+        for signal in signals if (signal["tic_id"], signal["signal_number"]) not in vetted
+    ]
+    print(f"Sector {sector}: {len(signals)} signals with SNR >= {arguments.min_snr} "
+          f"and >= {arguments.min_transits} transits, {len(previous_rows)} vetted in an earlier run", flush=True)
+
     with Pool(arguments.workers) as pool, open(output_path, "w", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=OUTPUT_COLUMNS)
         writer.writeheader()
-        for count, row in enumerate(pool.imap_unordered(vet_signal, tasks, chunksize=2), start=1):
+        writer.writerows(previous_rows)
+        file.flush()
+        for count, row in enumerate(pool.imap_unordered(vet_signal, tasks, chunksize=2), start=len(previous_rows) + 1):
             writer.writerow(row)
             if count % 500 == 0:
                 file.flush()
-                print(f"  {count} of {len(tasks)} signals vetted", flush=True)
+                print(f"  {count} of {len(signals)} signals vetted", flush=True)
     print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}")
 
 

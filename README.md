@@ -105,6 +105,8 @@ Run these steps in order. The examples use Sector 98, the sector that Rabtsevich
    A signal that passes both groups is a planet candidate.
    The script writes `results/qlp_sector_0098_leo_vetting/vetting.csv`, with the names of the tests that each signal failed.
    It does not run the LEO-Vetter pixel-level tests.
+   It uses all but two CPU cores. Add `--workers 9` to use 9 processes.
+   Add `--resume` to continue a stopped run. Without it, the script vets all signals again.
 
 5. Download the catalogues of known transit signals:
 
