@@ -10,8 +10,10 @@ The script takes each candidate with pixel verdict "on target" or "unresolved", 
    gives a transit shape that does not fit the target;
 4. measures the depth of the odd and the even transits with the fitted shape. Different depths mean an eclipsing
    binary at twice the period;
-5. measures the depth of each sector with the fitted shape. Different depths can mean a contaminating star that the
-   apertures of the sectors include differently;
+5. measures the depth of each sector with the fitted shape. The light curve pipelines use different apertures and
+   corrections, so the script also measures the depth with the same circular apertures in the TESScut cutout of
+   each sector. Different cutout depths can mean a contaminating star. When fewer than two sectors have cutout
+   depths, the test uses the light curve depths;
 6. measures the depth at phase 0.5. It compares it with the largest secondary eclipse a planet can give: full
    reflection plus the day side thermal emission without heat redistribution, at 800 nm;
 7. reads the Gaia DR3 radial velocity statistics. The star is RV-variable when rv_chisq_pvalue <= 0.01,
@@ -55,7 +57,9 @@ from wotan import flatten
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
 from candidate_verification_records import append_verification_record_entry
-from check_qlp_sector_candidate_pixels import output_directory as pixel_checks_output_directory
+from check_qlp_sector_candidate_pixels import (
+    cutout_path, load_cutout, output_directory as pixel_checks_output_directory, sectors_with_full_frame_images,
+)
 from check_qlp_sector_new_candidates import (
     COMPANION_MAXIMUM_RADIUS_EARTH_RADII, SCALED_SEMI_MAJOR_AXIS_RATIO_LIMIT, load_other_sector_light_curve,
     other_sector_products, output_directory as candidate_checks_output_directory,
@@ -75,6 +79,11 @@ FIT_WINDOW_DURATIONS = 2.5
 # The red noise factor compares the scatter of bin means with white noise, for bins of these fractions of the
 # transit duration.
 RED_NOISE_BIN_FRACTIONS = (0.25, 0.5, 0.75, 1.0)
+# The aperture photometry of the cutouts uses circular apertures of these radii. The sector depth test uses
+# CUTOUT_COMPARISON_RADIUS_PIXELS.
+CUTOUT_APERTURE_RADII_PIXELS = (1.5, 2.0, 2.5, 3.0)
+CUTOUT_COMPARISON_RADIUS_PIXELS = 2.0
+CUTOUT_BACKGROUND_PERCENTILE = 30
 # The exposure time of the full-frame images, by the first sector of each exposure time.
 FULL_FRAME_IMAGE_EXPOSURE_SECONDS_BY_FIRST_SECTOR = {1: 1800, 27: 600, 56: 200}
 # batman integrates the model over the exposure in steps of at most this many seconds.
@@ -101,7 +110,8 @@ OUTPUT_COLUMNS = [
     "fit_scaled_semi_major_axis_error", "fit_duration_hours", "fit_duration_error_hours",
     "planet_radius_earth_radii", "planet_radius_error_earth_radii", "stellar_radius_solar_radii",
     "stellar_density_fit_to_tic_ratio", "odd_depth_ppm", "even_depth_ppm", "odd_even_difference_sigma",
-    "depth_ppm_by_sector", "sector_depth_consistency_p_value", "secondary_depth_ppm", "secondary_depth_error_ppm",
+    "depth_ppm_by_sector", "sector_depth_consistency_p_value", "cutout_depth_ppm_by_sector_and_aperture",
+    "cutout_sector_depth_consistency_p_value", "secondary_depth_ppm", "secondary_depth_error_ppm",
     "secondary_maximum_planet_depth_ppm", "gaia_source_id", "gaia_rv_nb_transits", "gaia_rv_chisq_pvalue",
     "gaia_rv_renormalised_gof", "gaia_rv_amplitude_robust_km_s", "gaia_vbroad_km_s", "gaia_rv_variable",
     "lamost_spectra", "refuted_by", "cautions", "verdict", "error",
@@ -153,6 +163,43 @@ def red_noise_factor(time, flux, duration):
         means = np.bincount(bin_numbers, flux)[full] / counts[full]
         ratios.append(np.std(means) / (white / np.sqrt(np.mean(counts[full]))))
     return max(1.0, float(np.mean(ratios))) if ratios else 1.0
+
+
+def cutout_aperture_depths(candidate, star_row, sectors, period, epoch, duration):
+    """Return {sector: [(aperture radius, depth, depth error)]} from aperture photometry of the TESScut cutouts.
+
+    The same apertures in every sector remove the differences between the light curve pipelines. The background
+    is the median of the faintest CUTOUT_BACKGROUND_PERCENTILE percent of the pixels.
+    """
+    coordinate = SkyCoord(float(star_row["ra"]), float(star_row["dec"]), unit="deg")
+    depths = {}
+    for sector in sectors:
+        try:
+            time, flux, wcs, *_ = load_cutout(cutout_path(candidate["tic_id"], coordinate.ra.deg, coordinate.dec.deg,
+                                                          sector))
+        except Exception:
+            continue
+        column, row = wcs.world_to_pixel(coordinate)
+        rows, columns = np.indices(flux.shape[1:])
+        distance = np.hypot(columns - column, rows - row)
+        image = np.median(flux, axis=0)
+        background = np.median(flux[:, image < np.percentile(image, CUTOUT_BACKGROUND_PERCENTILE)], axis=1)
+        depths[sector] = []
+        for radius in CUTOUT_APERTURE_RADII_PIXELS:
+            aperture = distance <= radius
+            light_curve = flux[:, aperture].sum(axis=1) - background * aperture.sum()
+            time_kept, flux_kept = detrend_with_transits_masked(time, light_curve / np.median(light_curve), period,
+                                                                epoch, duration)
+            offset = np.abs(phase_time(time_kept, period, epoch))
+            inside = flux_kept[offset < 0.3 * duration]
+            outside_mask = (offset > 0.7 * duration) & (offset < 2 * duration)
+            outside = flux_kept[outside_mask]
+            if len(inside) < 3 or len(outside) < 10:
+                continue
+            noise = robust_standard_deviation(outside) * red_noise_factor(time_kept[outside_mask], outside, duration)
+            error = noise * np.sqrt(1 / len(inside) + 1 / len(outside))
+            depths[sector].append((radius, float(np.mean(outside) - np.mean(inside)), float(error)))
+    return {sector: values for sector, values in depths.items() if values}
 
 
 def load_all_sectors(sector, candidate, period, epoch, duration):
@@ -384,6 +431,19 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     secondary, secondary_error = secondary_eclipse_depth(all_sectors, all_sector_errors, median[1], median[0],
                                                          duration_median)
     secondary_maximum = maximum_planet_secondary_depth(median[2], 10 ** median[4], star["Teff"])
+    cutout_depths = cutout_aperture_depths(
+        candidate, star_row, sectors_with_full_frame_images(candidate["tic_id"], float(star_row["ra"]),
+                                                            float(star_row["dec"])),
+        median[1], median[0], duration_median)
+    comparison = [(depth_value, depth_error) for values in cutout_depths.values()
+                  for radius, depth_value, depth_error in values if radius == CUTOUT_COMPARISON_RADIUS_PIXELS]
+    if len(comparison) > 1:
+        comparison_depths, comparison_errors = np.array(comparison).T
+        comparison_mean = np.sum(comparison_depths / comparison_errors ** 2) / np.sum(comparison_errors ** -2)
+        cutout_p_value = float(stats.chi2.sf(np.sum(((comparison_depths - comparison_mean) / comparison_errors) ** 2),
+                                             len(comparison) - 1))
+    else:
+        cutout_p_value = np.nan
     density_ratio = float(np.median(fit_density) / density) if np.isfinite(density.value) else np.nan
     radius_median, radius_error = median_and_error(planet_radius)
 
@@ -397,6 +457,10 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         "depth_ppm_by_sector": "; ".join(f"S{name}: {value * model_depth * 1e6:.0f} +/- {error * model_depth * 1e6:.0f}"
                                          for name, (value, error) in by_sector.items()),
         "sector_depth_consistency_p_value": f"{consistency_p_value:.3g}",
+        "cutout_depth_ppm_by_sector_and_aperture": "; ".join(
+            f"S{number} r{radius}: {depth_value * 1e6:.0f} +/- {depth_error * 1e6:.0f}"
+            for number, values in cutout_depths.items() for radius, depth_value, depth_error in values),
+        "cutout_sector_depth_consistency_p_value": f"{cutout_p_value:.3g}",
         "secondary_depth_ppm": f"{secondary * 1e6:.0f}", "secondary_depth_error_ppm": f"{secondary_error * 1e6:.0f}",
         "secondary_maximum_planet_depth_ppm": f"{secondary_maximum * 1e6:.0f}",
         "planet_radius_earth_radii": f"{radius_median:.2f}", "planet_radius_error_earth_radii": f"{radius_error:.2f}",
@@ -428,7 +492,9 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         cautions.append("grazing transit")
     if not SCALED_SEMI_MAJOR_AXIS_RATIO_LIMIT ** -3 <= density_ratio <= SCALED_SEMI_MAJOR_AXIS_RATIO_LIMIT ** 3:
         cautions.append("stellar density does not fit the star")
-    if consistency_p_value < SECTOR_DEPTH_CONSISTENCY_P_VALUE:
+    # The cutout photometry uses the same apertures in every sector, so it decides when it has two sectors or more.
+    sector_p_value = cutout_p_value if np.isfinite(cutout_p_value) else consistency_p_value
+    if sector_p_value < SECTOR_DEPTH_CONSISTENCY_P_VALUE:
         cautions.append("depths differ between sectors")
     if row.get("gaia_rv_variable") is True:
         cautions.append("Gaia radial velocity variable")

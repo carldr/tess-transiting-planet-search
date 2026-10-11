@@ -212,7 +212,7 @@ Run these steps in order. The examples use Sector 98, the sector that Rabtsevich
    | Secondary eclipse at phase 0.5 | It is deeper than a planet can give by 3 sigma or more. |
    | Planet radius | It is larger than 2 Jupiter radii. |
    | Stellar density from the fit | Never. A density that does not fit the TIC star is a caution. |
-   | Depth in each sector | Never. Different depths are a caution. |
+   | Depth in each sector, with the same apertures in the TESScut cutout of each sector | Never. Different depths are a caution. |
    | Gaia DR3 radial velocity | Never. A variable radial velocity means a stellar companion, and is a caution. |
    | LAMOST DR7 spectra | Never. The script lists the class and the radial velocity of each spectrum. |
 
