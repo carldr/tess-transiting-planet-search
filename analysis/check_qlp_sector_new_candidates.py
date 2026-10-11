@@ -33,6 +33,7 @@ Run from the repository root, after cross_match_qlp_sector_signals_with_known_ca
 
 The script saves the other-sector light curves in data/candidate_other_sector_light_curves/.
 Output: results/qlp_sector_<nnnn>_new_candidate_checks/candidate_checks.csv, one row per candidate.
+The script also appends the result of each candidate to its verification record.
 """
 
 import argparse
@@ -49,6 +50,7 @@ from astroquery.mast import Catalogs
 from astroquery.vizier import Vizier
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
+from candidate_verification_records import append_verification_record_entry
 from cross_match_qlp_sector_signals_with_known_catalogues import (
     CATALOGUE_DIRECTORY, output_directory as cross_match_output_directory,
 )
@@ -510,6 +512,14 @@ def main():
         row = check_candidate(candidate, sector, ephemeris_sources, stars,
                               gaia_dr2_source_ids.get(int(candidate["tic_id"])))
         rows.append(row)
+        append_verification_record_entry(
+            sector, row["tic_id"], row["period_days"], "independent data checks", row["verdict"],
+            f"other sectors: {row['other_sector_results'] or 'none'}; joint search SNR {row['joint_search_snr']} "
+            f"against highest null SNR {row['joint_search_highest_null_snr']}; Gaia RUWE {row['gaia_ruwe']}; "
+            f"companion radius {row['companion_radius_earth_radii']} Earth radii; "
+            f"refuted by: {row['refuted_by'] or 'nothing'}; cautions: {row['cautions'] or 'none'}"
+            f"{'; error: ' + row['error'] if row['error'] else ''}",
+        )
         print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['verdict']}"
               f"{' (' + row['refuted_by'] + ')' if row['refuted_by'] else ''}", flush=True)
 

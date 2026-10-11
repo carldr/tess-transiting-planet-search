@@ -17,6 +17,7 @@ His star is the known-positive test: the search must find his 3.18 d signal in S
 | `data/candidate_other_sector_light_curves/` | The light curves of the new candidates from other TESS sectors. |
 | `data/candidate_tesscut_cutouts/` | TESScut cutouts of the full-frame images around the new candidates, one folder per TIC ID. |
 | `results/` | Outputs of the search code, one folder per script. The folders that end in `_quality_zero_mask` hold the first Sector 98 run, which also removed the cadences with QUALITY bit 30. |
+| `results/candidate_verification_records/` | One file per candidate, with a row for each verification step that ran on it. |
 | `reference/rabtsevich_preprint_zenodo_22967456/` | Rabtsevich's research note, `manuscript.pdf` (doi:10.5281/zenodo.22967456). |
 | `reference/rabtsevich_data_zenodo_22999133/` | His supporting data and code, version 1.0.1 (doi:10.5281/zenodo.22999133). `unpacked/` holds the contents of the three ZIP files. |
 | `reference/rabtsevich_s110_preregistration_zenodo_23175179/` | His pre-registered test of TESS Sector 110 (doi:10.5281/zenodo.23175179). `tic4206066_S110_prereg_final/` holds the contents of the ZIP file. |
@@ -171,7 +172,8 @@ Run these steps in order. The examples use Sector 98, the sector that Rabtsevich
    ```
 
    TESS pixels are 21 arcsec wide, so a dip on a nearby star can look like a transit on the target.
-   The script makes a difference image from a TESScut cutout of the sector: the image out of transit minus the image in transit.
+   The script checks every sector in which the star falls on the science pixels and TESScut has full-frame images.
+   In each sector it makes a difference image from a TESScut cutout: the image out of transit minus the image in transit.
    The pixels that lose light in the transit are bright in it.
    The script fits the difference image with the TESS pixel response function at the target and at each Gaia star bright enough to cause the dip.
    The star that fits best is the likely source.
@@ -184,28 +186,79 @@ Run these steps in order. The examples use Sector 98, the sector that Rabtsevich
    | unresolved | The target and a nearby star fit about equally well. |
    | too faint | The difference image is too noisy to locate the dip. |
 
-   The script saves the cutouts in `data/candidate_tesscut_cutouts/`, about 200 MB per star.
-   It writes `results/qlp_sector_0098_candidate_pixel_checks/pixel_checks.csv` and one image per candidate.
+   The verdict of the candidate is "on neighbour" when any sector gives "on neighbour".
+   Otherwise it is the first of "on target", "unresolved" and "too faint" that a sector gives.
 
-9. Compute the false positive probability of each candidate that step 8 puts on the target or leaves unresolved:
+   The script saves the cutouts in `data/candidate_tesscut_cutouts/`, about 200 MB per star and sector.
+   It writes two files and one image per candidate and sector to `results/qlp_sector_0098_candidate_pixel_checks/`:
 
-   ```
-   .venv_triceratops/bin/python analysis/validate_qlp_sector_candidates_with_triceratops.py 98
-   ```
-
-   The script runs TRICERATOPS in its own environment.
-   TRICERATOPS compares the folded transit with each false positive scenario, such as an eclipsing binary on the target, on a companion or on a nearby star.
-   It gives the false positive probability (FPP) and the nearby false positive probability (NFPP).
-   For an "on target" candidate, the script removes the scenarios on the stars that step 8 rules out.
-
-   | `triceratops_verdict` | condition |
+   | file | content |
    |---|---|
-   | validated without imaging | FPP < 0.015 and NFPP < 0.001 |
-   | likely planet | FPP < 0.5 and NFPP < 0.001 |
-   | not validated | any other result |
+   | `pixel_checks.csv` | One row per candidate, with the combined verdict. |
+   | `pixel_checks_by_sector.csv` | One row per candidate and sector. |
 
-   A full validation also needs high-resolution imaging of the star. This project does not have it.
-   The script writes `results/qlp_sector_0098_triceratops_validation/triceratops_validation.csv`.
+9. Verify each candidate that step 8 puts on the target or leaves unresolved, with the light curves of all TESS sectors:
+
+   ```
+   .venv/bin/python analysis/verify_qlp_sector_candidates_over_all_sectors.py 98
+   ```
+
+   The script fits one transit model to all sectors, and gives the values that a CTOI needs: period, epoch, depth, duration and planet radius, each with its error.
+   It then runs these tests:
+
+   | test | refutes the candidate when |
+   |---|---|
+   | Odd and even transits | Their depths differ by 3 sigma or more. The dip is an eclipsing binary at twice the period. |
+   | Secondary eclipse at phase 0.5 | It is deeper than a planet can give by 3 sigma or more. |
+   | Planet radius | It is larger than 2 Jupiter radii. |
+   | Stellar density from the fit | Never. A density that does not fit the TIC star is a caution. |
+   | Depth in each sector | Never. Different depths are a caution. |
+   | Gaia DR3 radial velocity | Never. A variable radial velocity means a stellar companion, and is a caution. |
+   | LAMOST DR7 spectra | Never. The script lists the class and the radial velocity of each spectrum. |
+
+   The verdict is "refuted" or "passed".
+   The script writes `results/qlp_sector_0098_all_sector_verification/all_sector_verification.csv`, and one image per candidate with the folded transit of each sector.
+
+10. Compute the false positive probability of each candidate that passed step 9:
+
+    ```
+    .venv_triceratops/bin/python analysis/validate_qlp_sector_candidates_with_triceratops.py 98
+    ```
+
+    The script runs TRICERATOPS in its own environment, on the light curves of all sectors, with the period, epoch and depth from step 9.
+    TRICERATOPS compares the folded transit with each false positive scenario, such as an eclipsing binary on the target, on a companion or on a nearby star.
+    It gives the false positive probability (FPP) and the nearby false positive probability (NFPP).
+    For an "on target" candidate, the script removes the scenarios on the stars that step 8 rules out.
+
+    | `triceratops_verdict` | condition |
+    |---|---|
+    | validated without imaging | FPP < 0.015 and NFPP < 0.001 |
+    | likely planet | FPP < 0.5 and NFPP < 0.001 |
+    | not validated | any other result |
+
+    A full validation also needs high-resolution imaging of the star. This project does not have it.
+    The script writes `results/qlp_sector_0098_triceratops_validation/triceratops_validation.csv`.
+
+### Verification sequence and record
+
+A candidate goes to the next step only when it meets the condition of that step:
+
+| step | script | condition to go to the next step |
+|---|---|---|
+| 6 | `cross_match_qlp_sector_signals_with_known_catalogues.py` | It passes every LEO-Vetter test and matches no TOI, CTOI, TCE or TESS EB. |
+| 7 | `check_qlp_sector_new_candidates.py` | The verdict is "supported" or "unconfirmed". |
+| 8 | `check_qlp_sector_candidate_pixels.py` | The pixel verdict is "on target" or "unresolved". |
+| 9 | `verify_qlp_sector_candidates_over_all_sectors.py` | The verdict is "passed". |
+| 10 | `validate_qlp_sector_candidates_with_triceratops.py` | The verdict is "likely planet" or "validated without imaging". |
+
+Before a CTOI submission, download the catalogues again (step 5), and run steps 6 to 10 again.
+A CTOI is published under the name of the person who submits it.
+
+Each of steps 6 to 10 appends one row per candidate to the verification record of the candidate, `results/candidate_verification_records/tic<TIC ID>_period_<period>_days.md`.
+The row gives the date, the sector, the step, the script, the git commit of the code, the verdict and the result.
+The commit ends in `-modified` when `analysis/` has uncommitted changes.
+A re-run adds a new row, so the record keeps the full history of the candidate.
+Commit the records with the results.
 
 ### Test star
 

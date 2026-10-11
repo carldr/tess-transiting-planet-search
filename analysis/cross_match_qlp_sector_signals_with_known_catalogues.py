@@ -13,6 +13,7 @@ Outputs, in results/qlp_sector_<nnnn>_known_catalogue_cross_match/:
 - signals_cross_matched.csv: every vetted signal, with the matching TOIs, CTOIs, TCEs and TESS EBs;
 - new_candidates.csv: the signals that pass every vetting test and match no known entry, highest MES first;
 - summary.json: the number of signals at each stage, the TOI recovery, and the rank of each test star.
+The script also starts the verification record of each new candidate, in results/candidate_verification_records/.
 """
 
 import argparse
@@ -23,6 +24,7 @@ from collections import defaultdict
 import numpy as np
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
+from candidate_verification_records import append_verification_record_entry
 from search_qlp_sector import MAXIMUM_PERIOD_DAYS, MINIMUM_PERIOD_DAYS, output_directory as search_output_directory
 from vet_qlp_sector_signals import output_directory as vetting_output_directory
 
@@ -166,6 +168,13 @@ def main():
             writer.writerows(rows)
     with open(directory / "summary.json", "w") as file:
         json.dump(summary, file, indent=1)
+    for row in new_candidates:
+        append_verification_record_entry(
+            sector, row["tic_id"], row["period_days"], "search, vetting and known-signal cross-match", "new candidate",
+            f"BLS SNR {to_float(row['snr']):.1f}, MES {to_float(row['MES']):.1f}, depth {to_float(row['depth_ppm']):.0f} ppm, "
+            f"{row['transit_count']} transits; passes the LEO-Vetter false alarm and false positive tests; no TOI, CTOI, "
+            f"TCE or TESS EB match in the catalogues of {summary['catalogue_download_date']}",
+        )
     print(json.dumps(summary, indent=1))
 
 

@@ -2,8 +2,9 @@
 
 TESS pixels are 21 arcsec wide, so the light of nearby stars falls on the target pixels. A dip on a nearby star
 can look like a transit on the target. For each candidate that check_qlp_sector_new_candidates.py did not refute,
-the script:
-1. downloads a 21x21-pixel TESScut cutout of the full-frame images of the sector;
+the script checks each sector in which the star falls on the science pixels and TESScut has full-frame images.
+In each sector it:
+1. downloads a 21x21-pixel TESScut cutout of the full-frame images;
 2. makes a difference image: for each transit, the mean image just before and after the transit minus the mean
    image in the transit, averaged over the transits. The pixels that lose light in the transit are bright in it;
 3. gets the Gaia DR3 sources within SOURCE_SEARCH_RADIUS_PIXELS pixels of the target that are bright enough to cause
@@ -20,13 +21,18 @@ those stars. The pixel verdict is:
 - "unresolved": the target and a nearby star fit about equally well;
 - "too faint": the difference image has an SNR below MINIMUM_DIFFERENCE_IMAGE_SNR at the best star.
 
+The verdict of the candidate combines the verdicts of the sectors. It is "on neighbour" when any sector puts the dip
+on a neighbour. Otherwise it is the first of "on target", "unresolved" and "too faint" that a sector gives.
+
 Run from the repository root, after check_qlp_sector_new_candidates.py:
     .venv/bin/python analysis/check_qlp_sector_candidate_pixels.py 98
 
 The script saves the cutouts in data/candidate_tesscut_cutouts/<TIC ID>/.
 Output, in results/qlp_sector_<nnnn>_candidate_pixel_checks/:
-- pixel_checks.csv: one row per candidate;
-- tic<TIC ID>_<period>.png: the out-of-transit image and the difference image, with the stars marked.
+- pixel_checks.csv: one row per candidate, with the combined verdict;
+- pixel_checks_by_sector.csv: one row per candidate and sector;
+- tic<TIC ID>_<period>_s<sector>.png: the out-of-transit image and the difference image, with the stars marked.
+The script also appends the result of each candidate to its verification record.
 """
 
 import argparse
@@ -45,9 +51,11 @@ from astropy.wcs import WCS
 from astroquery.gaia import Gaia
 from astroquery.mast import Tesscut
 from scipy.optimize import minimize
+from tess_stars2px import tess_stars2px_function_entry
 from transitDiffImage.tessprfmodel import SimpleTessPRF
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
+from candidate_verification_records import append_verification_record_entry
 from check_qlp_sector_new_candidates import output_directory as candidate_checks_output_directory
 
 CUTOUT_DIRECTORY = REPOSITORY_ROOT / "data/candidate_tesscut_cutouts"
@@ -75,6 +83,10 @@ OUTPUT_COLUMNS = [
     "target_position_offset_pixels", "stars_tested", "stars_within_half_pixel_of_target", "difference_image_snr", "best_source", "best_source_is_target",
     "target_chi_square_above_best", "best_other_star_chi_square_above_target", "free_fit_offset_from_target_arcsec",
     "pixel_verdict", "error",
+]
+CANDIDATE_OUTPUT_COLUMNS = [
+    "tic_id", "period_days", "epoch_btjd", "duration_hours", "depth_ppm", "tmag", "check_verdict", "sectors_checked",
+    "pixel_verdicts_by_sector", "pixel_verdict",
 ]
 
 
@@ -253,8 +265,8 @@ def check_pixels(candidate, star_row, sector, figure_directory):
     else:
         pixel_verdict = "unresolved"
 
-    draw_figure(figure_directory / f"tic{candidate['tic_id']}_{period:.5f}.png", out_of_transit_image, difference,
-                stars, positions, inside, best_index, free_fit.x, candidate, pixel_verdict)
+    draw_figure(figure_directory / f"tic{candidate['tic_id']}_{period:.5f}_s{sector:04d}.png", out_of_transit_image,
+                difference, stars, positions, inside, best_index, free_fit.x, candidate, sector, pixel_verdict)
     return {
         "sector": sector,
         "transits_used": transits_used,
@@ -274,7 +286,7 @@ def check_pixels(candidate, star_row, sector, figure_directory):
 
 
 def draw_figure(path, out_of_transit_image, difference, stars, positions, inside, best_index, free_position,
-                candidate, pixel_verdict):
+                candidate, sector, pixel_verdict):
     figure, axes = plt.subplots(1, 2, figsize=(11, 5))
     for axis, image, title in ((axes[0], out_of_transit_image, "Out of transit"),
                                (axes[1], difference, "Out of transit minus in transit")):
@@ -288,11 +300,27 @@ def draw_figure(path, out_of_transit_image, difference, stars, positions, inside
                          edgecolors=colour, linewidths=1.5)
         axis.scatter(*free_position, marker="x", color="orange", s=80)
         axis.set_title(title)
-    figure.suptitle(f"TIC {candidate['tic_id']}, P = {float(candidate['period_days']):.5f} d: {pixel_verdict}. "
+    figure.suptitle(f"TIC {candidate['tic_id']}, P = {float(candidate['period_days']):.5f} d, Sector {sector}: "
+                    f"{pixel_verdict}. "
                     f"Star: target. Red: best star. Cross: free fit.")
     figure.tight_layout()
     figure.savefig(path, dpi=90)
     plt.close(figure)
+
+
+def sectors_with_full_frame_images(tic_id, ra, dec):
+    """Return the sectors in which the star falls on the science pixels and TESScut has full-frame images."""
+    on_science_pixels = set(int(value) for value in tess_stars2px_function_entry(int(tic_id), ra, dec)[3])
+    available = set(int(value) for value in Tesscut.get_sectors(coordinates=SkyCoord(ra, dec, unit="deg"))["sector"])
+    return sorted(on_science_pixels & available)
+
+
+def combined_pixel_verdict(sector_verdicts):
+    """Combine the verdicts of the sectors. A dip on a neighbour in any sector outweighs the other sectors."""
+    for verdict in ("on neighbour", "on target", "unresolved", "too faint"):
+        if verdict in sector_verdicts:
+            return verdict
+    return ""
 
 
 def main():
@@ -307,26 +335,50 @@ def main():
     directory.mkdir(parents=True, exist_ok=True)
     print(f"Sector {sector}: {len(candidates)} candidates not refuted", flush=True)
 
-    rows = []
+    sector_rows, candidate_rows = [], []
     for count, candidate in enumerate(candidates, start=1):
-        row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
-        row["check_verdict"] = candidate["verdict"]
+        star_row = star_rows[candidate["tic_id"]]
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                row.update(check_pixels(candidate, star_rows[candidate["tic_id"]], sector, directory))
+            sectors = sectors_with_full_frame_images(candidate["tic_id"], float(star_row["ra"]), float(star_row["dec"]))
         except Exception as error:
-            row["error"] = f"{type(error).__name__}: {error}"
-        rows.append(row)
-        print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row.get('pixel_verdict') or row['error']}",
+            sectors = [sector]
+            print(f"  TIC {candidate['tic_id']}: sector list failed ({error}); Sector {sector} only", flush=True)
+        rows = []
+        for pixel_sector in sectors:
+            row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
+            row["check_verdict"] = candidate["verdict"]
+            row["sector"] = pixel_sector
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    row.update(check_pixels(candidate, star_row, pixel_sector, directory))
+            except Exception as error:
+                row["error"] = f"{type(error).__name__}: {error}"
+            rows.append(row)
+        sector_rows.extend(rows)
+        summary = "; ".join(
+            f"S{row['sector']} {row.get('pixel_verdict') or 'error: ' + row['error']}"
+            + (f" (SNR {row['difference_image_snr']}, best star {row['best_source']})" if row.get("pixel_verdict") else "")
+            for row in rows
+        )
+        candidate_row = {column: candidate.get(column, "") for column in CANDIDATE_OUTPUT_COLUMNS}
+        candidate_row["check_verdict"] = candidate["verdict"]
+        candidate_row["sectors_checked"] = " ".join(str(row["sector"]) for row in rows)
+        candidate_row["pixel_verdicts_by_sector"] = summary
+        candidate_row["pixel_verdict"] = combined_pixel_verdict([row.get("pixel_verdict", "") for row in rows])
+        candidate_rows.append(candidate_row)
+        append_verification_record_entry(sector, candidate["tic_id"], candidate["period_days"], "pixel check",
+                                         candidate_row["pixel_verdict"] or "error", summary)
+        print(f"  {count} of {len(candidates)}: TIC {candidate['tic_id']} {candidate_row['pixel_verdict']}: {summary}",
               flush=True)
 
-    output_path = directory / "pixel_checks.csv"
-    with open(output_path, "w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=OUTPUT_COLUMNS)
-        writer.writeheader()
-        writer.writerows(rows)
-    print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}")
+    for file_name, columns, rows in (("pixel_checks_by_sector.csv", OUTPUT_COLUMNS, sector_rows),
+                                     ("pixel_checks.csv", CANDIDATE_OUTPUT_COLUMNS, candidate_rows)):
+        with open(directory / file_name, "w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=columns)
+            writer.writeheader()
+            writer.writerows(rows)
+        print(f"Wrote {(directory / file_name).relative_to(REPOSITORY_ROOT)}")
 
 
 if __name__ == "__main__":
