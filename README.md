@@ -16,7 +16,7 @@ His star is the known-positive test: the search must find his 3.18 d signal in S
 | `data/known_transit_catalogues/` | The TOI, CTOI, SPOC TCE and TESS EB lists, to tell new signals from known ones. |
 | `data/candidate_other_sector_light_curves/` | The light curves of the new candidates from other TESS sectors. |
 | `data/candidate_tesscut_cutouts/` | TESScut cutouts of the full-frame images around the new candidates, one folder per TIC ID. |
-| `results/` | Outputs of the search code, one folder per script. |
+| `results/` | Outputs of the search code, one folder per script. The folders that end in `_quality_zero_mask` hold the first Sector 98 run, which also removed the cadences with QUALITY bit 30. |
 | `reference/rabtsevich_preprint_zenodo_22967456/` | Rabtsevich's research note, `manuscript.pdf` (doi:10.5281/zenodo.22967456). |
 | `reference/rabtsevich_data_zenodo_22999133/` | His supporting data and code, version 1.0.1 (doi:10.5281/zenodo.22999133). `unpacked/` holds the contents of the three ZIP files. |
 | `reference/rabtsevich_s110_preregistration_zenodo_23175179/` | His pre-registered test of TESS Sector 110 (doi:10.5281/zenodo.23175179). `tic4206066_S110_prereg_final/` holds the contents of the ZIP file. |
@@ -24,6 +24,7 @@ His star is the known-positive test: the search must find his 3.18 d signal in S
 | `.venv_triceratops/` | A separate Python 3.12.13 environment for TRICERATOPS, which needs numpy 1 and an older scipy. `requirements_triceratops.txt` lists its packages. |
 
 The files under `reference/` and `data/` are downloads. Do not edit them.
+The repository does not hold `data/`, the Python environments, or the `*_gaia_background.csv` files that TRICERATOPS writes to the working directory.
 
 ## Set up
 

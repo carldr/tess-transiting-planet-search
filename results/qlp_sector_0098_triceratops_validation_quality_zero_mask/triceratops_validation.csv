@@ -1,0 +1,3 @@
+tic_id,period_days,depth_ppm,tmag,check_verdict,pixel_verdict,nearby_scenarios_excluded,fpp_mean,fpp_standard_deviation,nfpp_mean,nfpp_standard_deviation,most_likely_scenario,triceratops_verdict,error
+33100834,5.739682,6134.2,11.3861,supported,on target,True,0.9986,0.002,2.743e-203,0,SEB on TIC 33100834,not validated,
+264626874,6.260026,1743.4,10.0672,supported,on target,True,0.1142,0.027,0,0,TP on TIC 264626874,likely planet,
