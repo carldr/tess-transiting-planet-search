@@ -1,0 +1,39 @@
+\section{How the two signals were found, and why they are tested} \label{sec:signals}
+
+\runin{The search.} I searched the Sector 98 light curves of the MIT Quick-Look Pipeline \citep[QLP;][]{Huang2020} of
+all 126,246 stars with TESS magnitude $T \leq 11.5$ for periodic transit-like dips, using box least squares after
+detrending. A signal had to reach a multiple-event statistic (MES; a signal-to-noise ratio of the folded transit that
+allows for correlated noise, as computed by the automated vetting tool LEO-vetter; \citealt{Kunimoto2025}) of at least
+9. The search returned 23,949 signals on 16,300 stars. After automated vetting, 141 signals on 140 stars remained; 70
+of them with MES $\geq 15$ formed the main list, and 71 with MES $< 15$ formed an exploratory list. TIC 4206066 (Gaia
+DR3 3220388198192519424; a K dwarf at 35.6\,pc) is the only star with two signals among the 141: A, with a period of
+3.18\,d and MES 10.6, and B, with a period of 11.13\,d and MES 11.0. Both are in the exploratory list, and both passed
+all automated false-alarm and false-positive tests of the vetting.
+
+\runin{Why the archival evidence is not enough.} The exploratory list (MES $< 15$) was added to the search protocol on
+2026 September 25, about two hours after signal B of this star had been found, so it was defined after results for
+individual stars, including this one, had been seen. I did not record why this star was the first to be examined in
+detail. No false-alarm rate or completeness was computed for the search as a whole. The archival significance of A
+and B therefore cannot be taken at face value. A test on data that did not exist when the signals were chosen avoids
+this problem, and that is the purpose of this protocol.
+
+\runin{What the archival data show.} Signal A recurs in the older TESS Sectors 6 and 32. Its expected box depth from
+those two sectors is $442 \pm 52$\,ppm (parts per million of the stellar flux; Table~\ref{tab:depths}). The transit fit of the preprint (radius ratio
+$0.0204 \pm 0.0010$ on a star of $0.623 \pm 0.019\,R_\odot$) corresponds to a planet of $1.4 \pm 0.1$ Earth radii if
+it orbits TIC 4206066. Archival difference images place the dip of A about $5''$ east of the target, at $(+5 \pm 3, 0
+\pm 3)''$, an offset of about $2\sigma$ from TIC 4206066 that does not exclude it. A dry run of the frozen localisation code on the
+Sector 32 pixels (a run on archival data, which never produces a label) gives an empirical $p$ of 0.156, which would
+read ``compatible'' under the rule of Section~\ref{sec:localisation} (Appendix~\ref{app:validation}).
+
+Signal B is tentative. In Sector 98 alone it is as strong as A (MES 11.0 against 10.6), but its archival support is
+weaker. Under the counting rule of this protocol it has two transits in Sector 98 and one in Sector 6; its two Sector
+32 events fall next to transits of A and cannot be counted (Table~\ref{tab:depths}). Its expected depth, $586 \pm
+137$\,ppm, therefore rests on the single Sector 6 transit. The archival dips of B were found only at the times
+predicted from the Sector 98 ephemeris, with a test defined after the data had been inspected; an earlier search that
+was not anchored on that ephemeris did not find them. A weaker feature with a period of 1.76\,d (about 130\,ppm) is
+also seen in Sector 98; it is not tested here (Section~\ref{sec:limits}).
+
+The discovery and the checks made so far are described in a preprint (version DOI \href{https://doi.org/10.5281/zenodo.22967456}{doi:10.5281/zenodo.22967456}) with
+its data and code (concept DOI \href{https://doi.org/10.5281/zenodo.22967098}{doi:10.5281/zenodo.22967098}, all versions). The preprint claims no statistical
+validation; the main alternative it leaves open for signal A is a planet that transits an unresolved companion star
+bound to TIC 4206066, rather than TIC 4206066 itself.

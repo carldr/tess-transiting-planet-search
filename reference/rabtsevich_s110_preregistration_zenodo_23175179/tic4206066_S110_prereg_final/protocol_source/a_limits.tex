@@ -1,0 +1,58 @@
+\section{Known limits, stated before the data: full list} \label{app:limits}
+
+\begin{itemize}
+\item The archival sectors were inspected, and one choice in the ephemeris (B modelled jointly with A,
+  Section~\ref{sec:predictions}) was made after looking at them.
+\item With the injection-calibrated errors, the archival transit times scatter less than expected ($\chi^2 = 8.3$ for
+  20 degrees of freedom). The prediction uncertainty of A may therefore be somewhat too large, which makes the timing
+  rule more lenient.
+\item $D_{98}$ for A (450\,ppm), the archival centre from which $\dhi$ is built, is close to the primary expectation
+  (442\,ppm). For A the consistency band is therefore set mostly by the noise and by the two expectation errors, not by
+  an excess in the discovery sector.
+\item The edge-zone rule was introduced during the adversarial audit of a first draft, after the archival dry runs had
+  shown the artefacts at data gaps. Before the rule was fixed, two zone widths (6\,h and 9\,h; at that stage measured from the
+  nearest data gap) were tried once on archival data to see whether the artefacts were the cause. Both gave the same
+  result (Sector 32: $\ddet = 211$ and 214\,ppm against 236 without zones; Sector 98: $\ddet = 142$ and 141 against
+  581; no real transit lost), so the trial could not favour one width. The adopted width is $W/2$ by the definition of
+  the filter, and it scales with $W$ in the variants. The archival recovery of A and B (Appendix~\ref{app:validation}) is
+  a validation made after the rule was fixed, not the reason for it.
+\item The change of percentiles (Appendix~\ref{app:history}, row 3b) was also made after archival measurements, to bring
+  the measured false-alarm level down. It makes detection stricter and widens the consistency band slightly. The percentiles were set once
+  (99.9 and 0.1) and then measured; they were not tuned further. The measured levels (SPOC 2-min: A 0.47\,\%, B
+  0.49\,\% overall, with the thresholds of the Sector 110 run since audit 6; Appendix~\ref{app:fa}) pool every trial set
+  that was run, including audit 3's. An intermediate version of this document quoted a lower level for A from one set
+  only and a grouping of $n$ chosen after seeing the counts; both were corrected after audit 4.
+\item The equal-stack localisation scheme was checked on audit 4's synthetic Sector 110 pixel file (a 2-d gap and 8
+  transits imposed). The on-target cloud has standard deviations of 3.7 to $3.9''$ (East) and 4.7 to $5.2''$ (North),
+  26 to 27 phase slots and no failed trial, against 3.4 to $3.5''$ and 9.2 to $10.7''$ with the earlier
+  phase-rejection scheme. This check was made outside this deposit on a synthetic file built from the Sector 32 pixels;
+  its scripts and outputs are kept by me and are not part of this deposit, so it is given for information only.
+\item Edge zones cost data: in a Sector 110 light curve with two or three segments, a transit has roughly a 6 to 10\,\%
+  chance to fall in an edge zone and not be tested.
+\item Neighbouring windows of the noise pool overlap (steps of $\Tfourteen/2$), so the pool has fewer independent
+  windows than its size. This does not bias the noise distribution, but its far tail rests on few independent windows.
+  This is why the false-detection levels are measured separately (Appendix~\ref{app:fa}).
+\item The archival localisation inputs include Sector 98 injection trials that overlap signal B (113 of 300). Using only
+  the clean trials would change the archival combined $p$ from 0.061 to 0.053. The headline values are used as
+  published. They come from the item 11 recipe, whose fakes may sit next to data gaps; the Sector 110 clouds exclude
+  such fakes and are narrower. For the same Sector 32 dry-run offset $(+5.46, +0.38)''$ the Gaussian $p$ was 0.29 with
+  the first wrapper (unequal stacks, fakes anywhere), 0.23 with equal stacks but no edge-zone rule, and 0.093 with the
+  final scheme; the empirical $p$ of the final rule is 0.156. The combined value mixes the two kinds of cloud and uses
+  Gaussian tails, and it is descriptive only.
+\item The localisation $p$ was changed after audit 5 from the Gaussian tail $\exp(-\delta^2/2)$ to the empirical $p$,
+  because archival on-target injections showed that the Gaussian tail is too light (Sector 32: 12 of 300 below
+  0.0027). The thresholds 0.05 and 0.0027 were not changed, and the method was fixed before its value for the Sector 32
+  dry run was computed. For that offset it raises $p$ from 0.093 to 0.156: such offsets are less unusual among
+  on-target injections than a Gaussian suggests. For moderate offsets the final rule is therefore more lenient than the
+  Gaussian one, while a false ``off target'' for an on-target signal now occurs near the nominal rate
+  (Appendix~\ref{app:validation}). On audit 4's synthetic Sector 110 pixel file (8 transits, a 2-d gap; a check made
+  outside this deposit, kept by me, for information only) the same coverage check gives 4.5 and 5.6\,\% below 0.05 and 0.07 and 0.50\,\% below
+  0.0027 (Gaussian tail: 7.4 to 7.6\,\% and 1.7 to 1.9\,\%). All injections of one sector share pixels and overlapping
+  windows, so the empirical $p$ assumes that a real on-target signal behaves like the injections at random phases. Its
+  resolution is $1/(N_{\rm cal}+1)$, or 1/3001 when all 3000 calibration trials succeed. Near 0.0027 only about 8 calibration trials lie further out, so its Monte Carlo error there is
+  about a third of its value.
+\item Box depths are lower than fitted transit depths (limb darkening, finite exposure). The expected and measured
+  values here are both box depths, so they can be compared with each other, but not with fitted depths quoted
+  elsewhere.
+\end{itemize}
+

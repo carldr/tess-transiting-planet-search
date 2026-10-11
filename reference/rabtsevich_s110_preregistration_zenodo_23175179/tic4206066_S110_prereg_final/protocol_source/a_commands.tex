@@ -1,0 +1,66 @@
+\section{Exact commands} \label{app:commands}
+
+All commands are run from the root of the deposit (Appendix~\ref{app:procedure}, point 2). Angle brackets mark the
+names of the Sector 110 files.
+
+\runin{Time-system check} (Appendix~\ref{app:p3}), before every run on a FITS file:
+\begin{verbatim}
+python -c "from astropy.io import fits; h = fits.getheader('FILE', 1); \
+print({k: h.get(k, 'ABSENT') for k in ('TIMESYS', 'TIMEREF', 'BJDREFI', \
+'BJDREFF', 'TIMEUNIT', 'TIMEDEL')})"
+\end{verbatim}
+Long commands are split over lines with a trailing backslash, so they can be pasted into a shell as they are.
+Text in angle brackets is replaced by the actual file name or value.
+
+\runin{Primary run:}
+\begin{verbatim}
+python s110_final.py --lc <tessNNNN-s0110-0000000004206066-NNNN-s_lc.fits> \
+  --product spoc --out s110_primary.json
+\end{verbatim}
+
+\runin{Fallback 1} (only under Appendix~\ref{app:data}):
+\begin{verbatim}
+python s110_final.py --lc <QLP s0110 llc.fits> --product qlp --out s110_primary.json
+\end{verbatim}
+The flux column is \code{SYS\_RM\_FLUX}, or \code{DET\_FLUX} if the file has no \code{SYS\_RM\_FLUX}. If it has
+neither, the script writes O4 for both signals with the reason ``no registered QLP flux column''.
+
+\runin{Fallback 2:}
+\begin{verbatim}
+python s110_final.py --lc <TESS-SPOC s0110 lc.fits> --product spoc --out s110_primary.json
+\end{verbatim}
+
+\runin{Variants,} on the same product as the primary: add \code{--window 0.5} (a), \code{--window 1.0} (b),
+\code{--drop-desat-hours 1} (c, SPOC primary only), \code{--flux SAP\_FLUX} (e), \code{--count-rule v2} (f); for (d)
+use \code{--lc <QLP s0110 llc.fits> --product qlp} (SPOC primary only).
+
+\runin{Localisation:}
+\begin{verbatim}
+python s110_localise.py --tpf <tessNNNN-s0110-0000000004206066-NNNN-s_tp.fits> \
+  --photometry s110_primary.json --primary-sha256 <posted hash> \
+  --prf-dir <MAST prf_fitsfiles/start_s0004> --out s110_loc_A.json
+\end{verbatim}
+and the same with \code{--signal B --out s110\_loc\_B.json}.
+
+\runin{Sentences:}
+\begin{verbatim}
+python s110_summary.py --primary s110_primary.json --variant a=... \
+  --loc-A s110_loc_A.json --loc-B s110_loc_B.json --d-status pending|final \
+  [--d-final-reason crashed|not-public-on-deadline] --out s110_summary.json
+\end{verbatim}
+In the summary command, \code{--variant a=...} is given for every applicable variant, or
+\code{--not-available KEY=FILE} instead for a variant that is not available. FILE is the attempt record of Appendix~\ref{app:p4}, which contains the unedited
+error output of the attempted run, or, for (d), the saved MAST search result; its sha256 and text are copied into the
+summary.
+
+\code{--d-status pending} is used while no QLP Sector 110 release is public; the qualifier then stays provisional, and
+this option is refused on or after 2027 February 28. \code{--d-status final} is used once (d) has been run
+(\code{--variant d=...}), or with \code{--not-available d=FILE} and \code{--d-final-reason crashed} (a public release
+was attempted and failed) or \code{not-public-on-deadline} (FILE is the saved MAST search of 2027 February 28 or later;
+refused before that date). It is automatic for a QLP primary.
+
+The summary script refuses to write sentences if a variant is missing; is not the registered variant of this primary;
+carries another script, ephemeris, expected-depth or helper-module checksum than this package (audit 6); or is declared
+not available without a saved non-empty error output. It also refuses if a required localisation file is missing, was
+not computed from this primary result or by this package's \code{s110\_localise.py}, or is not from a Sector 110 pixel
+file of TIC 4206066.

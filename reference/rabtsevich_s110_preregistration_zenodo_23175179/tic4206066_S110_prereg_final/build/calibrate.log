@@ -1,0 +1,8 @@
+S6 A n=4 not_tested=3 pool=338 depth 444.6 +- 64.7 ppm
+S6 B n=1 not_tested=1 pool=307 depth 585.5 +- 137.3 ppm
+S32 A n=6 not_tested=2 pool=387 depth 436.9 +- 87.0 ppm
+S32 B n=0 not_tested=3 pool=410 depth None +- None ppm
+S98 A n=8 not_tested=8 pool=392 depth 450.0 +- 47.8 ppm
+S98 B n=2 not_tested=3 pool=393 depth 994.5 +- 98.1 ppm
+A expected (S6+S32) 441.9 +- 51.9; S98 450.0 +- 47.8
+B expected (S6+S32) 585.5 +- 137.3; S98 994.5 +- 98.1

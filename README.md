@@ -1,0 +1,225 @@
+# TESS: search for new transiting planet candidates
+
+This project searches TESS light curves for transiting planets that nobody has reported yet.
+It follows the method of Pavel Rabtsevich, who found two candidate signals around the star TIC 4206066.
+His star is the known-positive test: the search must find his 3.18 d signal in Sector 98 before we trust it on other stars.
+
+## Layout
+
+| path | content |
+|---|---|
+| `analysis/` | The search code. |
+| `data/tic4206066_mast/` | TESS light curves and target pixel files of TIC 4206066 for Sectors 6, 32 and 98. |
+| `data/tic4206066_tesscut/` | 21x21-pixel TESScut cutouts of the full-frame images of TIC 4206066 for Sectors 6, 32 and 98. |
+| `data/qlp_bulk_download_scripts/` | The MAST bulk download scripts of QLP light curves, one per sector. The search code reads the TIC IDs and URLs from them and never runs them. |
+| `data/qlp_sector_<nnnn>/` | The star list and the downloaded light curves of one sector. |
+| `data/known_transit_catalogues/` | The TOI, CTOI, SPOC TCE and TESS EB lists, to tell new signals from known ones. |
+| `data/candidate_other_sector_light_curves/` | The light curves of the new candidates from other TESS sectors. |
+| `data/candidate_tesscut_cutouts/` | TESScut cutouts of the full-frame images around the new candidates, one folder per TIC ID. |
+| `results/` | Outputs of the search code, one folder per script. |
+| `reference/rabtsevich_preprint_zenodo_22967456/` | Rabtsevich's research note, `manuscript.pdf` (doi:10.5281/zenodo.22967456). |
+| `reference/rabtsevich_data_zenodo_22999133/` | His supporting data and code, version 1.0.1 (doi:10.5281/zenodo.22999133). `unpacked/` holds the contents of the three ZIP files. |
+| `reference/rabtsevich_s110_preregistration_zenodo_23175179/` | His pre-registered test of TESS Sector 110 (doi:10.5281/zenodo.23175179). `tic4206066_S110_prereg_final/` holds the contents of the ZIP file. |
+| `.venv/` | The Python 3.12.13 environment. `requirements.txt` lists its packages. |
+| `.venv_triceratops/` | A separate Python 3.12.13 environment for TRICERATOPS, which needs numpy 1 and an older scipy. `requirements_triceratops.txt` lists its packages. |
+
+The files under `reference/` and `data/` are downloads. Do not edit them.
+
+## Set up
+
+1. Create the Python environment:
+
+   ```
+   uv venv --python 3.12.13 .venv
+   uv pip install --python .venv/bin/python -r requirements.txt
+   ```
+
+   Create the TRICERATOPS environment:
+
+   ```
+   uv venv --python 3.12.13 .venv_triceratops
+   uv pip install --python .venv_triceratops/bin/python -r requirements_triceratops.txt
+   ```
+
+2. Download the archival TESS files of TIC 4206066:
+
+   ```
+   .venv/bin/python analysis/download_tic4206066_archival_tess_files.py
+   ```
+
+   The script reads the file list from Rabtsevich's `01_inputs/INPUT_PRODUCTS.csv`, so the test star uses the same files he did.
+   It downloads about 320 MB and checks each file against the sha256 in that list.
+   The three TESScut cutouts always fail this check, because MAST makes each cutout on request and the file headers change.
+   Every other file must match.
+
+## Run
+
+Run each script from the repository root.
+
+### Search one sector
+
+Run these steps in order. The examples use Sector 98, the sector that Rabtsevich searched.
+
+1. List the stars with a QLP light curve in the sector, with their TIC magnitude, radius, mass and temperature:
+
+   ```
+   .venv/bin/python analysis/build_qlp_sector_star_list.py 98
+   ```
+
+   The script writes `data/qlp_sector_0098/star_list.csv`. Sector 98 has 628,730 stars; the TIC query takes about 15 min.
+
+2. Download the light curves of the stars at or brighter than TESS magnitude 11.5:
+
+   ```
+   .venv/bin/python analysis/download_qlp_sector_light_curves.py 98 --max-tmag 11.5
+   ```
+
+   The script keeps only time, SAP flux and quality, in `data/qlp_sector_0098/light_curves/`.
+   For Sector 98 it downloads about 185 GB and keeps about 30 GB.
+   It skips stars that are already saved, so run it again to continue or to retry failed downloads.
+
+3. Search every downloaded light curve with box least squares (BLS):
+
+   ```
+   .venv/bin/python analysis/search_qlp_sector.py 98
+   ```
+
+   The script removes flagged cadences, but keeps the cadences flagged only with QLP QUALITY bit 30 (2^29).
+   QLP does not document bit 30, and those cadences are nearly as clean as unflagged ones.
+   The script detrends each light curve and searches periods of 0.5 to 14 d.
+   It masks each signal it finds and searches again, up to three signals per star.
+   It writes one row per signal to `results/qlp_sector_0098_bls_search/`, in chunks of 1000 stars.
+   It skips chunks that are already done, so run it again to continue.
+
+4. Vet the signals with LEO-Vetter:
+
+   ```
+   .venv/bin/python analysis/vet_qlp_sector_signals.py 98
+   ```
+
+   The script vets each signal with a BLS SNR of at least 7 and at least 3 transits.
+   It runs the LEO-Vetter flux-level tests and checks them against the LEO-Vetter default thresholds.
+   The false alarm tests reject noise and systematics. The false positive tests reject eclipsing binaries.
+   A signal that passes both groups is a planet candidate.
+   The script writes `results/qlp_sector_0098_leo_vetting/vetting.csv`, with the names of the tests that each signal failed.
+   It does not run the LEO-Vetter pixel-level tests.
+
+5. Download the catalogues of known transit signals:
+
+   ```
+   .venv/bin/python analysis/download_known_transit_catalogues.py
+   ```
+
+   The script downloads the TOI and CTOI lists from ExoFOP, every SPOC TCE table from MAST, and the TESS eclipsing binary (EB) catalogue from VizieR, about 300 MB.
+   It writes them to `data/known_transit_catalogues/`, with the download date in `download_date.txt`.
+   Run it again before step 6 when the lists are more than a few days old.
+
+6. Compare the vetted signals with the known signals, and count each stage:
+
+   ```
+   .venv/bin/python analysis/cross_match_qlp_sector_signals_with_known_catalogues.py 98
+   ```
+
+   A signal is known when a TOI, CTOI, TCE or TESS EB is on the same star with a period of 1/3, 1/2, 1, 2 or 3 times the signal period, within 1%.
+   The script writes three files to `results/qlp_sector_0098_known_catalogue_cross_match/`:
+
+   | file | content |
+   |---|---|
+   | `new_candidates.csv` | The signals that pass every vetting test and match no known signal, highest MES first. |
+   | `signals_cross_matched.csv` | Every vetted signal, with the matching TOIs, CTOIs, TCEs and TESS EBs. |
+   | `summary.json` | The number of signals at each stage, the TOI recovery, and the rank of TIC 4206066. |
+
+   The TOI recovery measures the search: of the TOIs on searched stars, how many the search found and the vetting passed.
+   `summary.json` gives the counts for all TOIs and for each TFOPWG disposition, such as confirmed planet (CP) or false positive (FP).
+
+7. Check each new candidate against independent data:
+
+   ```
+   .venv/bin/python analysis/check_qlp_sector_new_candidates.py 98
+   ```
+
+   The script runs these checks on each candidate in `new_candidates.csv`:
+
+   | check | data | refutes the candidate when |
+   |---|---|---|
+   | Other TESS sectors | The star's SPOC, TESS-SPOC or QLP light curve of each other sector, searched near the candidate period | The transit should be clear in a sector, but is not there. |
+   | Period pile-up | The periods of all the signals of the sector search | Many more stars have a signal at this period than at nearby periods. The period is a systematic of the sector. |
+   | Ephemeris match | The signals of the sector search, the TOIs and the TESS EBs within 10 arcmin | A nearby star has a dip at the same period that removes more light. That star is the likely source. |
+   | Gaia DR3 target | RUWE, non-single-star solution, eclipsing binary classification | Gaia classifies the star as an eclipsing binary. |
+   | Gaia DR3 neighbours | The sources within 60 arcsec | A neighbour that could cause the dip is a Gaia eclipsing binary. |
+   | VSX | The known variable stars within 60 arcsec | One of them is an eclipsing or ellipsoidal binary. |
+   | Companion | The LEO-Vetter transit fit and the TIC stellar radius | The companion is larger than 2 Jupiter radii, so it is a star. |
+
+   The script gives each candidate a verdict.
+   "refuted" means that a check refutes it.
+   "supported" means that the joint search detects the transit and no check refutes it.
+   The joint search searches all sectors together, near the candidate period.
+   A real transit stays in phase over the years between sectors, so its SNR grows.
+   The script also searches the same light curves at ten wrong periods.
+   The joint search detects the transit when its SNR is 1.5 times the highest SNR at a wrong period.
+   "unconfirmed" means neither.
+   The column `cautions` lists weaker warnings, such as a Gaia RUWE above 1.4, a grazing transit, or a neighbour bright enough to cause the dip.
+
+   The script saves the other-sector light curves in `data/candidate_other_sector_light_curves/`.
+   It writes `results/qlp_sector_0098_new_candidate_checks/candidate_checks.csv`, one row per candidate.
+
+8. Find which star causes the dip of each candidate that step 7 did not refute:
+
+   ```
+   .venv/bin/python analysis/check_qlp_sector_candidate_pixels.py 98
+   ```
+
+   TESS pixels are 21 arcsec wide, so a dip on a nearby star can look like a transit on the target.
+   The script makes a difference image from a TESScut cutout of the sector: the image out of transit minus the image in transit.
+   The pixels that lose light in the transit are bright in it.
+   The script fits the difference image with the TESS pixel response function at the target and at each Gaia star bright enough to cause the dip.
+   The star that fits best is the likely source.
+   The fit cannot separate stars less than half a pixel apart, so "target" below includes the stars within half a pixel of it.
+
+   | `pixel_verdict` | meaning |
+   |---|---|
+   | on target | The target fits clearly better than every other star. |
+   | on neighbour | A nearby star fits clearly better than the target. The candidate is a false positive. |
+   | unresolved | The target and a nearby star fit about equally well. |
+   | too faint | The difference image is too noisy to locate the dip. |
+
+   The script saves the cutouts in `data/candidate_tesscut_cutouts/`, about 200 MB per star.
+   It writes `results/qlp_sector_0098_candidate_pixel_checks/pixel_checks.csv` and one image per candidate.
+
+9. Compute the false positive probability of each candidate that step 8 puts on the target or leaves unresolved:
+
+   ```
+   .venv_triceratops/bin/python analysis/validate_qlp_sector_candidates_with_triceratops.py 98
+   ```
+
+   The script runs TRICERATOPS in its own environment.
+   TRICERATOPS compares the folded transit with each false positive scenario, such as an eclipsing binary on the target, on a companion or on a nearby star.
+   It gives the false positive probability (FPP) and the nearby false positive probability (NFPP).
+   For an "on target" candidate, the script removes the scenarios on the stars that step 8 rules out.
+
+   | `triceratops_verdict` | condition |
+   |---|---|
+   | validated without imaging | FPP < 0.015 and NFPP < 0.001 |
+   | likely planet | FPP < 0.5 and NFPP < 0.001 |
+   | not validated | any other result |
+
+   A full validation also needs high-resolution imaging of the star. This project does not have it.
+   The script writes `results/qlp_sector_0098_triceratops_validation/triceratops_validation.csv`.
+
+### Test star
+
+| command | what it does |
+|---|---|
+| `.venv/bin/python analysis/search_tic4206066_tls_per_sector.py` | Searches each archival sector of TIC 4206066 with Transit Least Squares (TLS), without Rabtsevich's periods. Writes `results/tls_per_sector/`. |
+
+`analysis/tic4206066_light_curves.py` loads and detrends the light curves for the scripts.
+It removes every cadence with a non-zero QUALITY flag, and removes trends with a wotan biweight filter with a 0.5 d window.
+
+## Check the Rabtsevich downloads
+
+Run each command from the folder that holds the checksum file. Each command prints `OK` for every file.
+
+```
+cd reference/rabtsevich_data_zenodo_22999133/unpacked && shasum -a 256 -c SHA256SUMS
+cd reference/rabtsevich_s110_preregistration_zenodo_23175179 && shasum -a 256 -c SHA256SUMS.txt
+```

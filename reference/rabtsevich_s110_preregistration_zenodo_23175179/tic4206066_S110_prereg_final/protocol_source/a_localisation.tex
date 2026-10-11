@@ -1,0 +1,104 @@
+\section{Pixel localisation: full rules} \label{app:localisation}
+
+\subsection{When it is run, and with which code}
+
+The localisation of a signal is run only if its photometric outcome is O1 or O2. Otherwise it is reported as not
+possible.
+
+The code is \code{s110\_localise.py}. It runs the headline recipe of the final re-derivation (items 10 and 11) through
+the library \code{deps/pixloc\_lib.py}, which is the re-derivation's code. On 2026 October 5 only the comments of this
+library and its default file paths, which \code{s110\_localise.py} replaces at run time, were made neutral. On the
+Sector 32 pixels with the re-derivation's ephemeris the code reproduces the published Sector 32 result exactly,
+including all 600 injection positions (\code{dryrun/loc\_s32\_items10\_fidelity.json}).
+
+\subsection{Recipe}
+
+\begin{itemize}
+\item Input: the Sector 110 SPOC 2-min target pixel file. Cadences with quality bits 1610619071 are removed.
+\item Each pixel is decorrelated against the spacecraft pointing columns \code{POS\_CORR1} and \code{POS\_CORR2}, with
+  a linear fit made away from the localised signal's own predicted transits, as in item 10.
+\item A stacked difference image is formed: the mean of the windows from 1.5 to 2.5\,$\Tfourteen$ before and after each
+  transit, minus the in-transit mean.
+\item A PRF is fitted to the difference image, weighted by pixel errors based on \code{FLUX\_ERR} (TESS\_PRF 0.1.3
+  \citep{Bell2022}, MAST PRF files \code{start\_s0004}, camera and CCD taken from the file).
+\item Offsets are measured relative to the Gaia DR3 position, moved with its proper motion to the Sector 110 epoch.
+\item Transits used: the counted transits of the primary photometric run. The pixel code also requires both
+  out-of-transit windows of a transit; any transit it drops is listed.
+\end{itemize}
+
+\subsection{Error clouds from injections} \label{app:clouds}
+
+The uncertainty of the position comes from fake transits injected into the real pixels, using the real stellar image
+as template:
+\begin{itemize}
+\item 300 injections at the position of the target (seed 1001) and 300 at $+5''$ east (seed 2002);
+\item for calibration, 3000 further on-target injections with the same recipe (seed 4004).
+\end{itemize}
+Every fake stack has exactly as many transits as the real stack. A candidate fake transit must lie more than
+$2.5\,\Tfourteen + \Tfourteen^{\rm other}/2$ from the other signal, pass the pixel usability rule, have its $\Tfourteen$
+window inside one segment of the primary photometric run at least $W/2$ from its ends (the photometric edge-zone rule;
+the segments are read from the photometry output file), and lie more than 3\,$\Tfourteen$ from every fake already chosen
+in that trial. For each trial a phase is drawn and its candidates are taken. While fewer candidates than needed are
+collected, further phases are drawn and their candidates added; no phase is rejected, and after at most 100 phases the
+trial fails. The needed number is then chosen at random from the candidates. Each cloud records the number of distinct
+$\Tfourteen$-wide phase slots of its fakes. Fewer than 15 slots in any cloud make the localisation ``not possible''.
+The injected depth is the pixel-aperture box depth of the real transits, as in item 11.
+
+\subsection{What is reported}
+
+\begin{itemize}
+\item The offset (East, North) of the dip from the target.
+\item Its distance $\delta$ from the target position $(0, 0)$, in units of the covariance of the 300-trial on-target
+  cloud (a Mahalanobis distance; called $d$ in the output files and in the earlier drafts).
+\item The empirical $p = (1 + m)/(N_{\rm cal} + 1)$, where $N_{\rm cal}$ is the number of successful calibration
+  trials (2700 to 3000) and $m$ counts those whose distance $\delta_i$, measured in the same way, is at least
+  $\delta$. When all trials succeed, the denominator is $3000+1$. This states the existing frozen-code
+  calculation; fewer than 2700 successful trials gives ``not possible''. This is a Monte Carlo $p$-value with a separate
+  calibration set \citep{DavisonHinkley1997,North2002,Bates2023}.
+\item $L(5''\,{\rm E})/L({\rm target})$, the ratio of the Gaussian densities of the two clouds at the observed position.
+  It is a ratio, not a probability, and the $5''$ east hypothesis was defined after looking at archival data.
+\end{itemize}
+The label uses the empirical $p$. It does not assume that the cloud is Gaussian; it assumes only that a real on-target
+signal behaves like the injected ones. The Gaussian tail $\exp(-\delta^2/2)$ and a $p$ measured from the mean of the
+injection cloud (``bias-corrected'') are reported for information and never change the label. The coverage of the
+empirical $p$ was checked on archival and synthetic pixels (Appendices~\ref{app:validation} and \ref{app:limits}).
+
+\subsection{Labels for signal A}
+
+The label of signal A from Sector 110 alone is:
+\begin{itemize}
+\item \textbf{L1 compatible} if $p \geq 0.05$;
+\item \textbf{L2 tension} if $0.0027 \leq p < 0.05$;
+\item \textbf{L3 off-target} if $p < 0.0027$.
+\end{itemize}
+
+The localisation is \textbf{not possible} in any of these cases: the pointing columns are missing, all zero or
+non-finite on more than 50\,\% of cadences (as coded: \code{POS\_CORR1} or \code{POS\_CORR2} is missing, or fewer than
+half of the cadences have both values finite and not both zero); no transit passes the pixel rule; fewer than 90\,\% of the
+trials succeed in any cloud (270 of 300, or 2700 of 3000); or $\delta$ is not finite.
+
+\subsection{Checks before a labelled run}
+
+The script refuses a labelled run unless all of the following hold: the installed package versions equal
+\code{requirements.txt}; the photometry file comes from the primary settings, and its sha256 equals the publicly posted
+primary checksum (Appendix~\ref{app:procedure}); its input is the SPOC 2-min light curve of Sector 110; the pixel file is
+the matching SPOC 2-min target pixel file of TIC 4206066; the PRF folder holds exactly the files listed in
+\code{PRF\_SHA256SUMS}, with those checksums; and the registered switches are used. The environment is checked before
+any file is read, and every other check comes before any rule that writes a result.
+
+Only after these checks: if the pixel file is not from camera 1, CCD 2 (the registered PRF files), localisation is not
+possible. If the primary product is a fallback, localisation is not possible. The switch \code{--dry-run} is refused on
+Sector 110 files and never produces a label. The first labelled run of each signal that writes its output file defines
+the result; that file and its sha256 are posted (Appendix~\ref{app:procedure}). Any other localisation of Sector 110 is
+exploratory and cannot be cited for or against the label.
+
+\subsection{Combined position and signal B}
+
+The positions of Sectors 32, 98 and 110 are also combined: an inverse-covariance mean of the three positions, using the
+archival positions and covariances of the re-derivation headline (\code{calib/localisation\_archival.json}; Sector 32
+decorrelated and Sector 98 ``hard'' mask, main recipe), and the product of the three likelihood ratios. The combined
+value is descriptive and never overrides the Sector 110 label. The archival values were measured with the
+re-derivation's older ephemeris (about 3\,min different), which moves no window by more than 3\,\%.
+
+Signal B gets the same measurement without a label, because it has at most three events, with injections kept clear
+of signal A.

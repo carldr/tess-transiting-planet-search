@@ -1,0 +1,104 @@
+\section{Predictions} \label{sec:predictions}
+
+\subsection{Ephemerides} \label{sec:ephem}
+
+All times used by the analysis are Barycentric TESS Julian Dates, BTJD $=$ BJD$_{\rm TDB} - 2457000$. The ephemerides
+are in the file \code{ephemeris\_final.json}:
+\begin{itemize}
+\item A: period $P = 3.1827844492913377$\,d, reference mid-time $T_0 = 3998.7348271847636$ BTJD, transit duration (first to
+  last contact) $\Tfourteen = 1.8705$\,h, with the covariance of $(T_0, P)$ in the file ($\sigma_{T_0} = 0.00243$\,d $= 3.5$\,min,
+  $\sigma_P = 0.0000051$\,d, correlation 0.70);
+\item B: $P = 11.132745380039134$\,d, $T_0 = 4000.8658739613074$ BTJD, $\Tfourteen = 1.6581$\,h, unchanged since the
+  first internal draft of this protocol; its prediction uncertainties (Table~\ref{tab:timesB}) are 1.5 times the
+  per-epoch uncertainties of the joint fit, because its timing errors are not calibrated by injections.
+\end{itemize}
+The values are given with the digits stored in the file. The ephemeris of A rests on one choice made after looking at
+the archival data: in two Sector 32 transits of A, signal B falls close to A, and B is modelled jointly with A instead
+of being masked. Masking B instead would shift the predicted times of A by 0.4\,min (2.6 instead of 3.0\,min earlier
+than in the internal draft v2, Appendix~\ref{app:history}), well inside the timing tolerance of at least 12.3\,min
+(Section~\ref{sec:timing}).
+
+\subsection{Predicted transits in Sector 110} \label{sec:times}
+
+Tables~\ref{tab:timesA} and \ref{tab:timesB} list every Sector 110 epoch, with the prediction uncertainty $\sigma$ of
+each. The scripts use BTJD only. Two calendar columns are added for convenience. ``BJD$_{\rm TDB}$ calendar'' is the
+same barycentric time written as a UTC calendar date (the \code{tc\_utc\_calendar} strings of
+\code{ephemeris\_final.json}); it is \emph{not} the time at which the transit is seen. ``UTC at Earth'' is the arrival
+time at the centre of the Earth in UTC, computed with astropy from the Gaia DR3 position \citepalias{GaiaMission,GaiaDR3}
+with the light-travel time to the solar-system barycentre removed; at TESS the arrival time is within 2\,s of it. In
+Sector 110 the arrival time is 5.6 to 7.2\,min earlier than the BJD$_{\rm TDB}$ calendar date, because the star is
+then on the Earth's side of the Sun.
+
+\begin{deluxetable}{rcccc}
+\tablecaption{Predicted mid-transit times of signal A in Sector 110.\label{tab:timesA}}
+\tablehead{\colhead{Epoch} & \colhead{BTJD} & \colhead{BJD$_{\rm TDB}$ calendar} & \colhead{UTC at Earth} &
+  \colhead{$\sigma$ (min)}}
+\startdata
+109 & 4345.65833 & 2026-11-01 03:46:51 & 2026-11-01 03:41:16 & 4.10 \\
+110 & 4348.84112 & 2026-11-04 08:10:03 & 2026-11-04 08:04:13 & 4.11 \\
+111 & 4352.02390 & 2026-11-07 12:33:16 & 2026-11-07 12:27:10 & 4.11 \\
+112 & 4355.20669 & 2026-11-10 16:56:28 & 2026-11-10 16:50:09 & 4.12 \\
+113 & 4358.38947 & 2026-11-13 21:19:41 & 2026-11-13 21:13:10 & 4.12 \\
+114 & 4361.57225 & 2026-11-17 01:42:54 & 2026-11-17 01:36:11 & 4.13 \\
+115 & 4364.75504 & 2026-11-20 06:06:06 & 2026-11-20 05:59:13 & 4.13 \\
+116 & 4367.93782 & 2026-11-23 10:29:19 & 2026-11-23 10:22:17 & 4.14 \\
+117 & 4371.12061 & 2026-11-26 14:52:31 & 2026-11-26 14:45:23 & 4.15 \\
+\enddata
+\end{deluxetable}
+
+\begin{deluxetable}{rcccc}
+\tablecaption{Predicted mid-transit times of signal B in Sector 110.\label{tab:timesB}}
+\tablehead{\colhead{Epoch} & \colhead{BTJD} & \colhead{BJD$_{\rm TDB}$ calendar} & \colhead{UTC at Earth} &
+  \colhead{$\sigma$ (min)}}
+\startdata
+31 & 4345.98098 & 2026-11-01 11:31:28 & 2026-11-01 11:25:51 & 4.06 \\
+32 & 4357.11373 & 2026-11-12 14:42:37 & 2026-11-12 14:36:10 & 4.08 \\
+33 & 4368.24647 & 2026-11-23 17:53:46 & 2026-11-23 17:46:44 & 4.11 \\
+\enddata
+\end{deluxetable}
+
+Only these epochs can enter the Sector 110 test. If the light curve covers at least one frozen epoch of a signal, every
+frozen epoch of that signal is listed in the output, observed or not. The closest A and B events are 7.4\,h apart
+(centre to centre), so their transit windows never overlap. Nine transits of A are predicted, but at most eight can be
+counted in practice. A transit is counted only if it lies outside the first and last 9\,h of each continuous stretch of
+data, where the detrending is unreliable (the edge zones, Section~\ref{sec:test}). Epoch 117 needs data until about BTJD
+4371.53 (2026-11-27 00:41 UTC at Earth) to clear the edge zone at the end of the light curve, which is after the
+scheduled end of the sector; epoch 109 needs continuous data from about BTJD 4345.24 (2026-10-31 17:45 UTC at Earth).
+
+\subsection{Expected depths} \label{sec:depths}
+
+The expected depths are box depths: 1 minus the mean normalised flux inside the predicted transit window. A box depth
+is lower than a fitted transit depth. They were computed on the archival sectors with exactly the statistic, counting
+rule, detrending and noise model of the test (Section~\ref{sec:test}; file \code{calib/expected\_depths.json}). The error
+of each value is the standard deviation of the mean of $n$ windows of that sector's noise pool (Section~\ref{sec:stat}). Notes on the individual
+values are in Appendix~\ref{app:depthnotes}. The products are the 2-minute light curves of the Science Processing Operations
+Center \citep[SPOC;][]{Jenkins2016}, its full-frame-image light curves \citep[TESS-SPOC;][]{Caldwell2020}, and QLP.
+
+\begin{table}[ht]
+\caption{Expected box depths from the archival sectors, with the number $n$ of counted transits and the transits that
+were not counted. Epochs are counted from $T_0$ (Section~\ref{sec:ephem}); negative epochs precede it. $D$, $D_{98}$ and
+$\dhi$ are used as described in Section~\ref{sec:stat}.\label{tab:depths}}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.24\textwidth}>{\raggedright\arraybackslash}p{0.40\textwidth}>{\raggedright\arraybackslash}p{0.28\textwidth}}
+\toprule
+Sector, product & A: depth, ppm & B: depth, ppm \\
+\midrule
+S6, TESS-SPOC 30-min & $444.6 \pm 64.7$ ($n = 4$; not counted: epoch $-795$, edge zone; epoch $-789$, coverage below
+  80\,\%) & $585.5 \pm 137.3$ ($n = 1$) \\
+S32, SPOC 2-min & $436.9 \pm 87.0$ ($n = 6$; epochs $-573$ and $-566$ not tested: their masks join the B masks into a
+  break of the detrending) & none counted (both B events sit next to A, same reason) \\
+S98, QLP 200-s (discovery sector) & $450.0 \pm 47.8$ ($n = 8$; not counted: epoch $-1$, no baseline on one side) &
+  $994.5 \pm 98.1$ ($n = 2$) \\
+\midrule
+Primary expectation $D$ (S6 and S32, inverse-variance mean) & $441.9 \pm 51.9$ & $585.5 \pm 137.3$ (S6 only, one
+  transit) \\
+$D_{98}$ (S98; the centre used to build $\dhi$, not $\dhi$ itself) & $450.0 \pm 47.8$ & $994.5 \pm 98.1$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Because both signals were found in Sector 98, their depth there may be biased upward by the selection. The Sector 98
+depth $D_{98}$ is therefore used only for the upper edge of the consistency band; the primary expectation $D$ comes from
+Sectors 6 and 32. A sector without a counted transit drops out of $D$; for B, the primary expectation $D$ therefore
+rests on a single Sector 6 transit, and its error reflects this.

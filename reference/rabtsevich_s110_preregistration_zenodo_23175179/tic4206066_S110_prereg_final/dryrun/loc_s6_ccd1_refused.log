@@ -1,0 +1,1 @@
+labelled run refused: TPF is not the SPOC 2-min Sector 110 target pixel file of TIC 4206066; photometry JSON sha256 does not equal --primary-sha256 (the posted primary hash); no photometry JSON; TPF is not Sector 110 / TIC 4206066; non-registered switches (--n-trials/--n-cal/--ephem/--events/--no-clear) (use --dry-run for validation)

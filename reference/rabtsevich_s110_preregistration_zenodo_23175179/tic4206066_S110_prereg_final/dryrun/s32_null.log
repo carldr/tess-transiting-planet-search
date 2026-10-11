@@ -1,0 +1,2 @@
+A n=7 not_tested=1 pool=256 phases d>=obs 35/46 d>det 0 O4_INSUFFICIENT d=-106 det>278 band=[99, 759] sens=0.92 det spread [269, 291] timing=None
+B n=2 not_tested=0 pool=276 phases d>=obs 6/143 d>det 0 O4_INSUFFICIENT d=194 det>369 band=[-145, 1465] sens=0.83 det spread [349, 384] timing=None

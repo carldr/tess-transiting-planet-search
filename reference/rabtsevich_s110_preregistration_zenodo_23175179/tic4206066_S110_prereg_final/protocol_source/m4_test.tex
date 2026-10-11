@@ -1,0 +1,108 @@
+\section{The test} \label{sec:test}
+
+\subsection{Data and processing}
+
+The primary is the first released SPOC 2-min light curve, column \code{PDCSAP\_FLUX} (corrected flux), quality mask
+17087. Only if it is absent on 2027 February 28 may the primary use QLP 200-s (mask 1610619071), then TESS-SPOC
+200-s (\code{PDCSAP\_FLUX}, mask 17087) if QLP is also absent, using the version public on that date and a saved
+MAST search record (Appendix~\ref{app:data}). QLP uses \code{SYS\_RM\_FLUX}, or \code{DET\_FLUX} only if the former
+column is absent (Appendix~\ref{app:commands}). An existing primary with no counted transit gives O4; it never
+triggers a product switch.
+
+The biweight detrending filter has window $W=0.75$\,d \citep{Hippke2019}; both signals are masked over
+$\pm1.5\,\Tfourteen$. Upward outliers above $4\times1.4826$ times the median absolute deviation are removed.
+Segments split at gaps longer than 0.3\,d in the cleaned series with both transit masks removed. The first and last
+$W/2$ (9\,h) of each segment are edge zones. A transit is counted only if (i) at least 80\,\% of its window has
+cadences after cleaning, (ii) at least 2 cadences lie on each side, 0.75 to 3\,$\Tfourteen$ from its predicted
+mid-time, (iii) its whole window lies within one segment outside the edge zones, and (iv) it is a frozen Sector 110
+epoch. Otherwise it is ``not tested'' and never counts against the signal (Appendix~\ref{app:processing}).
+
+\subsection{Statistic and thresholds} \label{sec:stat}
+
+The depth of one transit is 1 minus the mean detrended flux inside $|t - t_c| < \Tfourteen/2$, where $t_c$ is its
+predicted mid-time. The test statistic $d$ is the mean of these depths over the $n$ counted transits. Nothing is
+searched in period or in time.
+
+The noise is measured on the same light curve. The same window is placed at fake transit times between the real ones,
+and each fake ephemeris goes through the full detrending, masking and counting; the windows obtained form the noise
+pool (Appendix~\ref{app:noise}). The pool is resampled 20\,000 times for each of 20 seeds; the medians of the resulting thresholds and sensitivity
+are used (Appendix~\ref{app:thresholds}).
+From these resamples, for the $n$ actually counted:
+\begin{itemize}
+\item the detection threshold $\ddet$ is the 99.9th percentile of the mean of $n$ noise windows;
+\item the band of depths consistent with the prediction runs from $\dlo$, the 0.1st percentile of noise plus a depth
+  drawn from $N(D, D_{\rm err})$, to $\dhi$, the 99.9th percentile of noise plus a depth drawn from
+  $N(D_{98}, D_{98,\rm err})$;
+\item the sensitivity $\Sens = P(\mathrm{detect} \mid \mathrm{real})$ is the fraction of draws of noise plus
+  $N(D, D_{\rm err})$ above $\ddet$.
+\end{itemize}
+The percentile is not the false-alarm level: because neighbouring noise windows overlap, the bootstrap underestimates
+the tails. The false-detection levels were therefore measured on archival data with a separate set of fake ephemerides:
+0.47\,\% for A and 0.49\,\% for B overall in SPOC 2-min data, with the level for each number of counted transits in
+Table~\ref{tab:fa}. These trials are not independent of each other, so their binomial bounds are approximate.
+
+\subsection{Four outcomes} \label{sec:outcomes}
+
+Each signal receives exactly one outcome (Table~\ref{tab:outcomes}).
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.43\textwidth}>{\raggedright\arraybackslash}p{0.32\textwidth}}
+\caption{Outcome of each signal. All quantities are computed for the $n$ counted transits.\label{tab:outcomes}}\\
+\toprule
+Outcome & Condition & Meaning \\
+\midrule
+\endfirsthead
+\toprule
+Outcome & Condition & Meaning \\
+\midrule
+\endhead
+\textbf{O1 recovered} & $d > \ddet$, $\dlo \leq d \leq \dhi$, and the timing is consistent (Section~\ref{sec:timing}) &
+  a dip consistent with the prediction is present \\
+\textbf{O2 inconsistent} & $d > \ddet$, and at least one of: $d < \dlo$; $d > \dhi$; the timing is inconsistent & a dip is present, but
+  not the predicted one (the failed condition is recorded) \\
+\textbf{O3 excluded} & $d \leq \ddet$, $d < \dlo$, and $\Sens \geq 0.95$ & the predicted signal is not present at the
+  predicted depth, and the data had at least 95\,\% sensitivity to it \\
+\textbf{O4 insufficient} & anything else: fewer than 10 usable cadences, or no registered QLP flux column
+  (Appendix~\ref{app:commands}); $n = 0$; a noise pool of fewer than 100 windows; or $d \leq \ddet$ and either $d \geq \dlo$ or
+  $\Sens < 0.95$ & the data cannot decide \\
+\bottomrule
+\end{longtable}
+
+Transits that are not tested reduce $n$; they never count against the signal. O1 and O2 do not depend on the
+sensitivity: a $d$ above $\ddet$ gives O1 or O2 whatever the sensitivity; its false-detection level is the one in
+Table~\ref{tab:fa} for that $n$. The sensitivity matters only when $d \leq \ddet$. In the dry run on the archival
+Sector 32 data the sensitivity for A was 0.92, below the 0.95 needed for O3 (Appendix~\ref{app:validation}). Even a
+clean non-detection of A may therefore give O4. For B, with two or three transits, the sensitivity may be far below
+0.95. In that case an O1 of B is still possible but an O3 is not, and B will most likely end as O4 unless Sector 110 is
+quieter than Sector 32.
+
+O4 means only that the data cannot decide; it says nothing against the signal. O1 means that a dip consistent with the prediction is
+present in new data; it does not show that the signal comes from a planet (Section~\ref{sec:limits}).
+
+\subsection{Timing rule} \label{sec:timing}
+
+The timing is checked only when $d > \ddet$.
+\begin{itemize}
+\item The common time shift $\Delta t$ of all counted transits is the shift between $-30$ and $+30$\,min, in steps of
+  0.5\,min, that maximises their mean depth. If several shifts share the maximum (a plateau, because the grid is finer
+  than the cadence), the middle one is taken; for an even number of them, the later of the two middle shifts.
+\item $\sigma_{\rm meas}$ is the standard deviation of the recovered shift over 300 injections of a box of depth $d$ into
+  $n$ random noise-pool windows, with a true shift of 0 and a fixed seed.
+\item $\sigma_{\rm pred}$ is the mean of the prediction uncertainties (Tables~\ref{tab:timesA} and \ref{tab:timesB}) of
+  the counted epochs.
+\item The timing is consistent if $|\Delta t| \leq 3\sqrt{\sigma_{\rm pred}^2 + \sigma_{\rm meas}^2}$. For A this
+  tolerance is at least 12.3\,min.
+\item The shift of each counted transit alone is reported. It does not enter the outcome.
+\end{itemize}
+
+\subsection{Processing variants}
+
+Up to six fixed processing variants are run after the primary analysis and reported next to it: (a) and (b)
+detrending windows of 0.5 and 1.0\,d; (c) cadences near SPOC desaturation flags removed within $\pm1$\,h (SPOC primary only); (d) the QLP
+light curve (not for a QLP primary; possibly run later, on the release public on 2027 February 28); (e) the uncorrected
+simple-aperture flux; (f) the counting rule of an earlier draft, for comparison only. They never
+change the primary outcome. They only decide whether an O1 or an O3 is called ``robust'', a word with a narrow meaning:
+among the variants (a) to (e) that were run and reach $\Sens \geq 0.95$, none returned O3 against a primary O1, and
+none returned O1 or O2 against a primary O3. If none of them reaches 0.95, the qualifier is ``robustness not
+testable'', and while variant (d) is pending, ``robust'' and ``robustness not testable'' remain provisional;
+a qualifying contradiction already makes the result ``not robust''. The qualifier ``robust'' does not mean that all variants agree
+(Appendix~\ref{app:variants}).

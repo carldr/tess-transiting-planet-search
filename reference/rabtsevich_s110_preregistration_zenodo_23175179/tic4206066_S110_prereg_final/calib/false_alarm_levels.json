@@ -1,0 +1,308 @@
+{
+ "note": "Builds calib/false_alarm_levels.json from every false-alarm trial file in calib/ (outputs of\nbuild/false_alarm_check.py, all modes that were run): the realised false-detection level (\"d > det\" under the noise\nmodel, final percentiles) per product, for A-like and B-like trials, overall and for each exact number of counted\ntransits n. Product \"spoc_2min\" = Sector 32 trials (SPOC 2-min, the S110 primary product); \"qlp\" = Sector 98 trials\n(fallback 1); \"tessspoc_30min\" = Sector 6 trials. Every level is given as a point estimate with a one-sided 95 %\nClopper-Pearson upper bound; the overall level also with a 95 % interval from a bootstrap over trial ephemerides.\nNo grouping of n is used (an earlier grouping was chosen after seeing per-n counts and was dropped after audit 4).",
+ "files": [
+  "false_alarm_A.json",
+  "false_alarm_A_S32.json",
+  "false_alarm_A_S32_a3.json",
+  "false_alarm_B.json",
+  "false_alarm_B_S32.json",
+  "false_alarm_B_S32_a3.json"
+ ],
+ "qlp": {
+  "A": {
+   "overall": {
+    "trials": 614,
+    "exceed": 0,
+    "rate_percent": 0.0,
+    "upper95_percent": 0.4867159595588502,
+    "ci95_percent": [
+     0.0,
+     0.0
+    ],
+    "ephemerides": 10
+   },
+   "by_n": {
+    "1": {
+     "trials": 1,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 95.0
+    },
+    "2": {
+     "trials": 6,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 39.30377689970827
+    },
+    "3": {
+     "trials": 33,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 8.678118929147494
+    },
+    "4": {
+     "trials": 136,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 2.1786610611001893
+    },
+    "5": {
+     "trials": 197,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 1.5091723853914272
+    },
+    "6": {
+     "trials": 102,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 2.894281958292629
+    },
+    "7": {
+     "trials": 66,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 4.437517261818429
+    },
+    "8": {
+     "trials": 35,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 8.203163585667046
+    },
+    "9": {
+     "trials": 32,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 8.936819898626474
+    },
+    "10": {
+     "trials": 4,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 52.712919549841196
+    },
+    "11": {
+     "trials": 2,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 77.6393202250021
+    }
+   }
+  },
+  "B": {
+   "overall": {
+    "trials": 777,
+    "exceed": 5,
+    "rate_percent": 0.6435006435006435,
+    "upper95_percent": 1.3482334363243458,
+    "ci95_percent": [
+     0.2944863098373521,
+     0.9395973154362416
+    ],
+    "ephemerides": 5
+   },
+   "by_n": {
+    "1": {
+     "trials": 188,
+     "exceed": 2,
+     "rate_percent": 1.0638297872340425,
+     "upper95_percent": 3.3107706308582925
+    },
+    "2": {
+     "trials": 325,
+     "exceed": 2,
+     "rate_percent": 0.6153846153846154,
+     "upper95_percent": 1.9244043613569815
+    },
+    "3": {
+     "trials": 202,
+     "exceed": 1,
+     "rate_percent": 0.49504950495049505,
+     "upper95_percent": 2.3267966172228265
+    },
+    "4": {
+     "trials": 62,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 4.716951137535681
+    }
+   }
+  }
+ },
+ "spoc_2min": {
+  "A": {
+   "overall": {
+    "trials": 5514,
+    "exceed": 26,
+    "rate_percent": 0.47152702212549874,
+    "upper95_percent": 0.6536747835561346,
+    "ci95_percent": [
+     0.26759440975319654,
+     0.6987991780194797
+    ],
+    "ephemerides": 90
+   },
+   "by_n": {
+    "1": {
+     "trials": 23,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 12.212338890652303
+    },
+    "2": {
+     "trials": 68,
+     "exceed": 1,
+     "rate_percent": 1.4705882352941178,
+     "upper95_percent": 6.787136332732066
+    },
+    "3": {
+     "trials": 642,
+     "exceed": 7,
+     "rate_percent": 1.0903426791277258,
+     "upper95_percent": 2.0381939103145625
+    },
+    "4": {
+     "trials": 1538,
+     "exceed": 6,
+     "rate_percent": 0.39011703511053314,
+     "upper95_percent": 0.7685248274132293
+    },
+    "5": {
+     "trials": 1203,
+     "exceed": 1,
+     "rate_percent": 0.0831255195344971,
+     "upper95_percent": 0.39372312588113
+    },
+    "6": {
+     "trials": 963,
+     "exceed": 5,
+     "rate_percent": 0.5192107995846313,
+     "upper95_percent": 1.0885737434593745
+    },
+    "7": {
+     "trials": 907,
+     "exceed": 6,
+     "rate_percent": 0.6615214994487321,
+     "upper95_percent": 1.3014642195678126
+    },
+    "8": {
+     "trials": 146,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 2.0309637820788726
+    },
+    "9": {
+     "trials": 24,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 11.734615615494873
+    }
+   }
+  },
+  "B": {
+   "overall": {
+    "trials": 10312,
+    "exceed": 51,
+    "rate_percent": 0.4945694336695112,
+    "upper95_percent": 0.624127937863017,
+    "ci95_percent": [
+     0.3492695722513109,
+     0.6378398029358205
+    ],
+    "ephemerides": 53
+   },
+   "by_n": {
+    "1": {
+     "trials": 3054,
+     "exceed": 20,
+     "rate_percent": 0.6548788474132285,
+     "upper95_percent": 0.9501924902254522
+    },
+    "2": {
+     "trials": 6040,
+     "exceed": 31,
+     "rate_percent": 0.5132450331125827,
+     "upper95_percent": 0.6920541840396864
+    },
+    "3": {
+     "trials": 1077,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 0.2777687781118775
+    },
+    "4": {
+     "trials": 141,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 2.102221495123676
+    }
+   }
+  }
+ },
+ "tessspoc_30min": {
+  "A": {
+   "overall": {
+    "trials": 618,
+    "exceed": 0,
+    "rate_percent": 0.0,
+    "upper95_percent": 0.48357332371694844,
+    "ci95_percent": [
+     0.0,
+     0.0
+    ],
+    "ephemerides": 10
+   },
+   "by_n": {
+    "1": {
+     "trials": 11,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 23.84041903808526
+    },
+    "2": {
+     "trials": 51,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 5.7047952360442755
+    },
+    "3": {
+     "trials": 140,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 2.1170772844868804
+    },
+    "4": {
+     "trials": 175,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 1.697278163071123
+    },
+    "5": {
+     "trials": 118,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 2.5068007442686766
+    },
+    "6": {
+     "trials": 71,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 4.131565870690947
+    },
+    "7": {
+     "trials": 51,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 5.7047952360442755
+    },
+    "8": {
+     "trials": 1,
+     "exceed": 0,
+     "rate_percent": 0.0,
+     "upper95_percent": 95.0
+    }
+   }
+  }
+ }
+}

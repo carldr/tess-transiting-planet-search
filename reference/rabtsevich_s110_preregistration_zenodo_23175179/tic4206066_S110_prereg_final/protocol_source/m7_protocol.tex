@@ -1,0 +1,57 @@
+\section{The full protocol, which text governs, and reporting} \label{sec:protocol}
+
+\runin{Where the rules are.} Sections~\ref{sec:question} to \ref{sec:protocol} are the main part. Appendices~\ref{app:data}
+to \ref{app:codemap} state every rule in full and are part of the pre-registration. The complete pre-registration, with
+the appendices, is \code{PREREG\_S110\_FINAL.pdf}; a separate reader-oriented overview is issued as
+\code{PREREG\_S110\_SHORT.pdf}. It introduces no additional rules. Appendices A--I give data, processing, thresholds, variants, localisation, procedure, public checks,
+fixed wording and commands; J--N give dry runs, limits, history, files and the code's section map.
+
+\runin{Who computes the outcome, and which text governs.} Frozen scripts (deposited with checksums and not changed
+afterwards) compute every outcome from valid inputs: \code{s110\_final.py} runs the photometric test,
+\code{s110\_localise.py} the pixel localisation, and \code{s110\_summary.py} writes the only sentences allowed to
+describe the outcomes. Three rules of precedence apply.
+\begin{enumerate}
+\item If this text and the frozen code disagree on how an outcome is computed from valid inputs, the code defines the
+  outcome. This text defines which runs and inputs are valid (Sections~\ref{sec:ephem} and \ref{sec:times} for the
+  ephemeris and predicted times, Section~\ref{sec:stat} for the statistic, and Appendices~\ref{app:data}, \ref{app:processing}, \ref{app:variants},
+  \ref{app:localisation}, \ref{app:procedure}, \ref{app:public} and \ref{app:commands}). The code checks only part of
+  these rules; the rest are checked through the public record (Appendix~\ref{app:public}), and a few outcomes and
+  statements are written by hand from posted files (Appendices~\ref{app:p1}, \ref{app:p5} and \ref{app:p7}). A result obtained in violation of any pre-registered rule
+  is invalid and cannot be used to accept or reject either signal.
+\item Where Sections~\ref{sec:question} to \ref{sec:protocol} and an appendix differ in any way, or a summary leaves
+  something out, the formal rules of the appendix govern.
+\item This version 1.1 is the authoritative text of the pre-registration. It replaces the earlier text of 2026 October
+  5 (below).
+\end{enumerate}
+
+\runin{Order, failures and reporting.} No Sector 110 product is opened before the primary run. The first valid
+primary run that writes an output defines the result; it and its checksum are posted before variants or localisation.
+Applicable variants run in one continuous session in order (a), (b), (c), (e), (f), then (d) if public; otherwise (d) waits for the
+QLP release public on 2027 February 28. Each attempt has an unedited record with command, input and script hashes,
+UTC times, exit status and full output. A successful output cannot be replaced by a failure (Appendices F and G).
+
+Before each run, the time-system headers are recorded and checked: TDB, SOLARSYSTEM, reference 2457000, fractional
+reference 0 or absent, unit d, and cadence within 1\,\% of 2\,min (SPOC 2-min light curve or pixel file) or 200\,s (QLP/TESS-SPOC). A mismatch gives O4
+for the primary, an unavailable variant, or localisation not possible, without conversion or product switching.
+An environment or filename refusal is corrected and does not count as an attempt that failed while computing.
+A computing failure or interruption before output is repeated once unchanged; a second failure gives O4 (primary), unavailable
+(variant), or localisation not possible. A reading adaptation may change only how the file is read; its diff and
+exact archival reproduction check must be posted before use. Helpers and individual variants are never adapted.
+The binding reading limit is 30 days from release of the affected file, ending at 24:00 UTC; without a qualifying
+adaptation it gives O4 (primary) or localisation not possible. A missing pixel file becomes final as not possible on or after 2027 February 28, with a saved search
+showing none released by that deadline. The full cases and fixed failure sentences are in Appendix G.
+
+The 30-day primary-run, 7-day posting and 14-day variant/localisation limits are administrative: report delays.
+Order, the 2027 February 28 conditions and reading limits are binding. Invalid results are posted as invalid and
+cannot accept or reject a signal; if a valid repeat is no longer allowed, the affected outcome is O4 (or localisation
+not possible), reason ``pre-registered procedure not followed''. All outcomes, untested transits, variants and
+localisations are reported with the fixed wording, including the variant-outcome line wherever ``robust'' is quoted.
+The deposit is unchanged after publication; later ideas are separately labelled analyses (Appendices F--H).
+
+\runin{Record status.} Version 1.1 replaces the earlier text deposited on 2026 October 5
+(\href{https://doi.org/10.5281/zenodo.23171456}{doi:10.5281/zenodo.23171456}) and deleted the same day; that DOI retains a tombstone.
+The public timestamp of this pre-registration is the date of the present deposit.
+Unpublished internal drafts v1 and v2 are not part of this deposit and define no outcome.
+The scientific choices made after examining archival data are documented in Appendix~\ref{app:history};
+editorial changes and the detailed chronology are in \code{CHANGELOG.md}. Frozen code, predictions,
+calibrations and archival outputs are unchanged in v1.1.

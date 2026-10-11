@@ -1,0 +1,42 @@
+{
+ "script": "build/localisation_coverage.py",
+ "script_sha256": "bdb0501bdbc940115b9112c1cdabd35729ad3a728047f7b24b8c200e430c4800",
+ "reference": "loc_s32_final_pipeline.json",
+ "reference_sha256": "66ceb8e3548708e957bbb9c18c0258d9423c7d241af108d1e738f0f981e23d7f",
+ "check_run": "loc_s32_coverage_seed5005.json",
+ "check_run_sha256": "12dfab1ed9aff1f168807cabc65febcee134fac64ed84d0e64d71eb76ccb1293",
+ "seeds": {
+  "fit": 1001,
+  "calibration": 4004,
+  "check": 5005
+ },
+ "empirical_p_check_cloud_vs_registered_calibration": {
+  "n": 3000,
+  "below_0.05": 142,
+  "below_0.0027": 11,
+  "percent_below_0.05": 4.733333333333333,
+  "percent_below_0.0027": 0.36666666666666664
+ },
+ "empirical_p_registered_calibration_vs_check_cloud": {
+  "n": 3000,
+  "below_0.05": 162,
+  "below_0.0027": 7,
+  "percent_below_0.05": 5.4,
+  "percent_below_0.0027": 0.23333333333333336
+ },
+ "gaussian_tail_check_cloud": {
+  "n": 3000,
+  "below_0.05": 393,
+  "below_0.0027": 163,
+  "percent_below_0.05": 13.100000000000001,
+  "percent_below_0.0027": 5.433333333333333
+ },
+ "gaussian_tail_registered_calibration": {
+  "n": 3000,
+  "below_0.05": 388,
+  "below_0.0027": 179,
+  "percent_below_0.05": 12.933333333333334,
+  "percent_below_0.0027": 5.966666666666667
+ },
+ "note": "on-target trials only: every count below a threshold is a false 'tension' or 'off-target' for a signal that is on the target; trials share pixels and overlapping windows (see docstring)"
+}

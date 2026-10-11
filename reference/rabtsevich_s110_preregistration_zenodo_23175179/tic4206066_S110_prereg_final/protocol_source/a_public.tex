@@ -1,0 +1,226 @@
+\section{Rules checked through the public record} \label{app:public}
+
+The scripts check the software environment, the sector, the star, the file name, the registered arguments and the
+checksums that every result carries (Appendices~\ref{app:localisation} and \ref{app:procedure}). They do \emph{not}
+check the rules of this section. These rules are part of the pre-registration exactly like the coded ones. They are
+checked through the public record: every file named below is posted with its sha256 as in
+Appendix~\ref{app:procedure}, point 3, and because the data and the code are public, anyone can repeat each step.
+Nothing in this section claims that the code prevents a violation.
+
+\subsection{Invalid results} \label{app:p1}
+
+\begin{itemize}
+\item A result (a photometric, variant or localisation output file, a summary file, or a sentence) obtained in
+  violation of a pre-registered rule on the ephemeris and the predicted times (Sections~\ref{sec:ephem} and
+  \ref{sec:times}), the statistic (Section~\ref{sec:stat}), or of a rule of Appendices~\ref{app:data}, \ref{app:processing}, \ref{app:variants},
+  \ref{app:localisation}, \ref{app:procedure}, \ref{app:public} or \ref{app:commands}, is \emph{invalid}. An invalid result is not an
+  outcome of this test. It cannot be used to accept or to reject signal A or signal B, and it is not described with the
+  sentences of Appendix~\ref{app:wording}. It is still posted, labelled ``invalid'' with the rule it breaks
+  (Appendix~\ref{app:procedure}, point 5).
+\item That a script accepted a run, or that \code{s110\_summary.py} wrote a sentence, does not by itself make the result
+  valid.
+\item If a violation is found after posting, by me or by anyone, a new version of this record declares the affected
+  results invalid and names the rule. Where the rules still allow it, the step is repeated as registered (for example
+  the primary run on the product that Appendix~\ref{app:data} requires). An invalid run never counts as the first run of
+  Appendix~\ref{app:procedure}, point 3; the repeated run defines the outcome, and the delay and the earlier invalid run
+  are reported. Where the rules no longer allow a repeat, the outcome of each affected signal is O4 with the reason
+  ``pre-registered procedure not followed'', or, for the localisation, ``localisation not possible'' with that reason.
+  This is the case when the date 2027 February 28 or a reading limit of Appendix~\ref{app:p5} has passed, or when a rule
+  of order of Appendix~\ref{app:procedure}, points 1 and 3, was broken, which a repeat cannot repair.
+\item The time limits of Appendix~\ref{app:procedure}, points 1 and 3, are administrative: the primary run within 30 days
+  of the release of the primary product; results posted within 7 days; variants and localisation run within 14 days of
+  posting the primary result. No outcome, threshold, label or sentence depends on them, and none of the scripts reads
+  them (the only date any script compares is 2027 February 28, in \code{s110\_summary.py}). A run or a posting after
+  such a limit is reported with its delay; it is not invalid for that reason alone. Binding, as before, are every rule
+  of order (no Sector 110 product opened before the primary run, Appendix~\ref{app:procedure}, point 1; variants and
+  localisation only after the primary result is posted, point 3), the date 2027 February 28
+  (Appendices~\ref{app:data}, \ref{app:variants}, \ref{app:p2} and \ref{app:p5}), and the reading limits of
+  Appendix~\ref{app:p5}, which decide an outcome.
+\item Two different 30-day limits exist, and they are never interchangeable.
+  \begin{itemize}
+  \item The \emph{run limit} (Appendix~\ref{app:procedure}, point 1): the primary run is made within 30 days of the
+    release of the primary product. It is administrative, as stated above: a later primary run is still the primary
+    run, with its delay reported.
+  \item The \emph{reading limits} (Appendix~\ref{app:p5}): if a file cannot be read by the registered script, an adapted
+    reader that passes the check of Appendix~\ref{app:procedure}, point 4, must be posted within 30 days of the release
+    of that file at MAST. The file is the light curve for the photometric run and the target pixel file for the
+    localisation. The release date is the one listed by the product search record of Appendix~\ref{app:p2}, or, where
+    MAST lists none, the date of the first product search that lists the file. The limit ends at 24:00 UTC of the 30th
+    day. The reading limits are binding: when one has passed without such a posting, the outcome of the corresponding
+    row of Table~\ref{tab:failures} applies.
+  \end{itemize}
+  Meeting the run limit never meets a reading limit, and the administrative status of the run limit never applies to a
+  reading limit. Each of the two reading limits counts only from the release of its own file.
+\end{itemize}
+
+\subsection{Choice of the product (fallbacks)} \label{app:p2}
+
+\begin{itemize}
+\item Before the primary run a product search record is saved. It contains the exact MAST query (the astroquery call
+  with all its arguments, or the MAST Portal search with its URL), the UTC date and time of the search, and the
+  complete, unfiltered list of Sector 110 products of TIC 4206066 that the search returns (file names, product types,
+  and the release date or data release number where MAST gives one). It names the light curve and the target pixel
+  file selected, with their sha256 checksums, and, for a renamed file (Appendix~\ref{app:procedure}, point 2), the
+  original name. Listing, downloading and computing checksums of these files is not an opening of the product in the
+  sense of Appendix~\ref{app:procedure}, point 1.
+\item The primary run is valid only on the first released SPOC 2-min light curve listed by this record. A fallback run
+  is valid only if the record was made on or after 2027 February 28 and lists no SPOC 2-min light curve (fallback 1,
+  QLP), or lists neither a SPOC 2-min nor a QLP light curve (fallback 2, TESS-SPOC). A fallback run made before
+  2027 February 28, without this record, or while the record lists a product of higher priority is invalid, whatever
+  its outcome.
+\item The code does not check any of this: \code{s110\_final.py} accepts a QLP or TESS-SPOC file with a registered file
+  name as a registered run on any date, and \code{s110\_summary.py} writes sentences for it.
+\item Variant (d) uses a record of the same kind for its QLP file (Appendix~\ref{app:variants}). The record for the
+  primary product is posted with the primary result. The record for (d) is posted with the result of (d), or, if (d) is
+  not run, with the summary that declares it not available.
+\end{itemize}
+
+\subsection{Time system of every input file} \label{app:p3}
+
+\begin{itemize}
+\item Every analysed file must declare in its first extension (HDU 1) the time system of all archival inputs of this
+  test, which was checked on the archival SPOC 2-min, TESS-SPOC and QLP files of Sectors 6, 32 and 98 on 2026 October 5:
+  \code{TIMESYS} $=$ TDB, \code{TIMEREF} $=$ SOLARSYSTEM, \code{BJDREFI} $=$ 2457000, \code{BJDREFF} $=$ 0 or absent (QLP
+  files do not carry it), \code{TIMEUNIT} $=$ d, and \code{TIMEDEL} equal, within 1\,\%, to 2\,min for a SPOC 2-min light
+  curve or target pixel file and to 200\,s for a QLP or TESS-SPOC 200-s light curve.
+\item As the first step of every run, before the registered command, these keys are printed without reading any data
+  column, with the command given in Appendix~\ref{app:commands}. The printed line is kept in the attempt record
+  (Appendix~\ref{app:p4}). Reading these keys is part of the run, not an opening of the product in the sense of
+  Appendix~\ref{app:procedure}, point 1.
+\item If any key differs, the file is not analysed, no conversion is made, and there is no switch to another product.
+  For the primary file the outcome is O4 for both signals, with the reason ``time system of the product not as
+  registered''. For a variant file the variant is not available, with the printed line as its record. For the pixel
+  file the localisation is not possible, with the reason ``time system of the pixel file not as registered''.
+\item A run on a file whose keys were not printed and kept, or differ, is invalid. \code{s110\_final.py} and
+  \code{s110\_localise.py} do not read these keys.
+\end{itemize}
+
+\subsection{Attempt records and ``not available''} \label{app:p4}
+
+\begin{itemize}
+\item Every attempt of every registered command (primary or fallback, each variant, each localisation, the summary)
+  has a plain-text attempt record, written while the run happens and not edited afterwards. It contains the exact
+  command line; the name and sha256 of every input file; the sha256 of the script run; for a run on a FITS file, the
+  printed line of Appendix~\ref{app:p3}; the UTC start and end time; the exit status; and the complete standard output and
+  standard error. The record is written by the macOS \code{script} utility in UTC, for example
+  \code{TZ=UTC script -a RECORD <command>}, which saves the command, its start and end time, all its output and its exit
+  status. The checksum lines of the inputs and of the script, and the line of Appendix~\ref{app:p3}, are written into
+  the same record in the same way just before the registered command. There is one record per attempt, also for
+  successful attempts and for refusals. All records are posted with the output files they belong to
+  (Appendix~\ref{app:procedure}, point 3), so the number and the order of the attempts are public.
+\item The variants are attempted in one continuous session, in the order (a), (b), (c), (e), (f), and then (d) if a QLP
+  Sector 110 release is public when the session starts. Each is attempted once and, after a failure, repeated once
+  (Appendix~\ref{app:procedure}, point 4). The order is binding. A session that runs past midnight UTC continues in the
+  same order; its start and end are in the records, and nothing else follows from the date. If no QLP Sector 110
+  release is public when the session starts, (d) is attempted later, in the same way and with its own records, on the
+  QLP release that is public on 2027 February 28 (Appendix~\ref{app:variants}), on or after that date. If MAST lists no
+  QLP Sector 110 release on 2027 February 28, (d) is final as ``not-public-on-deadline''.
+\item A variant is ``not available'' only if its two records show the registered command on the registered input (for
+  (a) to (c), (e) and (f), the primary file, with the same sha256), each ending with a non-zero exit status after an
+  error while reading or computing. For a reading failure, which Appendix~\ref{app:procedure}, point 4, does not repeat,
+  one such record is enough. A variant is also not available if its file fails the check of Appendix~\ref{app:p3}. The
+  file given to \code{--not-available} is the record of the last attempt (or the printed line of
+  Appendix~\ref{app:p3}).
+\item A variant whose registered run wrote its output file can never be declared not available; that file is its
+  result. A refusal is not ``not available'' (Appendix~\ref{app:variants}).
+\item A summary that declares a variant not available with any other file (free text, a refusal, an edited or
+  shortened output, the record of another command) is invalid. \code{s110\_summary.py} accepts any non-empty file there
+  and does not check its content.
+\item Variant (d) is final as ``crashed'' with the two records of the attempt on a QLP release that was public at the
+  time. It is final as ``not-public-on-deadline'' with the product search record of Appendix~\ref{app:p2}, made on or
+  after 2027 February 28, that lists no QLP Sector 110 light curve. A file for (d) that fails the check of
+  Appendix~\ref{app:p3} is declared final with \code{--d-final-reason crashed} and the printed line of
+  Appendix~\ref{app:p3} as the file.
+\item When a variant among (a) to (e) is not available, the robustness qualifier is computed without it. The line of
+  Appendix~\ref{app:p7} shows it as ``not available'', and the qualifier is never described as covering it.
+\end{itemize}
+
+\subsection{Registered failures that leave no output file} \label{app:p5}
+
+Some registered outcomes are reached without an output file, so \code{s110\_summary.py} cannot write their sentences
+(it needs the primary result and, for a SPOC primary, the localisation result of each signal with O1 or O2). For these
+cases only, the sentence is written from the posted files exactly by the tables of Appendix~\ref{app:wording}; only the
+reason comes from Table~\ref{tab:failures}.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.34\textwidth}>{\raggedright\arraybackslash}p{0.16\textwidth}>{\raggedright\arraybackslash}p{0.14\textwidth}>{\raggedright\arraybackslash}p{0.26\textwidth}}
+\caption{Registered failures that leave no output file.\label{tab:failures}}\\
+\toprule
+Case & Posted record & Outcome & Fixed reason R \\
+\midrule
+\endfirsthead
+\toprule
+Case & Posted record & Outcome & Fixed reason R \\
+\midrule
+\endhead
+the primary photometric run ends twice without writing its output (not a refusal, not a reading failure;
+  Appendix~\ref{app:procedure}, point 4) & the two attempt records & O4 for A and B & ``the registered photometric run
+  failed twice without writing a result'' \\
+the primary file cannot be read, and no adapted reader (Appendix~\ref{app:p6}) that passes the check of
+  Appendix~\ref{app:procedure}, point 4, is posted within 30 days of the release of the primary product & the attempt
+  record with the error output & O4 for A and B & ``the registered product could not be read'' \\
+the primary file fails the check of Appendix~\ref{app:p3} & the printed line & O4 for A and B & ``time system of the
+  product not as registered'' \\
+localisation is needed, and a product search of 2027 February 28 or later lists no SPOC 2-min target pixel file of
+  Sector 110 & that search record & localisation not possible & ``no SPOC 2-min target pixel file released by
+  2027-02-28'' \\
+the localisation run ends twice without writing its output & the two attempt records & localisation not possible &
+  ``the registered localisation run failed twice without writing a result'' \\
+the pixel file cannot be read, and no adapted reader is posted within 30 days of its release & the attempt record
+  with the error output & localisation not possible & ``the target pixel file could not be read'' \\
+the pixel file fails the check of Appendix~\ref{app:p3} & the printed line & localisation not possible & ``time system
+  of the pixel file not as registered'' \\
+\bottomrule
+\end{longtable}
+
+\begin{itemize}
+\item Photometric failure: for each signal X, ``Sector 110 cannot decide on signal X (reason: R).''
+\item Localisation failure: the photometric part and the robustness part are written exactly as
+  Appendix~\ref{app:wording} defines them, from the posted primary and variant results and
+  \code{calib/false\_alarm\_levels.json}. The localisation part is ``; its position could not be measured (R).'' for A
+  and ``; B's localisation was not possible (R).'' for B, written like the localisation parts of
+  Appendix~\ref{app:wording}, without the word ``reason''. The sentence of the other signal is written in the same way
+  from its own files.
+\item These sentences are not produced or checked by the code; anyone can rebuild them from the tables and the posted
+  files.
+\item A pixel file that is missing before 2027 February 28 is not a final failure: the sentences wait until the file is
+  released or the date passes. The primary result is posted in any case (Appendix~\ref{app:procedure}, point 3).
+\item A failure never replaces a result: if any registered attempt of a step wrote its output file, that file defines
+  the result (Appendix~\ref{app:procedure}, point 4), and a failure sentence for that step is invalid.
+\end{itemize}
+
+\subsection{A reader adapted under the failure rule} \label{app:p6}
+
+\begin{itemize}
+\item \code{s110\_summary.py} compares the checksums carried by each result with the scripts in the folder where it
+  runs, under their registered names \code{s110\_final.py} and \code{s110\_localise.py}. An adapted script therefore
+  keeps its registered file name and replaces the original in the copy of this deposit that is used for the Sector 110
+  runs.
+\item The adapted photometric script is used unchanged for the primary and for every variant of that product. This is
+  not an edit of a variant: variants are never edited individually.
+\item The helper modules in \code{deps/} are never adapted. A pixel file that \code{deps/pixloc\_lib.py} cannot read is
+  the case ``the target pixel file could not be read'' of Table~\ref{tab:failures}.
+\item The sha256 of the adapted script, its diff against the deposited script, and the check of
+  Appendix~\ref{app:procedure}, point 4, are posted before the Sector 110 run. A result whose \code{script\_sha256} is
+  neither the checksum in \code{SHA256SUMS} nor a checksum posted in this way is invalid.
+\item The summary compares only with the file on its own disk, so it accepts any script placed there; the check that
+  counts is the public comparison of Appendix~\ref{app:procedure}, point 7.
+\end{itemize}
+
+\subsection{What ``robust'' means, and the line of variant outcomes} \label{app:p7}
+
+\begin{itemize}
+\item In the sentences, ``robust'' means exactly this: among the variants (a) to (e) that were run and reached
+  $\Sens \geq 0.95$, none returned the opposite outcome (O3 against a primary O1; O1 or O2 against a primary O3). It
+  does \emph{not} mean that all variants agree. A qualifying variant that returns O2 (a dip at the wrong depth or time)
+  or O4 against a primary O1, or O4 against a primary O3, leaves ``robust'' in place. Variants below 0.95, variant (f),
+  and variants that are not available or pending are not part of it.
+\item Every posted summary is followed, for each signal, by one fixed line written by hand from the posted variant
+  results and the summary file (the script does not write it). An example: ``Variant outcomes for signal A: a O1 (0.97);
+  b O2, timing off (0.99); c O1 (0.96); d pending; e not available; f O1 (0.95; comparison only).'' The line lists every
+  applicable variant in the order a to f. For each it gives the label O1, O2, O3 or O4 taken from the start of the
+  outcome string of the script (for O2 followed by the failed conditions written by the script, for O4 by its reason)
+  and its sensitivity to two decimals where its output file has one, else ``no sensitivity computed''; or ``not
+  available''; or ``pending''. Variant (f) is listed in the same way, marked ``comparison only''. Wherever a sentence
+  containing ``robust'' is quoted, this line is quoted with it.
+\item ``Robust'' is never rewritten as ``confirmed by all processings'' or in any wider sense.
+\end{itemize}

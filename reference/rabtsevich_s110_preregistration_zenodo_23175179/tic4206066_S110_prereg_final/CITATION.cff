@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use this pre-registration, cite it by the DOI of its Zenodo record."
+title: "A Pre-registered TESS Sector 110 Test of Two Transit-like Signals in TIC 4206066"
+doi: 10.5281/zenodo.23175179
+type: dataset
+version: "1.1"
+authors:
+  - family-names: Rabtsevich
+    given-names: Pavel
+    affiliation: "Independent Researcher, Tarragona, Spain"
+    orcid: "https://orcid.org/0009-0005-0654-6658"
+license:
+  - CC-BY-4.0
+  - MIT
+keywords:
+  - TESS
+  - pre-registration
+  - transit photometry
+  - transit-like signals
+  - TIC 4206066
+  - Sector 110
+references:
+  - type: article
+    title: "Two Transit-like Signals in TESS Photometry of the Nearby K Dwarf TIC 4206066"
+    authors:
+      - family-names: Rabtsevich
+        given-names: Pavel
+    doi: 10.5281/zenodo.22967456
+    year: 2026
+  - type: data
+    title: "Supporting data and code for \"Two Transit-like Signals in TESS Photometry of the Nearby K Dwarf TIC 4206066\""
+    authors:
+      - family-names: Rabtsevich
+        given-names: Pavel
+    doi: 10.5281/zenodo.22967099
+    year: 2026

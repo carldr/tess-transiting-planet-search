@@ -1,0 +1,41 @@
+{
+ "script": "s110_summary.py",
+ "script_sha256": "d234803a1b9b6da6beab994963685bcd4519aa9fadeaa4ec412deb48e271c339",
+ "levels_sha256": "71a7ab36443f06f91bc88ff56631e7fcaab528ecf53b8d182c04ab53b464f8a7",
+ "inputs_sha256": {
+  "s98_real.json": "b1786b333fdecb1eb27977781ef45765f6c5a45491eea0332ab4f49da10fe0db",
+  "na_not_run.txt": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57"
+ },
+ "dry_run": true,
+ "variants": [],
+ "not_available": {
+  "a": {
+   "error_file": "na_not_run.txt",
+   "sha256": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57",
+   "text": "dry run: variant not run (code check of s110_summary.py only; in Sector 110 this file is the saved error output of the attempted run)\n"
+  },
+  "b": {
+   "error_file": "na_not_run.txt",
+   "sha256": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57",
+   "text": "dry run: variant not run (code check of s110_summary.py only; in Sector 110 this file is the saved error output of the attempted run)\n"
+  },
+  "e": {
+   "error_file": "na_not_run.txt",
+   "sha256": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57",
+   "text": "dry run: variant not run (code check of s110_summary.py only; in Sector 110 this file is the saved error output of the attempted run)\n"
+  },
+  "f": {
+   "error_file": "na_not_run.txt",
+   "sha256": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57",
+   "text": "dry run: variant not run (code check of s110_summary.py only; in Sector 110 this file is the saved error output of the attempted run)\n"
+  }
+ },
+ "d_status": "final",
+ "d_final_reason": null,
+ "summary_date_utc": "2026-10-05",
+ "sentences": {
+  "A": "Signal A was recovered in the archival dry run (Sector 98) at the pre-registered times and depth (8 counted transits; measured false-detection level for this product about 0.00 % overall (0 of 614 trials; binomial 95 % upper bound 0.49 %, approximate because the trials share data) and 0.00 % for exactly 8 counted transits (0 of 35; binomial bound 8.20 %)); robustness not testable; its position could not be measured (fallback product: localisation not possible).",
+  "B": "Signal B was recovered in the archival dry run (Sector 98) at the pre-registered times and depth (2 counted transits; measured false-detection level for this product about 0.64 % overall (5 of 777 trials; binomial 95 % upper bound 1.35 %, approximate because the trials share data) and 0.62 % for exactly 2 counted transits (2 of 325; binomial bound 1.92 %)); robustness not testable; B's localisation was not possible (fallback product: localisation not possible)."
+ },
+ "fixed_note": "No combined statement about A and B or about the system is part of this test; any such statement is exploratory and cannot be cited for or against either outcome."
+}

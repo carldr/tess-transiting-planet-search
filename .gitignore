@@ -1,0 +1,12 @@
+# The Python environments. requirements.txt and requirements_triceratops.txt list their packages.
+.venv/
+.venv_triceratops/
+
+# Downloads. The README gives the commands that download them again.
+data/
+
+# TRICERATOPS writes its TRILEGAL background star list to the working directory.
+*_gaia_background.csv
+
+__pycache__/
+.DS_Store

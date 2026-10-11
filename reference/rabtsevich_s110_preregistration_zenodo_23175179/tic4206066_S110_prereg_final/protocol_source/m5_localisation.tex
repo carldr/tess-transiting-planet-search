@@ -1,0 +1,26 @@
+\section{Pixel localisation of signal A} \label{sec:localisation}
+
+A dip in a TESS light curve can come from a neighbouring star whose light falls into the same pixels, which are
+$21''$ wide. The localisation of a signal is run only if its photometric outcome is O1 or O2. Its position on the sky
+is then measured from the Sector 110 target pixel file: each pixel is decorrelated against the spacecraft pointing, a stacked difference image (out of
+transit minus in transit) is formed from the counted transits, and the TESS pixel response function (PRF) is fitted to
+it \citep{Bell2022}. The offset is measured from the Gaia DR3 position of TIC 4206066 moved to the Sector 110 epoch.
+
+The uncertainty comes from fake transits injected into the real pixels: 300 at the position of the target and 300 at
+$5''$ east of it (close to the archival offset of Section~\ref{sec:signals}; this second point was chosen after looking at
+the archival data and does not enter the label), and a separate set of 3000 on-target injections for calibration. The measured offset is converted
+into a distance $\delta$ in units of the covariance of the on-target cloud, and into an empirical $p$-value,
+$p = (1 + m)/(N_{\rm cal} + 1)$, where $N_{\rm cal}$ is the number of successful calibration trials
+(2700 to 3000; fewer gives ``not possible'') and $m$ counts those at least as far from the target
+\citep{DavisonHinkley1997,North2002,Bates2023}. This $p$ does not assume a Gaussian cloud; it assumes that a real
+on-target signal behaves like the injected ones. The label of signal A from Sector 110 alone is
+\textbf{L1 compatible} if $p \geq 0.05$, \textbf{L2 tension} if $0.0027 \leq p < 0.05$, and \textbf{L3 off-target} if
+$p < 0.0027$. Signal B gets the same measurement without a label, because it has at most three events.
+
+When the localisation is skipped because the photometric outcome is O3 or O4, and in the other cases listed in
+Appendices~\ref{app:data}, \ref{app:localisation} and \ref{app:public} (for example a fallback product, failed checks
+of the pixel data or of the injections, or a missing or unreadable pixel file), it is reported with the fixed label
+``not possible''. A combined position
+from Sectors 32, 98 and 110 is also reported; it is descriptive and never overrides the Sector 110 label. With TESS
+pixels the position cannot be fixed better than a few arcseconds, so even L1 does not exclude a bound companion or a background star within a few
+arcseconds of TIC 4206066 (Section~\ref{sec:limits}).

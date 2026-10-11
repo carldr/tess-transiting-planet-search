@@ -1,0 +1,34 @@
+\section{Files of the deposit} \label{app:files}
+
+\begin{itemize}
+\item \code{PREREG\_S110\_FINAL.pdf} (this document) and its LaTeX source in \code{protocol\_source/} (main
+  file \code{PREREG\_S110\_FINAL.tex}): the authoritative text of the pre-registration (version 1.1). It replaces the
+  earlier Markdown text \code{PREREG\_S110\_FINAL.md} of 2026 October 5, which is not part of this deposit; the
+  changes are listed in \code{CHANGELOG.md}.
+\item \code{PREREG\_S110\_SHORT.pdf}: a separate reader-oriented overview; this full protocol governs (source \code{protocol\_source/PREREG\_S110\_SHORT.tex}).
+\item \code{CHANGELOG.md}, \code{README.md} (overview, reproduction recipe, acknowledgements), \code{FILE\_GUIDE.md} (the
+  purpose of every file), \code{LICENSE}, \code{CITATION.cff}, \code{requirements.txt} (the binding pin),
+  \code{requirements\_lock.txt} (the full environment with checksums), \code{SHA256SUMS}.
+\item \code{calib/transit\_times\_A.csv}, \code{calib/ephemeris\_inputs.json} and \code{calib/ephemeris\_sources/}: the
+  inputs of \code{ephemeris\_final.json} and their sources (added 2026 October 3). Every number in them is copied
+  unchanged from my archival analyses. On 2026 October 5 only the free-text field \code{B.ephemeris\_note} of
+  \code{calib/ephemeris\_inputs.json} was reworded; no number or other field changed.
+\item \code{build/fetch\_archival\_inputs.sh}, \code{build/reproduce.sh}, \code{build/compare\_outputs.py}: they download
+  the public archival inputs, rebuild every output in a copy of the deposit and compare it with this deposit (added
+  2026 October 3; they do not change any analysis).
+\item \code{s110\_final.py}, \code{s110\_localise.py}, \code{s110\_summary.py}, \code{ephemeris\_final.json};
+  \code{deps/lcio.py} and \code{deps/pixloc\_lib.py} (frozen copies).
+\item \code{calib/expected\_depths.json}, \code{calib/localisation\_archival.json};
+  \code{calib/localisation\_coverage.json} and \code{build/localisation\_coverage.py} (coverage of the empirical
+  localisation $p$, Appendix~\ref{app:validation}); \code{calib/false\_alarm\_*.json} (trials),
+  \code{calib/false\_alarm\_levels.json} (levels), \code{calib/false\_alarm\_summary.txt},
+  \code{build/false\_alarm\_check.py} and \code{build/false\_alarm\_levels.py} (measured false-alarm levels,
+  Appendix~\ref{app:fa}).
+\item \code{dryrun/} (outputs on archival data); \code{build/make\_ephemeris.py} (how the ephemeris file was built) and
+  \code{build/run\_all.sh} (rebuilds \code{calib/expected\_depths.json} and every dry run).
+\item The internal drafts v1 (2026 September 27) and v2 (2026 September 30) are not part of this deposit; they are kept
+  unchanged by me (Section~\ref{sec:protocol}).
+\item \code{PRF\_SHA256SUMS}: the sha256 checksums of the TESS PRF files used (MAST
+  \code{prf\_fitsfiles/start\_s0004/cam1\_ccd2/}). They are public MAST files and are not copied here; the localisation
+  output records their checksums on every run.
+\end{itemize}

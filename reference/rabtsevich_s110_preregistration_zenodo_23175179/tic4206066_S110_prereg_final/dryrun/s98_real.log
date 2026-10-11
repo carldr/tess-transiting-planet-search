@@ -1,0 +1,2 @@
+A n=8 not_tested=8 pool=392 phases d>=obs 0/58 d>det 0 O1_RECOVERED d=450 det>150 band=[223, 659] sens=1.00 det spread [144, 156] timing=+1.0 min, tol 11.7 (meas 1.7, pred 3.5)
+B n=2 not_tested=3 pool=393 phases d>=obs 0/213 d>det 0 O1_RECOVERED d=995 det>306 band=[60, 1421] sens=0.95 det spread [292, 321] timing=+2.0 min, tol 13.6 (meas 1.9, pred 4.1)

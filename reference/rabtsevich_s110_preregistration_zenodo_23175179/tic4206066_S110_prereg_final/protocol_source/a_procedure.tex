@@ -1,0 +1,43 @@
+\section{Procedure and commitments} \label{app:procedure}
+
+\begin{enumerate}
+\item \textbf{Order.} No Sector 110 product of any kind (light curves, pixels, full-frame images, SPOC data-validation
+  reports, threshold-crossing-event or TESS Object of Interest lists for this star) is opened before the primary run.
+  The primary run is made within 30 days of the release of the primary product (Appendix~\ref{app:data}). A later run is
+  still the primary run, and its delay is reported.
+\item \textbf{Refusals.} Every registered run (photometry, variants, localisation) refuses to start, before reading any
+  data, in three cases: the installed package versions, the machine type or the operating system differ from
+  \code{requirements.txt}; the input is not Sector 110 of TIC 4206066; or the file name is not the registered name of
+  the product. If MAST distributes a product under another name, the file is renamed to the registered pattern of
+  \code{s110\_final.py}, and the original name and its sha256 are recorded. A refused run writes nothing and is not a
+  run. The exact commands, run from the root of the deposit, are listed in
+  Appendix~\ref{app:commands}.
+\item \textbf{First run and posting.} The first primary run that writes its output file is the primary run. That file
+  (which contains the input, code and dependency checksums and the package versions) and its sha256 are posted as a new
+  version of this Zenodo record within 7 days of the run. Only then are the variants and the localisation run, within
+  14 days of posting the primary result. Their output files and the summary file are posted in the same way within 7
+  days of being made.
+\item \textbf{Failures and repeats.} If a script writes its output file, that file defines its outcomes, even if a later
+  step fails. A run that ends before writing its output for any reason other than a refusal or a failure to read the
+  file (for example an interruption) is repeated once, unchanged. If it fails again, the outcome is O4 for both signals
+  (photometry) or ``localisation not possible''. For a reading failure the unedited error message of the script is saved
+  and its checksum recorded. A code edit is allowed only to read the file (column or extension names, data type), and
+  the edited script keeps its registered file name (Appendix~\ref{app:p6}). It may not change any constant, window,
+  mask, seed, threshold or rule. Before use, the edited script must reproduce exactly the \code{results} block of every
+  photometric \code{dryrun/*.json}, and the \code{stats} block and every \code{injections.sets.*.trials} list of every
+  localisation \code{dryrun/loc\_*.json} (run times differ and are not compared). The diff and this check are posted, as
+  in point 3, before the Sector 110 run. Variants are never edited. Any other failure of the localisation gives
+  ``localisation not possible''.
+\item \textbf{Full reporting.} All outcomes are reported, whatever they are, for A and B, with all variants, the
+  transits that were not tested and the reasons, and the localisation.
+\item \textbf{No changes.} Nothing in this deposit is changed after publication. Any later idea is a new, separately
+  labelled analysis.
+\item \textbf{Public checks.} Readers can check every posted output file: its \code{script\_sha256},
+  \code{deps\_sha256}, \code{ephemeris\_sha256} and \code{expected\_depths\_sha256} must equal the checksums in
+  \code{SHA256SUMS} of this deposit (or, for a script adapted under point 4 to read the file, the checksum of the
+  adapted script whose diff and check were posted; Appendix~\ref{app:p6}). The scripts compare these checksums only
+  with the files on the computer that runs them, and \code{s110\_summary.py} takes the date of its 2027 February 28
+  rule from that computer's clock. The public comparison is therefore the check that counts. A fallback primary needs
+  the MAST search of Appendix~\ref{app:data}, and a variant declared not available needs its error output
+  (Appendix~\ref{app:variants}). Appendix~\ref{app:public} lists every rule that only this public comparison checks.
+\end{enumerate}

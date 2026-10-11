@@ -1,0 +1,18 @@
+# Packages of the main analysis venv (.venv, Python 3.12.13).
+# setuptools supplies the distutils module that batman-package imports.
+lightkurve==2.6.0
+astroquery
+numpy==2.5.3
+scipy
+astropy==8.0.1
+wotan==1.10
+transitleastsquares==2.0
+batman-package==2.5.1
+emcee==3.1.6
+matplotlib
+setuptools
+leo-vetter==1.2.0
+# The LEO-Vetter pixel tests need transit-diffImage, which is not on PyPI, and tess-point and spiceypy.
+transit-diffImage @ git+https://github.com/stevepur/transit-diffImage@2b13199132ce67f437b8cd9bb4eb128bd78e0d81
+tess-point==0.9.5.post1
+spiceypy==8.2.0

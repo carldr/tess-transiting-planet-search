@@ -1,0 +1,80 @@
+{
+ "script": "s110_localise.py (final pre-registration, 2026-10-02, revised after audit 5)",
+ "args": {
+  "tpf": "../archival_inputs/mast/tess2020324010417-s0032-0000000004206066-0200-s_tp.fits",
+  "photometry": "dryrun/s32_null.json",
+  "signal": "A",
+  "prf_dir": "../tess_prf/start_s0004",
+  "ephem": "final",
+  "events": "photometry",
+  "n_trials": 300,
+  "n_cal": 3000,
+  "no_clear": false,
+  "dry_run": true,
+  "primary_sha256": null,
+  "out": "dryrun/loc_s32_null_gate.json"
+ },
+ "dry_run": true,
+ "provenance": {
+  "run_utc": "2026-10-05T19:41:21+00:00",
+  "script": "s110_localise.py",
+  "script_sha256": "fbd3a66021d66e46927af4fea159dc086443f3764d8116a90ae021059d475bfa",
+  "deps_sha256": {
+   "lcio.py": "6514f6a0d60e20bfec14ba658d9aa74c5507f27613d36696f883d8ec1a994823",
+   "pixloc_lib.py": "145c69dd21522c4456ab38484f89265a537eb6b83c471e0dca41cac31054601d"
+  },
+  "ephemeris_sha256": "b6f09b57395085608ddc9ed3d334521575de167b493f9b2cf7b1201567c273ef",
+  "versions": {
+   "python": "3.12.13",
+   "machine": "arm64",
+   "system": "Darwin",
+   "numpy": "2.5.3",
+   "astropy": "8.0.1",
+   "scipy": "1.18.1",
+   "wotan": "1.10",
+   "numba": "0.67.0",
+   "llvmlite": "0.49.0",
+   "TESS_PRF": "0.1.3"
+  },
+  "expected_depths_sha256": "ff83f871e7ac0ce5812d9de5543125c3e481cb6b60ffc3fa8047f383a278964c",
+  "inputs": {
+   "tess2020324010417-s0032-0000000004206066-0200-s_tp.fits": "f1f76576cc088d134cd94b8b004cbd7af27be161a9a80578bbe96b7335f1b2d1",
+   "s32_null.json": "e90b6d011eeeefc95b1a89b8167fe18477a8aee4e5b1a158c95bc982e4c52528"
+  },
+  "prf_files_sha256": {
+   "tess2019107181901-prf-1-2-row0001-col0045.fits": "6bf1816c3ff88f789fb9d498bc9892ce107b1a4d9e41ccb3bf90e29bf6c6874b",
+   "tess2019107181901-prf-1-2-row0001-col0557.fits": "a077e72645309a9e8fe805c05fdf5a25c4da5d09adb083b665cda22393f01da1",
+   "tess2019107181901-prf-1-2-row0001-col1069.fits": "afc3f4d27fac454f2fcd97af3edfaaeaf3bd5965b6797840e14ec657f2ad5743",
+   "tess2019107181901-prf-1-2-row0001-col1580.fits": "b01e213c944177237fd75501b7fb82bdc4b38aafab3fd57ae887d84d9d0696c4",
+   "tess2019107181901-prf-1-2-row0001-col2092.fits": "7bbe4489b2f2cda7766db24ec758f4bcbfe0c0168b059386df8e85fabbfa12d4",
+   "tess2019107181901-prf-1-2-row0513-col0045.fits": "556418e6c0641349401c1d5315f5499fbb129de22922468476c6b9fe8367cf4d",
+   "tess2019107181901-prf-1-2-row0513-col0557.fits": "3528d87c50f56f1c8674d46bdabaad9eda2b004562c85a7b7b70eabf64214da3",
+   "tess2019107181901-prf-1-2-row0513-col1069.fits": "b5a89b1b6d1c9889dab5b17f004cde2f6eefab6e9cd5ec0d7011118101f70d6a",
+   "tess2019107181901-prf-1-2-row0513-col1580.fits": "0acc0ca3b16d20d35941705337016967a9abbfd26fcfe3bf27d955bb4b0c0371",
+   "tess2019107181901-prf-1-2-row0513-col2092.fits": "704d4a21faf499b0898c54cb2892fdb5036fa195b64225ed52cdef68dbe326ad",
+   "tess2019107181901-prf-1-2-row1025-col0045.fits": "67cbd1d0dd97a0298b6b540218de7d0ecd07a5e639a2dbeb0f91fa5c2e582afc",
+   "tess2019107181901-prf-1-2-row1025-col0557.fits": "ae3d0ba47f5d0b12fc556c0da8cef3ae1822deb812e590c9d36e7faafecbfa07",
+   "tess2019107181901-prf-1-2-row1025-col1069.fits": "68ff652dd6c67c603d31de3cccee090101c3d542dab34e7acc346681d043aa2c",
+   "tess2019107181901-prf-1-2-row1025-col1580.fits": "7d587404e6ac15703f27b73f9f346d5d34c63dc50f5919a009b54cf5fc4386a2",
+   "tess2019107181901-prf-1-2-row1025-col2092.fits": "c313d421677cd44d8178600f7c4f2b58d0841bd112152c32208799dc5a7c6829",
+   "tess2019107181901-prf-1-2-row1536-col0045.fits": "7f9cf3aa4773259213aff60d378fbe2c3b9a2d59fab110c846fbbcc24a0cd056",
+   "tess2019107181901-prf-1-2-row1536-col0557.fits": "0de8db3be5c6d0c321283bb32e603b247d39af7cd50e3af3a423b308febb246e",
+   "tess2019107181901-prf-1-2-row1536-col1069.fits": "047685d87b89571cddbdca4883048a23da28639cd46a75a20bc97c7d1e25f95e",
+   "tess2019107181901-prf-1-2-row1536-col1580.fits": "86829d56247f9a223bca4b863eb953e965716066f1bcbb57ccd75d78e821e3fd",
+   "tess2019107181901-prf-1-2-row1536-col2092.fits": "e25838755d8af423b4e96d68e13d4f63e194c0f29de531a524040b91ad4600d4",
+   "tess2019107181901-prf-1-2-row2048-col0045.fits": "900976ee1e2457e604f1e7e76f9e4c76abbb5df4a69fa69539043153a9b868cc",
+   "tess2019107181901-prf-1-2-row2048-col0557.fits": "d3a0aa47d8642b88d2b50df6b2548c7ae534c5d8a5ee3651849015691473ed9a",
+   "tess2019107181901-prf-1-2-row2048-col1069.fits": "8fd57cad34e360cca2b46991778f876abe7d05e0c6ec1b2a2587ba68f60b2f0b",
+   "tess2019107181901-prf-1-2-row2048-col1580.fits": "e6272ac3d3736b3e586e3a76715de52154bddb49bd8f58d4312a93bfd6119e40",
+   "tess2019107181901-prf-1-2-row2048-col2092.fits": "a65dfa5519c86165e1f93aca3555ee1ed3eb14bde6382f55f317a1622779be8b"
+  }
+ },
+ "file_sector": 32,
+ "file_tic": 4206066,
+ "camera_ccd": [
+  1,
+  2
+ ],
+ "photometric_outcome": "O4_INSUFFICIENT",
+ "result": "localisation not possible: signal A not detected (photometric outcome O4_INSUFFICIENT)"
+}

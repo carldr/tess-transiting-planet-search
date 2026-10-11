@@ -1,0 +1,107 @@
+{
+ "6": [
+  {
+   "search_number": 1,
+   "period_days": 3.1822161133926223,
+   "epoch_btjd": 1468.4254367210729,
+   "depth_ppm": 403.57813987912385,
+   "duration_hours": 1.9033683811625983,
+   "signal_detection_efficiency": 11.502917199635066,
+   "transit_count_with_data": 6,
+   "ratio_to_rabtsevich_period_signal_a": 0.99982126137726,
+   "ratio_to_rabtsevich_period_signal_b": 0.2858430281667067
+  },
+  {
+   "search_number": 2,
+   "period_days": 4.518354525861033,
+   "epoch_btjd": 1469.2279553828482,
+   "depth_ppm": 368.4333684110808,
+   "duration_hours": 1.4213531659112253,
+   "signal_detection_efficiency": 5.687427998858712,
+   "transit_count_with_data": 5,
+   "ratio_to_rabtsevich_period_signal_a": 1.4196229169928327,
+   "ratio_to_rabtsevich_period_signal_b": 0.4058618566373627
+  },
+  {
+   "search_number": 3,
+   "period_days": 1.2239067109464994,
+   "epoch_btjd": 1469.5222589062503,
+   "depth_ppm": 171.6336834273191,
+   "duration_hours": 1.3731642759323344,
+   "signal_detection_efficiency": 6.096594757076144,
+   "transit_count_with_data": 16,
+   "ratio_to_rabtsevich_period_signal_a": 0.3845395497799881,
+   "ratio_to_rabtsevich_period_signal_b": 0.10993759945408761
+  }
+ ],
+ "32": [
+  {
+   "search_number": 1,
+   "period_days": 3.182981397561554,
+   "epoch_btjd": 2175.000361532848,
+   "depth_ppm": 395.92489096529346,
+   "duration_hours": 1.737044765980881,
+   "signal_detection_efficiency": 7.078648911749308,
+   "transit_count_with_data": 8,
+   "ratio_to_rabtsevich_period_signal_a": 1.000061706198048,
+   "ratio_to_rabtsevich_period_signal_b": 0.2859117699291957
+  },
+  {
+   "search_number": 2,
+   "period_days": 6.106581755945186,
+   "epoch_btjd": 2175.5734112783016,
+   "depth_ppm": 533.2963003860103,
+   "duration_hours": 1.545782882555927,
+   "signal_detection_efficiency": 6.1204124290597495,
+   "transit_count_with_data": 5,
+   "ratio_to_rabtsevich_period_signal_a": 1.9186284200614196,
+   "ratio_to_rabtsevich_period_signal_b": 0.5485246000486121
+  },
+  {
+   "search_number": 3,
+   "period_days": 12.111242473974794,
+   "epoch_btjd": 2175.081541446654,
+   "depth_ppm": 664.9226878384651,
+   "duration_hours": 1.7065397568970224,
+   "signal_detection_efficiency": 12.79972411352803,
+   "transit_count_with_data": 3,
+   "ratio_to_rabtsevich_period_signal_a": 3.8052342442153004,
+   "ratio_to_rabtsevich_period_signal_b": 1.0878941279482675
+  }
+ ],
+ "98": [
+  {
+   "search_number": 1,
+   "period_days": 11.135596847947612,
+   "epoch_btjd": 4000.8729587134712,
+   "depth_ppm": 740.8308282739196,
+   "duration_hours": 1.1119826328069617,
+   "signal_detection_efficiency": 13.39829712299907,
+   "transit_count_with_data": 3,
+   "ratio_to_rabtsevich_period_signal_a": 3.498695905613358,
+   "ratio_to_rabtsevich_period_signal_b": 1.0002566167850513
+  },
+  {
+   "search_number": 2,
+   "period_days": 3.1821725484432366,
+   "epoch_btjd": 3995.557676028618,
+   "depth_ppm": 376.78420791131816,
+   "duration_hours": 0.9600832233634804,
+   "signal_detection_efficiency": 14.511533528726407,
+   "transit_count_with_data": 10,
+   "ratio_to_rabtsevich_period_signal_a": 0.9998075736951244,
+   "ratio_to_rabtsevich_period_signal_b": 0.2858391149387515
+  },
+  {
+   "search_number": 3,
+   "period_days": 2.048345665189166,
+   "epoch_btjd": 3995.9229436219202,
+   "depth_ppm": 230.773514698579,
+   "duration_hours": 0.6929976402568105,
+   "signal_detection_efficiency": 6.273713618213239,
+   "transit_count_with_data": 16,
+   "ratio_to_rabtsevich_period_signal_a": 0.6435702270775958,
+   "ratio_to_rabtsevich_period_signal_b": 0.18399294919212753
+  }
+ ]
+}

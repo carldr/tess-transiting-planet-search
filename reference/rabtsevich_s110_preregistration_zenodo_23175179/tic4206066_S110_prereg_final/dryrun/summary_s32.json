@@ -1,0 +1,32 @@
+{
+ "script": "s110_summary.py",
+ "script_sha256": "d234803a1b9b6da6beab994963685bcd4519aa9fadeaa4ec412deb48e271c339",
+ "levels_sha256": "71a7ab36443f06f91bc88ff56631e7fcaab528ecf53b8d182c04ab53b464f8a7",
+ "inputs_sha256": {
+  "s32_real.json": "d6cef56da9516b3db72eb3097f70ec4db140c1af621f782a2c2c6def4fb94417",
+  "s32_w05.json": "f0710570a730dafba83383d7d5d9580c77bd090be6bf13d39d2c606df6936759",
+  "s32_w10.json": "bb3470daf61cf5961bd5ba01fcd4348070250280efe6e1b4d1edf5adefd0ed30",
+  "s32_desat1.json": "8f863a305dce50e2eeb3d7cc4a5637cb4694d1c985726bff26dbafe8931ec3f8",
+  "s32_sap.json": "dfcf67b2c08e4326ab9fa984c06ba4eaa4c542ee67ee5d52a02b53e7bd63c5c6",
+  "s32_v2rule.json": "c1e6773b087e85c2353897e01ab1b36f4548976c70af7a09399a3cddb58599a5",
+  "loc_s32_final_pipeline.json": "66ceb8e3548708e957bbb9c18c0258d9423c7d241af108d1e738f0f981e23d7f",
+  "loc_s32_B.json": "8950ec0917491e5203078c8a1cc0e43c50456fb6669c03e427230a2a7ecfb2c6"
+ },
+ "dry_run": true,
+ "variants": [
+  "a",
+  "b",
+  "c",
+  "e",
+  "f"
+ ],
+ "not_available": {},
+ "d_status": "pending",
+ "d_final_reason": null,
+ "summary_date_utc": "2026-10-05",
+ "sentences": {
+  "A": "Signal A was recovered in the archival dry run (Sector 32) at the pre-registered times and depth (6 counted transits; measured false-detection level for this product about 0.47 % overall (26 of 5514 trials; binomial 95 % upper bound 0.65 %, approximate because the trials share data) and 0.52 % for exactly 6 counted transits (5 of 963; binomial bound 1.09 %)); robust (provisional until 2027-02-28); its pixel position is compatible with TIC 4206066 (empirical p = 0.1563 from 3000 on-target injections, not below 0.05).",
+  "B": "The archival dry run (Sector 32) cannot decide on signal B (reason: no counted transit)."
+ },
+ "fixed_note": "No combined statement about A and B or about the system is part of this test; any such statement is exploratory and cannot be cited for or against either outcome."
+}

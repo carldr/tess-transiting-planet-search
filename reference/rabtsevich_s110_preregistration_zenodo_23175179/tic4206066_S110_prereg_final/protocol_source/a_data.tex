@@ -1,0 +1,30 @@
+\section{Data products, fallbacks and dates} \label{app:data}
+
+\runin{Primary product.} The test uses the first version of the SPOC 2-min light curve of TIC 4206066 for Sector
+110 that is released at MAST, column \code{PDCSAP\_FLUX}, with quality mask 17087 (the default bitmask
+\code{TessQualityFlags.DEFAULT\_BITMASK} of lightkurve). Later SPOC reprocessings are reported as additional analyses
+and never replace it.
+
+\runin{Fallback products.} A fallback is used only if no SPOC 2-min light curve is public on 2027 February 28. In
+that case, on that date and with the version then public:
+\begin{enumerate}
+\item fallback 1 is the QLP 200-s light curve (column \code{SYS\_RM\_FLUX}, quality mask 1610619071). A corrected QLP
+  release counts only if it is public on 2027 February 28;
+\item if there is no QLP light curve either, fallback 2 is the TESS-SPOC 200-s full-frame-image light curve
+  (\code{PDCSAP\_FLUX}, mask 17087).
+\end{enumerate}
+A SPOC 2-min product released after a fallback run is reported as an additional analysis, not as the primary.
+
+A fallback run counts only together with the saved result of a MAST search, made on or after 2027 February 28, that
+finds no SPOC 2-min light curve of TIC 4206066 for Sector 110. That file and its sha256 checksum are posted with the
+fallback result. \code{s110\_summary.py} cannot check this, because the command of fallback 1 is the same as the command
+of variant (d) (Appendix~\ref{app:variants}); readers check it. Appendix~\ref{app:p2} fixes the content of this search
+record and the consequence of a fallback chosen without it.
+
+\runin{No counted transit.} If the primary product exists but the analysis counts no transit (for example because
+\code{PDCSAP\_FLUX} is all NaN), the outcome is O4 for that signal. There is no switch to another product.
+
+\runin{Pixel data.} The localisation uses the first released SPOC 2-min target pixel file of Sector 110. If it does
+not exist by 2027 February 28, localisation is reported as not possible.
+
+\runin{Records.} The scripts record the file name and the sha256 checksum of every input.

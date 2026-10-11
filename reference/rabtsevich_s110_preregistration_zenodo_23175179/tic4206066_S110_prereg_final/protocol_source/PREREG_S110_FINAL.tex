@@ -1,0 +1,110 @@
+%% Pre-registration of the TESS Sector 110 test of TIC 4206066: main part (Sections 1 to 7) and the full protocol
+%% (Appendices A to N). Same class and conventions as the author's preprint (aastex702, default style).
+%% Rules, numbers and code are those of the frozen deposit tic4206066_S110_prereg_final (SHA256SUMS sha256 310cb93d...);
+%% RULE_MAP.md maps every rule of the earlier Markdown text to its place here.
+\documentclass{aastex702}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+
+\defcitealias{GaiaMission}{Gaia Collaboration et al. 2016}
+\defcitealias{GaiaDR3}{Gaia Collaboration et al. 2023}
+\defcitealias{DESY3}{DES Collaboration et al. 2022}
+\defcitealias{Astropy2013}{Astropy Collaboration et al. 2013}
+\defcitealias{Astropy2018}{Astropy Collaboration et al. 2018}
+\defcitealias{Astropy2022}{Astropy Collaboration et al. 2022}
+\defcitealias{Lightkurve2018}{Lightkurve Collaboration et al. 2018}
+\defcitealias{COSPrereg}{Center for Open Science 2026}
+\shorttitle{Pre-registered Sector 110 Follow-up of TIC 4206066}
+\shortauthors{Rabtsevich}
+\journalinfo{Pre-registration, written before the TESS Sector 110 observations}
+
+\newcommand{\ddet}{d_{\rm det}}
+\newcommand{\dlo}{d_{\rm lo}}
+\newcommand{\dhi}{d_{\rm hi}}
+\newcommand{\Tfourteen}{T_{14}}
+\newcommand{\code}[1]{\texttt{#1}}
+\let\origunderscore\_
+\renewcommand{\_}{\origunderscore\allowbreak}
+\newcommand{\slashbreak}{/\allowbreak}
+\newcommand{\Sens}{S}
+\newcommand{\runin}[1]{\par\smallskip\noindent\textbf{#1}\enspace}
+\setlist{leftmargin=*,itemsep=1pt,topsep=3pt}
+\setlist[itemize,2]{label=$\circ$}
+
+\begin{document}
+
+\title{A Pre-registered TESS Sector 110 Follow-up Protocol for Two Transit-like Signals in TIC 4206066}
+
+\author[gname=Pavel,sname=Rabtsevich]{Pavel Rabtsevich}
+\affiliation{Independent Researcher, Tarragona, Spain}
+\email{pavel.rabtsevich.research@gmail.com}
+
+\begin{abstract}
+Archival photometry from the Transiting Exoplanet Survey Satellite (TESS) of the nearby K dwarf TIC 4206066 shows two
+transit-like signals: signal A with a period of 3.18\,d and a tentative signal B with a period of 11.13\,d and less archival support.
+Both were selected after the data had been inspected, so their archival significance cannot be taken at face value.
+TESS observes the star again in Sector 110, from 2026 October 31 to November 26, at 2-minute cadence. These data did not
+exist when this protocol was written, so they give an independent test. The protocol fixes the predicted transit
+times, the expected depths, the processing of the light curve, a rule that gives each signal one of four outcomes
+(recovered, inconsistent, excluded, or insufficient data), a timing rule, and a pixel-level check that signal A comes
+from TIC 4206066. Frozen code computes the outcomes from valid inputs; this text defines which inputs and runs are
+valid. A recovery would not show that a signal is caused by a planet, and an undecided result would not show that it
+is not.
+\end{abstract}
+
+\keywords{TESS, TIC 4206066, exoplanet candidates, transit photometry, pre-registration}
+
+\input{m1_question}
+\input{m2_signals}
+\input{m3_predictions}
+\input{m4_test}
+\input{m5_localisation}
+\input{m6_limits}
+\input{m7_protocol}
+
+\begin{acknowledgments}
+This work uses data collected by the TESS mission, obtained from the MAST data archive at the Space Telescope Science
+Institute (STScI); funding for the TESS mission is provided by NASA's Science Mission Directorate. It uses the TESS-SPOC
+(\doi{10.17909/t9-wpz1-8s54}) and QLP (\doi{10.17909/t9-r086-e880}) high-level science products and the TESS PRF
+models from MAST. This work has made use of data from the European Space Agency (ESA) mission Gaia
+(\url{https://www.cosmos.esa.int/gaia}), processed by the Gaia Data Processing and Analysis Consortium (DPAC,
+\url{https://www.cosmos.esa.int/web/gaia/dpac/consortium}). Funding for the DPAC has been provided by national
+institutions, in particular the institutions participating in the Gaia Multilateral Agreement.
+
+AI assistance: Claude (Anthropic) assisted code and text drafting; Codex (OpenAI) assisted editing and
+verification. I designed the test and am responsible for the protocol. Internal package checks were separate
+AI review sessions, not human peer review. Frozen analysis code is unchanged in v1.1.
+\end{acknowledgments}
+
+\software{astropy \citepalias{Astropy2013,Astropy2018,Astropy2022}, lightkurve \citepalias{Lightkurve2018}, wotan
+\citep{Hippke2019}, TESS\_PRF \citep{Bell2022}}
+
+\appendix
+
+\noindent\textit{Terms used in the appendices.} The ``final re-derivation'' is my complete re-analysis of all archival
+data (2026 October 1); its ``items'' 03, 10 and 11 are its transit-time, pixel-localisation and injection analyses, and
+the inputs taken from it are in the folder \code{calib/}. ``Audits 1 to 6'' and the ``final independent check'' name the separate AI review sessions recorded in \code{CHANGELOG.md}. ``v1'' and ``v2'' are
+the unpublished internal drafts (Section~\ref{sec:protocol}). A ``dry run'' is a run of the frozen code on archival data,
+used only to check the code. These names are kept because the files of the deposit use them.
+
+\input{a_data}
+\input{a_processing}
+\input{a_decision}
+\input{a_variants}
+\input{a_localisation}
+\input{a_procedure}
+\input{a_public}
+\input{a_wording}
+\input{a_commands}
+\input{a_validation}
+\input{a_limits}
+\input{a_history}
+\input{a_files}
+\input{a_codemap}
+
+\bibliography{references}{}
+\bibliographystyle{aasjournalv7}
+
+\end{document}

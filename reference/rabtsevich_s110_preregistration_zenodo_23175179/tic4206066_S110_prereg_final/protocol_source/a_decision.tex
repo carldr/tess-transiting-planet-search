@@ -1,0 +1,107 @@
+\section{Noise model, thresholds and measured false-detection levels} \label{app:decision}
+
+\subsection{Noise model} \label{app:noise}
+
+The noise model measures how deep a dip the light curve produces by chance at times where no transit is predicted.
+From the cleaned light curve the predicted windows of both signals ($\pm 1.5\,\Tfourteen$) are cut. Fake phase offsets
+of the tested signal are then placed between 0.15\,$P$ and 0.85\,$P$, in steps of $\Tfourteen/2$. For each fake phase
+the light curve is detrended exactly as in Appendix~\ref{app:processing}, but with the fake ephemeris masked. The
+windows at the fake times that pass the counting rule, with the segments and edge zones of that fake detrending, form
+the noise pool. Every noise window therefore goes through the same detrending, masking, counting and measurement as a
+real window. If the pool has fewer than 100 windows, the outcome is O4.
+
+As a supplementary check, the whole set of counted windows at each fake phase gives a full-set statistic $d_\phi$, and
+the number of fake phases with $d_\phi \geq d$ is reported. This number is not part of the outcome: it is in-sample, its
+sets have their own number of windows, and, because the phases overlap, the count can only distinguish levels of about
+5\,\%.
+
+\subsection{Thresholds} \label{app:thresholds}
+
+For each signal, with $n$ counted transits and statistic $d$:
+\begin{itemize}
+\item the noise pool is bootstrapped 20\,000 times to give the distribution of the mean of $n$ windows;
+\item $\ddet$ is the 99.9th percentile of this distribution;
+\item $\dlo$ is the 0.1st percentile of (noise $+$ a depth drawn from $N(D, D_{\rm err})$);
+\item $\dhi$ is the 99.9th percentile of (noise $+$ a depth drawn from $N(D_{98}, D_{98,\rm err})$);
+\item the sensitivity $\Sens = P(\mathrm{detect} \mid \mathrm{real})$ is the fraction of (noise $+$ $N(D, D_{\rm err})$)
+  above $\ddet$.
+\end{itemize}
+All four quantities are computed for 20 bootstrap seeds, and their medians are used. The 99.9th percentile of 20\,000
+draws rests on about 20 draws, so $\ddet$ moves between seeds (for B by up to about 10\,\%). The seed spread is
+reported and plays no role in the outcome. A value of $d$ inside the spread is not described as ``marginal''.
+
+\subsection{Measured false-detection levels} \label{app:fa}
+
+The bootstrap of a finite pool of overlapping windows underestimates the tails of the noise, so the 99.9th percentile
+is not the false-alarm level of the test. The levels that actually apply were therefore measured with a separate set of fake
+ephemerides on the archival sectors: the true transits were removed, the fake periods were arbitrary, each fake phase
+was one trial, and the thresholds were computed from the pool without the overlapping phases. The levels were measured
+per product and per number of counted transits $n$ (Table~\ref{tab:fa}). The level that applies to Sector 110 is the
+one of its product (SPOC 2-min for the primary run) and of the $n$ actually counted.
+
+\begingroup\footnotesize
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.05\textwidth}>{\raggedright\arraybackslash}p{0.162\textwidth}>{\raggedright\arraybackslash}p{0.162\textwidth}>{\raggedright\arraybackslash}p{0.162\textwidth}>{\raggedright\arraybackslash}p{0.162\textwidth}>{\raggedright\arraybackslash}p{0.162\textwidth}}
+\caption{Measured false-detection levels on archival data, from \code{calib/false\_alarm\_levels.json}: exceedances
+$k$ out of $N$ trials. The first row pools all trials of a product and signal, with the 95\,\% interval from a bootstrap
+over the trial ephemerides; the other rows give exactly $n$ counted transits. ``Bound'': one-sided 95\,\% Clopper-Pearson
+upper bound for independent trials (see text). Empty: no trial with this $n$. The five columns contain all
+17\,835 trials. The TESS-SPOC 30-min trials (Sector 6) are not quoted by \code{s110\_summary.py}: the Sector 110
+TESS-SPOC product has 200-s cadence, and for it the SPOC 2-min levels are quoted.\label{tab:fa}}\\
+\toprule
+$n$ & SPOC 2-min (primary), A & SPOC 2-min (primary), B & QLP 200-s (fallback 1), A & QLP 200-s (fallback 1), B & TESS-SPOC 30-min (Sector 6), A \\
+\midrule
+\endfirsthead
+\toprule
+$n$ & SPOC 2-min (primary), A & SPOC 2-min (primary), B & QLP 200-s (fallback 1), A & QLP 200-s (fallback 1), B & TESS-SPOC 30-min (Sector 6), A \\
+\midrule
+\endhead
+all & 0.47\,\% (26/5514; interval 0.27 to 0.70; bound 0.65\,\%) & 0.49\,\% (51/10312; interval 0.35 to 0.64; bound 0.62\,\%) & 0/614 (bound 0.49\,\%) & 0.64\,\% (5/777; interval 0.29 to 0.94; bound 1.35\,\%) & 0/618 (bound 0.48\,\%) \\
+1 & 0/23 (bound 12.21\,\%) & 20/3054 (0.65\,\%, bound 0.95\,\%) & 0/1 (bound 95.00\,\%) & 2/188 (1.06\,\%, bound 3.31\,\%) & 0/11 (bound 23.84\,\%) \\
+2 & 1/68 (1.47\,\%, bound 6.79\,\%) & 31/6040 (0.51\,\%, bound 0.69\,\%) & 0/6 (bound 39.30\,\%) & 2/325 (0.62\,\%, bound 1.92\,\%) & 0/51 (bound 5.70\,\%) \\
+3 & 7/642 (1.09\,\%, bound 2.04\,\%) & 0/1077 (bound 0.28\,\%) & 0/33 (bound 8.68\,\%) & 1/202 (0.50\,\%, bound 2.33\,\%) & 0/140 (bound 2.12\,\%) \\
+4 & 6/1538 (0.39\,\%, bound 0.77\,\%) & 0/141 (bound 2.10\,\%) & 0/136 (bound 2.18\,\%) & 0/62 (bound 4.72\,\%) & 0/175 (bound 1.70\,\%) \\
+5 & 1/1203 (0.08\,\%, bound 0.39\,\%) &  & 0/197 (bound 1.51\,\%) &  & 0/118 (bound 2.51\,\%) \\
+6 & 5/963 (0.52\,\%, bound 1.09\,\%) &  & 0/102 (bound 2.89\,\%) &  & 0/71 (bound 4.13\,\%) \\
+7 & 6/907 (0.66\,\%, bound 1.30\,\%) &  & 0/66 (bound 4.44\,\%) &  & 0/51 (bound 5.70\,\%) \\
+8 & 0/146 (bound 2.03\,\%) &  & 0/35 (bound 8.20\,\%) &  & 0/1 (bound 95.00\,\%) \\
+9 & 0/24 (bound 11.73\,\%) &  & 0/32 (bound 8.94\,\%) &  &  \\
+10 &  &  & 0/4 (bound 52.71\,\%) &  &  \\
+11 &  &  & 0/2 (bound 77.64\,\%) &  &  \\
+\bottomrule
+\end{longtable}
+\endgroup
+
+Every trial set that was run is included: the three-product sets, two later SPOC 2-min sets, and the SPOC 2-min set run
+by audit 3 (\code{build/false\_alarm\_check.py}, modes A, B, A\_S32, B\_S32, A\_S32\_a3 and B\_S32\_a3). Three of audit
+3's ephemerides were recomputed by the trial script of the deposit and agree exactly. Since audit 6 every trial uses
+exactly the thresholds of the Sector 110 run (\code{s110\_final.thresholds}, the median of 20 seeds). Before that, the
+trial script used one seed, which changed 14 of the 17\,835 trial classifications (4 more and 10 fewer exceedances; all
+trial depths identical).
+
+``Bound'' is the one-sided 95\,\% Clopper-Pearson upper bound for independent trials \citep{ClopperPearson1934}. The
+trials are not independent: neighbouring phases share data, and all trials of one product share one light curve. The
+bound is therefore an approximation whose coverage is not established. It is not a guaranteed maximum, and neither the
+bound nor the interval is a guarantee for Sector 110. These levels are frequencies of the noise model per trial, not
+probabilities that a detected signal is a planet. At a given $n$, the level of B is not always higher than that of A. For an $n$ with few
+trials the point value can be 0 while its bound is several times the overall level (A, $n = 8$: 0 of 146 trials, bound
+2.03\,\%). The sentence of Appendix~\ref{app:wording} prints both, and the bound is the number to read. A grouping of $n$
+that was tried after seeing the per-$n$ counts is not used. \code{s110\_summary.py} quotes, for the product of the run,
+the overall level and the level for exactly the $n$ counted, each with its binomial bound and the remark on dependent
+trials.
+
+A check of the lower tail gave the matching numbers for real signals: a signal at the expected depth fell below $\dlo$
+in 0.10\,\% (A) and 0.17\,\% (B) of the A\_S32 and B\_S32 trials. For fallback 2 (TESS-SPOC 200-s) no trials exist,
+and the SPOC 2-min levels are quoted with that remark.
+
+The trial files are \code{calib/false\_alarm\_*.json}, made by \code{build/false\_alarm\_check.py}; the levels are in
+\code{calib/false\_alarm\_levels.json}, built by \code{build/false\_alarm\_levels.py}. The intervals come from a
+bootstrap over the trial ephemerides. Because all trials of one product share one light curve, these intervals are
+optimistic. The percentiles were set once (99.9 and 0.1) and are not tuned further. The levels are reported as they are,
+and \code{s110\_summary.py} quotes the level of the product and of the $n$ of the actual run.
+
+The transit times are fixed in advance and nothing is searched, so these are fixed-epoch levels, not search-wide
+false-alarm rates. There is no minimum number of transits: the thresholds and the sensitivity are computed for the $n$
+actually counted. An exclusion (O3) needs $\Sens \geq 0.95$ for that $n$. Whether this is reached depends on the
+expected depth, the noise and $n$, not on a fixed number of transits; in the archival trials some sets reach it with
+$n = 2$. A detection is possible for any $n$, and its false-detection level is the one of Table~\ref{tab:fa} for that
+$n$.

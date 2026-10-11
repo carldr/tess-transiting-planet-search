@@ -1,0 +1,9 @@
+S32: 17101/18730 good cadences, cadence 120 s, target at box pixel (4.501,4.288), box origin (0,0), detector col/row 1373/944; none
+target done 43 s
+E5 done 42 s
+target_cal done 433 s
+offset (+5.46, +0.38)" n=6 d=2.18 p_emp=0.1659 LR=6.24 L1_COMPATIBLE (dry run, not a label)
+empirical_p_check_cloud_vs_registered_calibration    n=3000  <0.05: 142 (4.73 %)  <0.0027: 11 (0.37 %)
+empirical_p_registered_calibration_vs_check_cloud    n=3000  <0.05: 162 (5.40 %)  <0.0027: 7 (0.23 %)
+gaussian_tail_check_cloud                            n=3000  <0.05: 393 (13.10 %)  <0.0027: 163 (5.43 %)
+gaussian_tail_registered_calibration                 n=3000  <0.05: 388 (12.93 %)  <0.0027: 179 (5.97 %)

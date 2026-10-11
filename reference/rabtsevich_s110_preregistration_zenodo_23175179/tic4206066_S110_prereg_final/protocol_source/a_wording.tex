@@ -1,0 +1,99 @@
+\section{How the results will be described} \label{app:wording}
+
+The outcome labels are computed by \code{s110\_final.py} and \code{s110\_localise.py}. The sentences that describe them
+are produced by \code{s110\_summary.py} from their output files, and only these sentences describe the outcomes.
+Combined positions, variants, later reprocessings or products, and individual transit times and depths appear only in
+tables, never in these sentences. ``$p$'' is always the empirical $p$ of Appendix~\ref{app:localisation}.
+``Recovered'' never means ``confirmed planet'' (Section~\ref{sec:limits}). A combined statement about A and B, or about
+the system, is not part of this test; it is exploratory and cannot be cited for or against either outcome. In a dry
+run, ``Sector 110'' is replaced by ``the archival dry run (Sector NN)''.
+
+In these tables X stands for the signal (A or B), and the other letters (n, R, k, N, U, r, u, C, s, P, x) are filled in
+by the script: for example n is the number of counted transits, R and r are false-detection levels with their trial
+counts k of N, U and u their bounds, s the sensitivity, P the empirical $p$, and N in the localisation part the number of
+calibration injections. Each sentence about signal X is built from three parts: the outcome (Table~\ref{tab:sent1}), the robustness
+qualifier for O1 and O3 (Table~\ref{tab:sent2}), and the localisation for O1 and O2 (Table~\ref{tab:sent3}).
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.08\textwidth}>{\raggedright\arraybackslash}p{0.86\textwidth}}
+\caption{First part of the sentence, by outcome.\label{tab:sent1}}\\
+\toprule
+Outcome & First part of the sentence \\
+\midrule
+\endfirsthead
+\toprule
+Outcome & First part of the sentence \\
+\midrule
+\endhead
+O1 & ``Signal X was recovered in Sector 110 at the pre-registered times and depth (n counted transits; measured
+  false-detection level for this product about R \% overall (k of N trials; binomial 95 \% upper bound U \%, approximate
+  because the trials share data) and r \% for exactly n counted transits (k' of N'; binomial bound u \%))'', with the
+  numbers of Table~\ref{tab:fa} for the product of the run. If no trial had exactly $n$ transits: ``; no trials with
+  exactly n counted transits''. For a TESS-SPOC primary: ``; measured on SPOC 2-min data, no trials exist for the
+  TESS-SPOC product''. \\
+O2 & ``A dip was found at the predicted times of signal X, but it is not the predicted signal (C), as pre-registered;
+  this contradicts the archival model of signal X'', with C the failed conditions as written by the script: ``shallower
+  than predicted'', ``deeper than predicted'', ``timing off''. \\
+O3 & ``The predicted signal X is excluded by Sector 110 (pre-registered sensitivity s $>$= 0.95)'' \\
+O4 & ``Sector 110 cannot decide on signal X (reason: R).'' with R one of the fixed reasons written by the script: fewer
+  than 10 usable cadences; no registered QLP flux column; no counted transit; noise pool has fewer than 100 windows; d not
+  above det and not below lo; sensitivity below 0.95; both of the last two. \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.38\textwidth}>{\raggedright\arraybackslash}p{0.56\textwidth}}
+\caption{Added part for the robustness qualifier (O1 and O3 only).\label{tab:sent2}}\\
+\toprule
+Case & Added part \\
+\midrule
+\endfirsthead
+\toprule
+Case & Added part \\
+\midrule
+\endhead
+at least one variant qualifies, and none contradicts & ``; robust'' \\
+no variant reaches $\Sens \geq 0.95$ & ``; robustness not testable'' \\
+either of the two above while variant (d) is pending & the same, followed by `` (provisional until 2027-02-28)'' \\
+O1, and a qualifying variant returned O3 & ``; a processing variant with adequate sensitivity excluded it (variant x);
+  this is reported and does not change the outcome'' \\
+O3, and a qualifying variant returned O1 or O2 & ``; a processing variant with adequate sensitivity detected a dip
+  (variant x); this is reported and does not change the outcome'' \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}p{0.72\textwidth}}
+\caption{Added part for the localisation (O1 and O2 only).\label{tab:sent3}}\\
+\toprule
+Case & Added part \\
+\midrule
+\endfirsthead
+\toprule
+Case & Added part \\
+\midrule
+\endhead
+A, L1 & ``; its pixel position is compatible with TIC 4206066 (empirical p = P from N on-target injections, not below
+  0.05).'' \\
+A, L2 & ``; its pixel position is in tension with TIC 4206066 (empirical p = P from N on-target injections, below 0.05
+  and not below 0.0027).'' \\
+A, L3 & ``; its pixel position is off target (empirical p = P from N on-target injections, below 0.0027): the signal
+  most likely comes from another source, and a planet on TIC 4206066 is disfavoured.'' \\
+A, not possible & ``; its position could not be measured (reason as written by the localisation script).'' \\
+B, measured & ``; B's pixel offset is reported in the table without a label and is not interpreted in this test.'' \\
+B, not possible & ``; B's localisation was not possible (reason as written by the localisation script).'' \\
+A or B, fallback primary & as ``not possible'', with the reason ``fallback product: localisation not possible'' \\
+\bottomrule
+\end{longtable}
+
+For O3 and O4 no localisation is run, and the sentence ends with the robustness part or the reason. P is printed with
+four significant digits; the stated relation to the thresholds is computed from the unrounded value.
+
+Two cases are worded by the code slightly differently from Tables~\ref{tab:sent1} and \ref{tab:sent3}; as stated in
+Section~\ref{sec:protocol}, the code defines the sentence. The O4 reason ``both of the last two'' is written as ``d not
+above det and not below lo; sensitivity below 0.95''. If the localisation distance is not finite, the label for A
+is \code{NOT\_POSSIBLE}; the sentence for A then ends ``its position could not be measured (label NOT\_POSSIBLE).'',
+and the sentence for B gives the clause ``B's pixel offset is reported in the table without a label and is not
+interpreted in this test.''.
+
+Appendix~\ref{app:public} adds three things: for the failure cases that leave no output file (Appendix~\ref{app:p5}) the
+same sentence parts are written from the posted files with the fixed reasons listed there; a result declared invalid
+and not repairable gives the reason ``pre-registered procedure not followed'' (Appendix~\ref{app:p1}); and every summary
+is posted with the line of variant outcomes of Appendix~\ref{app:p7}.

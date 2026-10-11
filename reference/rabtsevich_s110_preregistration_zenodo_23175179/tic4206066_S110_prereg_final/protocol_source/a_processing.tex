@@ -1,0 +1,53 @@
+\section{Light-curve processing} \label{app:processing}
+
+\subsection{Cleaning and detrending}
+
+Cleaning and detrending are unchanged from draft v2, except for the ephemeris used for masking. The light curve is
+cleaned with the quality mask of its product. It is then detrended by \code{lcio.detrend} from the frozen helper module
+\code{deps/lcio.py}, which uses the biweight filter of wotan \citep{Hippke2019} with a window $W = 0.75$\,d. When the
+trend is fitted, both signals are masked over $\pm 1.5\,\Tfourteen$ around their predicted mid-times. Upward outliers
+above 4 robust standard deviations ($4 \times 1.4826 \times$ the median absolute deviation) are removed.
+
+\subsection{Segments and edge zones} \label{app:edges}
+
+\code{lcio.detrend} gives wotan the cleaned light curve without the masked windows of both signals ($\pm
+1.5\,\Tfourteen$), with a break tolerance of 0.3\,d. Wotan therefore fits a separate segment wherever this series has a
+gap longer than 0.3\,d. The edge zones are taken from exactly these segments, for the real detrending and separately
+for every fake detrending of the noise model (Appendix~\ref{app:noise}). The first and last $W/2$ of every segment are
+edge zones: 0.375\,d (9\,h) for the primary run with $W = 0.75$\,d, and 0.25\,d and 0.5\,d for variants (a) and (b),
+whose windows are 0.5\,d and 1.0\,d.
+
+The reason is that the filter is centred and $W$ wide. Within $W/2$ of a segment end it has less than half a window of
+data on one side, so its trend there is less reliable. The wotan documentation limits its own edge cut-off to $W/2$
+``as this fills the window completely''. A transit whose mask joins a data gap into a break lies between two segments
+and is not tested.
+
+\subsection{Counting rule} \label{app:counting}
+
+A predicted transit is counted only if all four conditions hold:
+\begin{enumerate}[label=(\roman*)]
+\item at least 80\,\% of its $\Tfourteen$ window has cadences after cleaning;
+\item it has at least 2 cadences on each side between 0.75 and 3\,$\Tfourteen$ from the predicted mid-time;
+\item its whole $\Tfourteen$ window lies inside one segment and outside the edge zones of that segment;
+\item in Sector 110, it is one of the frozen epochs of Tables~\ref{tab:timesA} and \ref{tab:timesB}.
+\end{enumerate}
+A transit that fails any of these conditions is not tested. It is listed with its status and depth, never enters the
+statistic, and is never counted as a missing transit.
+
+
+\subsection{Notes on the expected depths} \label{app:depthnotes}
+
+These notes explain the values of Table~\ref{tab:depths}.
+\begin{enumerate}
+\item In Sector 32 the two B events fall about 2.0 and 2.3\,h after transits of A. The masks of the two signals then
+  join into a hole longer than the 0.3\,d break tolerance, and the detrender fits the two sides separately. By the
+  edge-zone rule (Appendix~\ref{app:edges}) these transits are not tested. In Sector 110 the closest pairs (A116 and
+  B33, A109 and B31) are 7.4 and 7.7\,h apart, and their masks are separated by 2.1 and 2.4\,h of data. The same
+  happens there only if most of that data is lost (about 1.6\,h next to the A mask, about 2.2\,h next to the B mask),
+  and then both events of the pair are not tested.
+\item The Sector 6 value is measured at 30-minute cadence, where the box statistic is lower than at 2-minute cadence. A
+  transit-model check made for draft v2 (kept by me and not part of this deposit, so not verifiable from it; given for information only) gives a ratio of box depth to
+  maximum depth of about 0.80 at 30\,min against 0.85 to 0.88 at 2\,min. One of the four counted Sector 6 transits of A
+  (epoch $-793$) passes the 80\,\% coverage rule with 0.802, and in Sector 98 epoch 10 also passes with 0.802. The lower box
+  depth at 30-minute cadence and these two marginal coverages are accepted as they are.
+\end{enumerate}

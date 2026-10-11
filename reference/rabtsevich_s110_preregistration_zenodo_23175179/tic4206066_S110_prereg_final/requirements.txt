@@ -1,0 +1,10 @@
+# Environment of every run in this deposit (python 3.12.13). The Sector 110 primary run uses exactly these versions.
+numpy==2.5.3
+astropy==8.0.1
+scipy==1.18.1
+wotan==1.10
+TESS_PRF==0.1.3
+numba==0.67.0
+llvmlite==0.49.0
+# machine: arm64
+# system: Darwin

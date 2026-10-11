@@ -1,0 +1,46 @@
+{
+ "script": "s110_summary.py",
+ "script_sha256": "d234803a1b9b6da6beab994963685bcd4519aa9fadeaa4ec412deb48e271c339",
+ "levels_sha256": "71a7ab36443f06f91bc88ff56631e7fcaab528ecf53b8d182c04ab53b464f8a7",
+ "inputs_sha256": {
+  "s32_null.json": "e90b6d011eeeefc95b1a89b8167fe18477a8aee4e5b1a158c95bc982e4c52528",
+  "na_not_run.txt": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57"
+ },
+ "dry_run": true,
+ "variants": [],
+ "not_available": {
+  "a": {
+   "error_file": "na_not_run.txt",
+   "sha256": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57",
+   "text": "dry run: variant not run (code check of s110_summary.py only; in Sector 110 this file is the saved error output of the attempted run)\n"
+  },
+  "b": {
+   "error_file": "na_not_run.txt",
+   "sha256": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57",
+   "text": "dry run: variant not run (code check of s110_summary.py only; in Sector 110 this file is the saved error output of the attempted run)\n"
+  },
+  "c": {
+   "error_file": "na_not_run.txt",
+   "sha256": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57",
+   "text": "dry run: variant not run (code check of s110_summary.py only; in Sector 110 this file is the saved error output of the attempted run)\n"
+  },
+  "e": {
+   "error_file": "na_not_run.txt",
+   "sha256": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57",
+   "text": "dry run: variant not run (code check of s110_summary.py only; in Sector 110 this file is the saved error output of the attempted run)\n"
+  },
+  "f": {
+   "error_file": "na_not_run.txt",
+   "sha256": "7806030003314e121ee0f50a2244bb0ad4f8b48b5695cc520c6e1c885eacee57",
+   "text": "dry run: variant not run (code check of s110_summary.py only; in Sector 110 this file is the saved error output of the attempted run)\n"
+  }
+ },
+ "d_status": "pending",
+ "d_final_reason": null,
+ "summary_date_utc": "2026-10-05",
+ "sentences": {
+  "A": "The archival dry run (Sector 32) cannot decide on signal A (reason: sensitivity below 0.95).",
+  "B": "The archival dry run (Sector 32) cannot decide on signal B (reason: d not above det and not below lo; sensitivity below 0.95)."
+ },
+ "fixed_note": "No combined statement about A and B or about the system is part of this test; any such statement is exploratory and cannot be cited for or against either outcome."
+}

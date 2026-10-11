@@ -1,0 +1,51 @@
+{
+ "note": "Inputs of ephemeris_final.json, copied unchanged from the final re-derivation (2026-10-01) so that the ephemeris can be rebuilt from this deposit (added 2026-10-03; ephemeris_final.json itself is unchanged). build/make_ephemeris.py reads the same numbers from the re-derivation folders, which are not part of this deposit.",
+ "A": {
+  "transit_times_file": "calib/transit_times_A.csv",
+  "transit_times_columns": "epoch; sector; tc = mid-time in BTJD (BJD_TDB - 2457000); tc_err_formal_min = formal error; tc_err_inj_min = injection-calibrated error (half width of the 16-84 percentile interval of recovered minus injected, 200 injections per transit), used as the weight; the other columns are diagnostics",
+  "ephemeris_fit": "weighted least squares of tc on epoch with weights 1 / (tc_err_inj_min / 1440)^2, all 22 transits, no rescaling; it gives T0, P and cov_T0_P of ephemeris_final.json (to about 1e-9 d, because the CSV rounds the errors to 1e-4 min); sigma_pred(n) = 1440 * sqrt(C00 + 2 n C01 + n^2 C11) min",
+  "T14_h_mcmc": {
+   "median": 1.870548542043308,
+   "plus": 0.05164144571624263,
+   "minus": 0.04996255907869007,
+   "p2_3": 1.775111118244566,
+   "p97_7": 1.9727735441928236
+  },
+  "T14_rule": "T14 of ephemeris_final.json = T14_h_mcmc.median / 24 d",
+  "source_files_sha256": {
+   "03_signalA/out/transit_times_calibrated.csv": "31b428d044b92b7d13315baf164967f4ec04454cb81c61f92107859d71fd38ad",
+   "03_signalA/out/mcmc_summary.json": "60ea9701157f967794039ef9d932ec84d82bef39488bd2b6b34de72ea0a9f57a",
+   "03_signalA/out/linear_ephemeris_calibrated.json": "646dba07c90127e03d128b8c8aba82ab94908cbee45cb62d3d084ecca0438d8b"
+  }
+ },
+ "B": {
+  "ephemeris_B_used": {
+   "P": 11.132745380039134,
+   "T0": 4000.8658739613074,
+   "T14": 0.06908750357336403
+  },
+  "ephemeris_note": "joint-fit ephemeris of the internal drafts v1 and v2, unchanged (also in the unpublished draft v1)",
+  "s110_epochs_joint_fit_mcmc": [
+   {
+    "epoch": 31,
+    "tc_btjd": 4345.980981,
+    "sigma_min_corr": 2.71
+   },
+   {
+    "epoch": 32,
+    "tc_btjd": 4357.113726,
+    "sigma_min_corr": 2.723
+   },
+   {
+    "epoch": 33,
+    "tc_btjd": 4368.246472,
+    "sigma_min_corr": 2.737
+   }
+  ],
+  "sigma_rule": "sigma_pred_min of ephemeris_final.json = 1.5 x sigma_min_corr (B timing errors are not injection-calibrated)",
+  "source_files_sha256": {
+   "14_signalB/out/signalB.json": "4b26b60105ef5eecc97471b90fbd95cd2402bb2ea2588b06920e577cbc4b2224",
+   "05_ephemeris/out/s110_predicted_transits.csv": "5162cbca3d9caeb122db634deb18f64643bbd16a073bb0f0691f204a28bc81cd"
+  }
+ }
+}

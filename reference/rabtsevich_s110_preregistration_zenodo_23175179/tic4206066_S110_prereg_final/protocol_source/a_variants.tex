@@ -1,0 +1,59 @@
+\section{Processing variants and the robustness qualifier} \label{app:variants}
+
+\subsection{Variants}
+
+After the primary run, fixed alternative processings (variants) are run on the same product and reported next to the
+primary result. They use the expected depths of the primary run; they are not recalibrated per variant. The variants
+are:
+\begin{enumerate}[label=(\alph*)]
+\item detrending window 0.5\,d;
+\item detrending window 1.0\,d;
+\item cadences within $\pm 1$\,h of SPOC desaturation flags removed (only when the primary product is a SPOC product);
+\item the QLP light curve with mask 1610619071: the first QLP release that is public when the other variants are run,
+  or, if none is public then, the release that is public on 2027 February 28. It is run once and not re-run on later
+  releases. It is not run when the primary product is itself QLP;
+\item the \code{SAP\_FLUX} of the same product. This flux is not corrected for light from other stars, so variant (e)
+  is diluted and leans toward ``shallower'';
+\item for comparison only, outside the robustness rule: the counting rule of draft v2 (80\,\% coverage only, no edge
+  zones, so every transit with 80\,\% coverage is counted).
+\end{enumerate}
+
+Variants are never edited. A variant that crashes or cannot be run is ``not available'' and is ignored. ``Not
+available'' means one of two things: the registered command of the variant, run unchanged on the registered file,
+stopped with an error while reading or computing (after the one repeat allowed by Appendix~\ref{app:procedure}, point
+4); or its input file fails the time-system check of Appendix~\ref{app:p3}. Its attempt record
+(Appendix~\ref{app:p4}), which contains the unedited error output or the printed header line, is saved and posted. A
+refusal by the environment check or the file-name check is not ``not available'': the environment or the file name is
+corrected and the variant is run. For variant (d), ``not yet public'' is handled by the robustness rule below.
+\code{s110\_summary.py} copies the error output but cannot judge it. Because data and code are public, anyone can rerun
+a variant declared not available. Appendix~\ref{app:p4} fixes what the saved record of an attempt must contain and when
+a ``not available'' is invalid.
+
+\subsection{Robustness qualifier} \label{app:robust}
+
+Variants never change any primary outcome. They only decide whether an O1 or an O3 carries the qualifier ``robust''.
+Only variants (a) to (e) with $\Sens \geq 0.95$ (qualifying variants) are considered.
+\begin{itemize}
+\item If no variant among (a) to (e) reaches $\Sens \geq 0.95$, the qualifier is ``robustness not testable''.
+\item If at least one variant reaches $\Sens \geq 0.95$: a primary O1 is called robust only if no qualifying variant returns
+  O3, and a primary O3 is called robust only if no qualifying variant returns O1 or O2.
+\item O2 and O4 carry no robustness qualifier.
+\end{itemize}
+
+If variant (d) is not yet public when the other variants are run, ``robust'' and ``robustness not testable'' are
+reported as provisional. A qualifying contradiction already gives ``not robust'', without a provisional qualifier:
+a later variant cannot remove that contradiction. A provisional qualifier becomes final on 2027 February 28, with
+(d) if (d) is public by then. ``Not yet public'' keeps the qualifier provisional; it
+never makes it final. A provisional qualifier becomes final only in one of three cases: (d) has been run; a public QLP release
+was attempted and the run failed; or a MAST search made on or after 2027 February 28 finds no QLP Sector 110 release.
+\code{s110\_summary.py} accepts the last case only on or after that date (audit 6).
+
+The qualifier is computed by \code{s110\_summary.py}, not by hand. The only exception is the cases of
+Appendix~\ref{app:p5}, where the summary script cannot run; there the qualifier is written from the posted variant
+results by exactly this rule. ``Robust'' has exactly the meaning given here, which is narrower than ``all variants
+agree''. Appendix~\ref{app:p7} fixes this meaning and the line of variant outcomes that is always posted with it.
+
+\subsection{Exploratory analyses}
+
+Aperture photometry of my own and any search away from the predicted times (shifted transits, other periods) are
+exploratory and cannot be cited for or against any outcome.

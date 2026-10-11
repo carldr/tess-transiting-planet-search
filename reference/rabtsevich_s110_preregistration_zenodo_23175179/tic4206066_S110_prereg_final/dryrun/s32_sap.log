@@ -1,0 +1,2 @@
+A n=6 not_tested=2 pool=402 phases d>=obs 0/58 d>det 0 O1_RECOVERED d=440 det>264 band=[128, 746] sens=0.96 det spread [249, 272] timing=+2.5 min, tol 16.1 (meas 4.4, pred 3.0)
+B n=0 O4_INSUFFICIENT (no counted transit)

@@ -1,0 +1,86 @@
+\section{Validation on archival data} \label{app:validation}
+
+The frozen scripts were run on the archival sectors (folder \code{dryrun/}). These dry runs check that the code does
+what Sections~\ref{sec:times} and \ref{sec:test} and Appendices~\ref{app:processing} to \ref{app:localisation}
+say. They are not evidence about Sector 110 and not an
+independent test, because Sectors 32 and 98 contributed to the ephemeris and to the expected depths. Archival epochs
+are outside the frozen Sector 110 tables, so their $\sigma_{\rm pred}$ comes from the ephemeris covariance at those
+epochs (about 3.0 to 3.5\,min instead of 4.1). The prediction part of the archival timing tolerances is therefore slightly smaller than in
+Sector 110. Table~\ref{tab:dryruns} lists the results; depths and thresholds are in ppm.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.25\textwidth}>{\raggedright\arraybackslash}p{0.12\textwidth}>{\raggedright\arraybackslash}p{0.33\textwidth}>{\raggedright\arraybackslash}p{0.20\textwidth}}
+\caption{Dry runs of the frozen code on archival data.\label{tab:dryruns}}\\
+\toprule
+Data & Settings & A & B \\
+\midrule
+\endfirsthead
+\toprule
+Data & Settings & A & B \\
+\midrule
+\endhead
+\multicolumn{4}{l}{\textit{Photometric test}} \\
+S32 SPOC 2-min & primary & O1; $n = 6$ (epochs $-573$, $-566$ not tested, see Section~\ref{sec:depths}); $d = 437$;
+  $\ddet = 287$ (280 to 302); band 114 to 766; sensitivity 0.92; $\Delta t = +2.5$\,min, tolerance 14.7; 0 of 58 fake
+  phases above $\ddet$ & O4; no counted transit \\
+S32, ephemeris shifted by half a period, real transits cut & null test & O4; $n = 7$; $d = -106$; $\ddet = 278$;
+  sensitivity 0.92 (below 0.95, so not O3) & O4; $d = 194$; $\ddet = 369$; sensitivity 0.83 \\
+S98 QLP & fallback 1 & O1; $n = 8$ (epoch $-1$ not tested: no baseline); $d = 450$; $\ddet = 150$; band 223 to 659;
+  sensitivity 1.00; $\Delta t = +1.0$, tolerance 11.7 & O1; $n = 2$; $d = 995$; $\ddet = 306$; sensitivity 0.949 \\
+S98 QLP, v2 counting rule (no baseline rule, no edge zones) & variant (f) & O4; $n = 9$; $d = 509$; $\ddet = 652$;
+  sensitivity 0.05 & O4; $\ddet = 2428$; sensitivity 0.01 \\
+S32 window 0.5\,d / 1.0\,d / desaturation $\pm 1$\,h & variants (a) to (c) & O1 / O1 / O1 (sensitivity 0.93 / 0.88 /
+  0.94) & O4 (no counted transit) \\
+S32 SAP flux & variant (e) & O1; sensitivity 0.96 & O4 (no counted transit) \\
+S32, v2 counting rule & variant (f) & O1; $n = 8$ (the two epochs next to B counted); $d = 426$; $\ddet = 280$ & O4;
+  $n = 2$; sensitivity 0.10 \\
+\midrule
+\multicolumn{4}{l}{\textit{Pixel localisation}} \\
+S32 pixels, full localisation pipeline (equal stacks: 6 fake transits in all 3600 trials, 31 phase slots in the
+  300-trial clouds and 32 in the calibration cloud, no failed trial) & Appendix~\ref{app:localisation} & offset $(+5.46,
+  +0.38)''$, cloud standard deviation $(3.2, 4.1)''$, $\delta = 2.18$, empirical $p = 0.156$ (468 of 3000 calibration
+  trials at least as far; the Gaussian tail of the earlier rule gave 0.093) (dry run, no label) & ``not possible'' (B
+  not detected) \\
+S32 pixels, coverage of the empirical $p$: the same run with calibration seed 5005, each of its 3000 on-target trials
+  scored against the registered 3000, and the reverse & \code{build\slashbreak localisation\_coverage.py},
+  \code{calib\slashbreak localisation\_coverage.json} & below 0.05: 4.7\,\% and 5.4\,\% (nominal 5\,\%); below 0.0027: 0.37\,\% and
+  0.23\,\% (nominal 0.27\,\%); the Gaussian tail on the same trials: 13\,\% and 5.4 to 6.0\,\% & \\
+S32 pixels, re-derivation ephemeris, all transits & fidelity check & offset $(+4.79, +0.90)''$, Gaussian $p = 0.213$ as
+  in item 11 (empirical $p = 0.211$), all 600 injection positions identical to item 11 & \\
+S32 null-test photometry & localisation gate & ``not possible'' (A not detected) & \\
+\midrule
+\multicolumn{4}{l}{\textit{Refusals and fixed sentences}} \\
+S32 files, run without \code{--dry-run} & refusal check & photometry and localisation both refused (not Sector 110 /
+  TIC 4206066) & \\
+S6 TESS-SPOC pixel file (camera 1, CCD 1), run without \code{--dry-run}, non-registered switches & refusal check &
+  refused before the camera/CCD rule, nothing written (audit 5) & \\
+Sentences from the dry-run outputs (with \code{--dry-run}: ``in the archival dry run (Sector NN)'') &
+  \code{s110\_summary.py} & S32: ``recovered \ldots\ robust (provisional until 2027-02-28); its pixel position is
+  compatible with TIC 4206066 (empirical p = 0.1563 from 3000 on-target injections, not below 0.05)''; null test:
+  ``cannot decide (reason: sensitivity below 0.95)''; S98: ``recovered \ldots\ robustness not testable; its position
+  could not be measured (fallback product \ldots)'' & S32: ``cannot decide (reason: no counted transit)''; S98:
+  ``recovered \ldots\ 0.62\,\% for exactly 2 counted transits \ldots'' \\
+Summary with a variant silently left out & refusal check & refused (``variants \ldots\ are neither given nor declared
+  not available'') & \\
+Summary with a variant declared not available without a saved error output & refusal check & refused (audit 5) & \\
+Summary with a variant that carries another script checksum (fixture \code{dryrun/s32\_sap\_other\_version.json}: a copy
+  of \code{s32\_sap.json} whose script checksum is set to zeros on purpose) & refusal check & refused (audit 6) & \\
+Summary with variant (d) declared final as ``not public'' before 2027-02-28 & refusal check & refused (audit 6) & \\
+\bottomrule
+\end{longtable}
+
+The dry runs show the following in advance.
+\begin{itemize}
+\item At the noise level of the Sector 32 2-min data, with 6 or 7 counted transits, the test detects A (sensitivity
+  0.92) but cannot return O3 in the null test (0.92 is below 0.95): a non-detection would be O4, undecided.
+\item In Sector 110 at most 8 transits of A can be counted in practice. Epoch 117 (BTJD 4371.121) needs data until about
+  BTJD 4371.53 (2026-11-27 00:41 UTC at Earth) to clear its edge zone, and epoch 109 needs continuous data from about
+  BTJD 4345.24 (2026-10-31 17:45 UTC at Earth). More counted transits raise the sensitivity; it is computed from the
+  Sector 110 data, not assumed.
+\item Signal B, with 2 or 3 transits, will most likely end as O4 unless Sector 110 is quieter than Sector 32.
+\item Without the baseline rule and the edge zones (variant f), single windows next to data gaps dominate the noise in
+  Sector 98, and the test cannot decide even for the real signal. This is why those rules exist.
+\item On these pixels the Gaussian tail of the earlier rule would have called about 6\,\% of truly on-target signals
+  ``off target''; the empirical $p$ keeps this near the nominal 0.27\,\%.
+\item In the localisation dry run the combined line counts Sector 32 twice and has no meaning; it only checks the code.
+  Because B is not detected in the Sector 32 dry run, the B localisation is not exercised by any dry run.
+\end{itemize}
