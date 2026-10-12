@@ -1,0 +1,5 @@
+# TIC 4158861, period 6.05941 d
+
+| date (UTC) | sector | step | script | code version | verdict | result |
+|---|---|---|---|---|---|---|
+| 2026-10-12 21:32 | 98 | search, vetting and known-signal cross-match | cross_match_qlp_sector_signals_with_known_catalogues.py | 49142f8 | new candidate | BLS SNR 9.2, MES 7.0, depth 484 ppm, 8 transits; passes the LEO-Vetter false alarm and false positive tests; no TOI, CTOI, TCE or TESS EB match in the catalogues of 2026-10-09 |
