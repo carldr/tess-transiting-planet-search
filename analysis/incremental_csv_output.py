@@ -48,9 +48,13 @@ class IncrementalCsvWriter:
         self.writer = csv.DictWriter(self.file, fieldnames=columns, extrasaction="ignore")
 
     def write_row(self, row):
-        self.writer.writerow(row)
+        """Write the row, and return it as a later run reads it back: the text of each column, "" for None."""
+        written_row = {column: "" if row.get(column) is None else str(row.get(column, ""))
+                       for column in self.writer.fieldnames}
+        self.writer.writerow(written_row)
         self.file.flush()
         os.fsync(self.file.fileno())
+        return written_row
 
     def __enter__(self):
         return self

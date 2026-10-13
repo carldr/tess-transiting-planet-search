@@ -57,7 +57,7 @@ from tess_stars2px import tess_stars2px_function_entry
 from transitDiffImage.tessprfmodel import SimpleTessPRF
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
-from candidate_verification_records import append_verification_record_entry
+from candidate_verification_records import append_verification_record_entry, verification_stamp
 from check_qlp_sector_new_candidates import output_directory as candidate_checks_output_directory
 from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows, earlier_rows_to_keep
 
@@ -89,7 +89,7 @@ OUTPUT_COLUMNS = [
 ]
 CANDIDATE_OUTPUT_COLUMNS = [
     "tic_id", "period_days", "epoch_btjd", "duration_hours", "depth_ppm", "tmag", "check_verdict", "sectors_checked",
-    "pixel_verdicts_by_sector", "pixel_verdict",
+    "pixel_verdicts_by_sector", "pixel_verdict", "verification_date_utc", "code_version",
 ]
 
 
@@ -326,6 +326,18 @@ def combined_pixel_verdict(sector_verdicts):
     return ""
 
 
+def append_verification_record(sector, candidate_row):
+    """Append the row of a candidate, as written to pixel_checks.csv, to its verification record.
+
+    A candidate with no pixel verdict gets no record row: the next run checks that candidate again.
+    """
+    if not candidate_row["pixel_verdict"]:
+        return
+    append_verification_record_entry(sector, candidate_row["tic_id"], candidate_row["period_days"], "pixel check",
+                                     candidate_row["pixel_verdict"], candidate_row["pixel_verdicts_by_sector"],
+                                     candidate_row)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
@@ -351,6 +363,10 @@ def main():
     star_rows = {row["tic_id"]: row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}
     print(f"Sector {sector}: {len(not_refuted)} candidates not refuted, {len(checked)} checked in an earlier run",
           flush=True)
+
+    # A stop between a CSV row and its record row leaves the record row missing. This appends it.
+    for candidate_row in earlier_candidate_rows:
+        append_verification_record(sector, candidate_row)
 
     sector_writer = IncrementalCsvWriter(sector_output_path, OUTPUT_COLUMNS, earlier_sector_rows)
     candidate_writer = IncrementalCsvWriter(candidate_output_path, CANDIDATE_OUTPUT_COLUMNS, earlier_candidate_rows)
@@ -386,11 +402,11 @@ def main():
             candidate_row["sectors_checked"] = " ".join(str(row["sector"]) for row in rows)
             candidate_row["pixel_verdicts_by_sector"] = summary
             candidate_row["pixel_verdict"] = combined_pixel_verdict([row.get("pixel_verdict", "") for row in rows])
-            append_verification_record_entry(sector, candidate["tic_id"], candidate["period_days"], "pixel check",
-                                             candidate_row["pixel_verdict"] or "error", summary)
+            candidate_row.update(verification_stamp())
             for row in rows:
                 sector_writer.write_row(row)
-            candidate_writer.write_row(candidate_row)
+            candidate_row = candidate_writer.write_row(candidate_row)
+            append_verification_record(sector, candidate_row)
             print(f"  {count} of {len(candidates)}: TIC {candidate['tic_id']} {candidate_row['pixel_verdict']}: "
                   f"{summary}", flush=True)
     print(f"Wrote {sector_output_path.relative_to(REPOSITORY_ROOT)} and "

@@ -40,7 +40,7 @@ import warnings
 import numpy as np
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT
-from candidate_verification_records import append_verification_record_entry
+from candidate_verification_records import append_verification_record_entry, verification_stamp
 from check_qlp_sector_candidate_pixels import PIXEL_SIZE_ARCSEC, UNRESOLVABLE_SEPARATION_PIXELS
 from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
 from search_qlp_sector import robust_standard_deviation
@@ -61,7 +61,7 @@ OUTPUT_COLUMNS = [
     "tic_id", "period_days", "tmag", "pixel_verdict", "sectors_used", "fit_period_days", "fit_epoch_btjd",
     "fit_depth_ppm", "nearby_scenarios_excluded",
     "fpp_mean", "fpp_standard_deviation", "nfpp_mean", "nfpp_standard_deviation", "most_likely_scenario",
-    "triceratops_verdict", "error",
+    "triceratops_verdict", "error", "verification_date_utc", "code_version",
 ]
 
 
@@ -141,6 +141,26 @@ def validate(sector, candidate):
     }
 
 
+def verification_record_result(row):
+    return (
+        f"sectors {row['sectors_used']}; FPP {row['fpp_mean']} +/- {row['fpp_standard_deviation']}; "
+        f"NFPP {row['nfpp_mean']} +/- {row['nfpp_standard_deviation']}; most likely scenario "
+        f"{row['most_likely_scenario']}; nearby scenarios excluded: {row['nearby_scenarios_excluded']}; "
+        f"{RUNS_PER_CANDIDATE} runs"
+    )
+
+
+def append_verification_record(sector, row):
+    """Append the row of a candidate, as written to triceratops_validation.csv, to its verification record.
+
+    A row with an error gets no record row: the next run validates that candidate again.
+    """
+    if row["error"]:
+        return
+    append_verification_record_entry(sector, row["tic_id"], row["period_days"], "TRICERATOPS",
+                                     row["triceratops_verdict"], verification_record_result(row), row)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
@@ -161,6 +181,10 @@ def main():
     print(f"Sector {sector}: {len(passed)} candidates passed the all-sector verification, "
           f"{len(earlier_rows)} validated in an earlier run", flush=True)
 
+    # A stop between a CSV row and its record row leaves the record row missing. This appends it.
+    for row in earlier_rows:
+        append_verification_record(sector, row)
+
     with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer:
         for count, candidate in enumerate(candidates, start=1):
             row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
@@ -170,17 +194,11 @@ def main():
                     row.update(validate(sector, candidate))
             except Exception as error:
                 row["error"] = f"{type(error).__name__}: {error}"
-            result = row["error"] or (
-                f"sectors {candidate['sectors_used']}; FPP {row['fpp_mean']} +/- {row['fpp_standard_deviation']}; "
-                f"NFPP {row['nfpp_mean']} +/- {row['nfpp_standard_deviation']}; most likely scenario "
-                f"{row['most_likely_scenario']}; nearby scenarios excluded: {row['nearby_scenarios_excluded']}; "
-                f"{RUNS_PER_CANDIDATE} runs"
-            )
-            append_verification_record_entry(sector, candidate["tic_id"], candidate["period_days"], "TRICERATOPS",
-                                             row["triceratops_verdict"] or "error", result)
-            writer.write_row(row)
+            row.update(verification_stamp())
+            row = writer.write_row(row)
+            append_verification_record(sector, row)
             print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['triceratops_verdict'] or 'error'}: "
-                  f"{result}", flush=True)
+                  f"{row['error'] or verification_record_result(row)}", flush=True)
     print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}")
 
 

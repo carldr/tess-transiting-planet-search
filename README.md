@@ -270,7 +270,10 @@ A CTOI is published under the name of the person who submits it.
 Each of steps 6 to 10 appends one row per candidate to the verification record of the candidate, `results/candidate_verification_records/tic<TIC ID>_period_<period>_days.md`.
 The row gives the date, the sector, the step, the script, the git commit of the code, the verdict and the result.
 The commit ends in `-modified` when `analysis/` has uncommitted changes.
-A re-run adds a new row, so the record keeps the full history of the candidate.
+Each step writes its result to its CSV first, with the same date and code version, and then appends the record row.
+So each record row has a result row in `results/` behind it.
+A result with an error gets no record row, because the next run does that candidate again.
+A run with `--restart` adds a new row, so the record keeps the full history of the candidate.
 Commit the records with the results.
 
 ### Test star

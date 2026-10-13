@@ -52,7 +52,7 @@ from astroquery.mast import Catalogs
 from astroquery.vizier import Vizier
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
-from candidate_verification_records import append_verification_record_entry
+from candidate_verification_records import append_verification_record_entry, verification_stamp
 from cross_match_qlp_sector_signals_with_known_catalogues import (
     CATALOGUE_DIRECTORY, output_directory as cross_match_output_directory,
 )
@@ -107,8 +107,9 @@ OUTPUT_COLUMNS = [
     "vsx_variables", "vsx_binaries",
     "companion_radius_earth_radii", "tic_stellar_parameters_complete", "transit_grazing",
     "fitted_to_expected_scaled_semi_major_axis",
-    "refuted_by", "cautions", "verdict", "error",
+    "refuted_by", "cautions", "verdict", "error", "verification_date_utc", "code_version",
 ]
+VERIFICATION_RECORD_STEP = "independent data checks"
 
 
 def output_directory(sector):
@@ -499,6 +500,23 @@ def check_candidate(candidate, sector, ephemeris_sources, stars, gaia_dr2_source
     return row
 
 
+def append_verification_record(sector, row):
+    """Append the result row of a candidate, as written to candidate_checks.csv, to its verification record.
+
+    A row with an error gets no record row: the next run checks that candidate again.
+    """
+    if row["error"]:
+        return
+    append_verification_record_entry(
+        sector, row["tic_id"], row["period_days"], VERIFICATION_RECORD_STEP, row["verdict"],
+        f"other sectors: {row['other_sector_results'] or 'none'}; joint search SNR {row['joint_search_snr']} "
+        f"against highest null SNR {row['joint_search_highest_null_snr']}; Gaia RUWE {row['gaia_ruwe']}; "
+        f"companion radius {row['companion_radius_earth_radii']} Earth radii; "
+        f"refuted by: {row['refuted_by'] or 'nothing'}; cautions: {row['cautions'] or 'none'}",
+        row,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
@@ -520,22 +538,20 @@ def main():
     ephemeris_sources, stars = load_ephemeris_sources(sector)
     gaia_dr2_source_ids = gaia_dr2_source_ids_by_tic_id({candidate["tic_id"] for candidate in candidates})
 
+    # A stop between a CSV row and its record row leaves the record row missing. This appends it.
+    for row in earlier_rows:
+        append_verification_record(sector, row)
+
     # The candidates run one at a time: lightkurve redirects stdout during a download, which breaks other threads.
     rows = list(earlier_rows)
     with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer:
         for count, candidate in enumerate(candidates, start=1):
             row = check_candidate(candidate, sector, ephemeris_sources, stars,
                                   gaia_dr2_source_ids.get(int(candidate["tic_id"])))
+            row.update(verification_stamp())
+            row = writer.write_row(row)
+            append_verification_record(sector, row)
             rows.append(row)
-            append_verification_record_entry(
-                sector, row["tic_id"], row["period_days"], "independent data checks", row["verdict"],
-                f"other sectors: {row['other_sector_results'] or 'none'}; joint search SNR {row['joint_search_snr']} "
-                f"against highest null SNR {row['joint_search_highest_null_snr']}; Gaia RUWE {row['gaia_ruwe']}; "
-                f"companion radius {row['companion_radius_earth_radii']} Earth radii; "
-                f"refuted by: {row['refuted_by'] or 'nothing'}; cautions: {row['cautions'] or 'none'}"
-                f"{'; error: ' + row['error'] if row['error'] else ''}",
-            )
-            writer.write_row(row)
             print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['verdict']}"
                   f"{' (' + row['refuted_by'] + ')' if row['refuted_by'] else ''}", flush=True)
 

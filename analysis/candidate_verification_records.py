@@ -6,8 +6,13 @@ the step, the script, the version of the code, the verdict and the result. A re-
 keeps the full history of the candidate.
 
 The code version is the git commit of the repository. It ends in "-modified" when analysis/ has uncommitted changes.
+
+A step stores the date and the code version in its result row with verification_stamp, writes the row to its CSV,
+and then appends the record row. A stop between the two writes leaves a CSV row with no record row. The step then
+appends the record rows of its earlier rows when it continues, so each record row has a CSV row behind it.
 """
 
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -34,13 +39,29 @@ def code_version():
     return f"{commit}-modified" if git("status", "--porcelain", "analysis") else commit
 
 
-def append_verification_record_entry(sector, tic_id, period_days, step, verdict, result):
-    """Append one row to the verification record of the candidate. Create the record when it does not exist."""
+def verification_stamp():
+    """Return the date and the code version of a result, as columns for the result row of a step."""
+    return {
+        "verification_date_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"),
+        "code_version": code_version(),
+    }
+
+
+def append_verification_record_entry(sector, tic_id, period_days, step, verdict, result, stamp):
+    """Append one row to the verification record of the candidate. Create the record when it does not exist.
+
+    The function does not append a row that the record already has, so a step can call it again for its earlier rows.
+    """
     path = verification_record_path(tic_id, period_days)
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
         path.write_text(f"# TIC {int(tic_id)}, period {float(period_days):.5f} d\n\n{TABLE_HEADER}")
-    date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
-    cells = [date, str(sector), step, Path(sys.argv[0]).name, code_version(), verdict, result]
+    cells = [stamp["verification_date_utc"], str(sector), step, Path(sys.argv[0]).name, stamp["code_version"],
+             verdict, result]
+    line = "| " + " | ".join(str(cell).replace("|", "/").replace("\n", " ") for cell in cells) + " |\n"
+    if line in path.read_text():
+        return
     with open(path, "a") as file:
-        file.write("| " + " | ".join(cell.replace("|", "/").replace("\n", " ") for cell in cells) + " |\n")
+        file.write(line)
+        file.flush()
+        os.fsync(file.fileno())

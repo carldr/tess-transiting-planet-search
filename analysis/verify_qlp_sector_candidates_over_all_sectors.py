@@ -58,7 +58,7 @@ from scipy.optimize import minimize
 from wotan import flatten
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
-from candidate_verification_records import append_verification_record_entry
+from candidate_verification_records import append_verification_record_entry, verification_stamp
 from check_qlp_sector_candidate_pixels import (
     cutout_path, load_cutout, output_directory as pixel_checks_output_directory, sectors_with_full_frame_images,
 )
@@ -117,7 +117,7 @@ OUTPUT_COLUMNS = [
     "cutout_sector_depth_consistency_p_value", "secondary_depth_ppm", "secondary_depth_error_ppm",
     "secondary_maximum_planet_depth_ppm", "gaia_source_id", "gaia_rv_nb_transits", "gaia_rv_chisq_pvalue",
     "gaia_rv_renormalised_gof", "gaia_rv_amplitude_robust_km_s", "gaia_vbroad_km_s", "gaia_rv_variable",
-    "lamost_spectra", "refuted_by", "cautions", "verdict", "error",
+    "lamost_spectra", "refuted_by", "cautions", "verdict", "error", "verification_date_utc", "code_version",
 ]
 
 
@@ -541,6 +541,35 @@ def draw_figure(path, sectors, all_sectors, model, theta, duration, candidate, v
     plt.close(figure)
 
 
+def verification_record_result(row):
+    return (
+        f"sectors {row['sectors_used']}; P {row['fit_period_days']} +/- {row['fit_period_error_days']} d; "
+        f"T0 {row['fit_epoch_btjd']} +/- {row['fit_epoch_error_days']} BTJD; depth {row['fit_depth_ppm']} "
+        f"+/- {row['fit_depth_error_ppm']} ppm; duration {row['fit_duration_hours']} h; "
+        f"b {row['fit_impact_parameter']}; "
+        f"Rp {row['planet_radius_earth_radii']} +/- {row['planet_radius_error_earth_radii']} Earth radii; "
+        f"density ratio {row['stellar_density_fit_to_tic_ratio']}; "
+        f"odd-even {row['odd_even_difference_sigma']} sigma; "
+        f"sector depths {row['depth_ppm_by_sector']} (p {row['sector_depth_consistency_p_value']}); "
+        f"secondary {row['secondary_depth_ppm']} +/- {row['secondary_depth_error_ppm']} ppm "
+        f"(planet maximum {row['secondary_maximum_planet_depth_ppm']}); "
+        f"Gaia RV variable {row['gaia_rv_variable']}; "
+        f"LAMOST: {row['lamost_spectra'] or 'none'}; refuted by: {row['refuted_by'] or 'nothing'}; "
+        f"cautions: {row['cautions'] or 'none'}"
+    )
+
+
+def append_verification_record(sector, row):
+    """Append the row of a candidate, as written to all_sector_verification.csv, to its verification record.
+
+    A row with an error gets no record row: the next run verifies that candidate again.
+    """
+    if row["error"]:
+        return
+    append_verification_record_entry(sector, row["tic_id"], row["period_days"], "all-sector verification",
+                                     row["verdict"], verification_record_result(row), row)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
@@ -563,6 +592,10 @@ def main():
     print(f"Sector {sector}: {len(to_verify)} candidates on the target or unresolved, "
           f"{len(earlier_rows)} verified in an earlier run", flush=True)
 
+    # A stop between a CSV row and its record row leaves the record row missing. This appends it.
+    for row in earlier_rows:
+        append_verification_record(sector, row)
+
     with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer:
         for count, pixel_check in enumerate(candidates, start=1):
             candidate = {**checks[(pixel_check["tic_id"], pixel_check["period_days"])], **pixel_check}
@@ -574,26 +607,11 @@ def main():
                                       directory))
             except Exception as error:
                 row["error"] = f"{type(error).__name__}: {error}"
-            result = row["error"] or (
-                f"sectors {row['sectors_used']}; P {row['fit_period_days']} +/- {row['fit_period_error_days']} d; "
-                f"T0 {row['fit_epoch_btjd']} +/- {row['fit_epoch_error_days']} BTJD; depth {row['fit_depth_ppm']} "
-                f"+/- {row['fit_depth_error_ppm']} ppm; duration {row['fit_duration_hours']} h; "
-                f"b {row['fit_impact_parameter']}; "
-                f"Rp {row['planet_radius_earth_radii']} +/- {row['planet_radius_error_earth_radii']} Earth radii; "
-                f"density ratio {row['stellar_density_fit_to_tic_ratio']}; "
-                f"odd-even {row['odd_even_difference_sigma']} sigma; "
-                f"sector depths {row['depth_ppm_by_sector']} (p {row['sector_depth_consistency_p_value']}); "
-                f"secondary {row['secondary_depth_ppm']} +/- {row['secondary_depth_error_ppm']} ppm "
-                f"(planet maximum {row['secondary_maximum_planet_depth_ppm']}); "
-                f"Gaia RV variable {row.get('gaia_rv_variable', '')}; "
-                f"LAMOST: {row['lamost_spectra'] or 'none'}; refuted by: {row['refuted_by'] or 'nothing'}; "
-                f"cautions: {row['cautions'] or 'none'}"
-            )
-            append_verification_record_entry(sector, candidate["tic_id"], candidate["period_days"],
-                                             "all-sector verification", row["verdict"] or "error", result)
-            writer.write_row(row)
-            print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['verdict'] or row['error']}: {result}",
-                  flush=True)
+            row.update(verification_stamp())
+            row = writer.write_row(row)
+            append_verification_record(sector, row)
+            print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['verdict'] or 'error'}: "
+                  f"{row['error'] or verification_record_result(row)}", flush=True)
     print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}")
 
 
