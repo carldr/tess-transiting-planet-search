@@ -32,6 +32,8 @@ Output, in results/qlp_sector_<nnnn>_candidate_pixel_checks/:
 - pixel_checks.csv: one row per candidate, with the combined verdict;
 - pixel_checks_by_sector.csv: one row per candidate and sector;
 - tic<TIC ID>_<period>_s<sector>.png: the out-of-transit image and the difference image, with the stars marked.
+The script writes the rows of each candidate as soon as it has them. --resume keeps the candidates of a stopped run
+and checks only the others.
 The script also appends the result of each candidate to its verification record.
 """
 
@@ -57,6 +59,7 @@ from transitDiffImage.tessprfmodel import SimpleTessPRF
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
 from candidate_verification_records import append_verification_record_entry
 from check_qlp_sector_new_candidates import output_directory as candidate_checks_output_directory
+from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows
 
 CUTOUT_DIRECTORY = REPOSITORY_ROOT / "data/candidate_tesscut_cutouts"
 CUTOUT_SIZE_PIXELS = 21
@@ -326,59 +329,69 @@ def combined_pixel_verdict(sector_verdicts):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
-    sector = parser.parse_args().sector
+    parser.add_argument("--resume", action="store_true",
+                        help="keep the candidates in an earlier pixel_checks.csv and check only the others")
+    arguments = parser.parse_args()
+    sector = arguments.sector
 
-    checks = list(csv.DictReader(open(candidate_checks_output_directory(sector) / "candidate_checks.csv")))
-    candidates = [row for row in checks if row["verdict"] != "refuted"]
-    star_rows = {row["tic_id"]: row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
-    print(f"Sector {sector}: {len(candidates)} candidates not refuted", flush=True)
+    sector_output_path, candidate_output_path = directory / "pixel_checks_by_sector.csv", directory / "pixel_checks.csv"
+    earlier_candidate_rows = complete_csv_rows(candidate_output_path) if arguments.resume else []
+    checked = {(row["tic_id"], row["period_days"]) for row in earlier_candidate_rows}
+    # A stop between the two files can leave sector rows of a candidate with no candidate row. The script drops them.
+    earlier_sector_rows = [row for row in (complete_csv_rows(sector_output_path) if arguments.resume else [])
+                           if (row["tic_id"], row["period_days"]) in checked]
+    checks = list(csv.DictReader(open(candidate_checks_output_directory(sector) / "candidate_checks.csv")))
+    not_refuted = [row for row in checks if row["verdict"] != "refuted"]
+    candidates = [row for row in not_refuted if (row["tic_id"], row["period_days"]) not in checked]
+    star_rows = {row["tic_id"]: row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}
+    print(f"Sector {sector}: {len(not_refuted)} candidates not refuted, {len(checked)} checked in an earlier run",
+          flush=True)
 
-    sector_rows, candidate_rows = [], []
-    for count, candidate in enumerate(candidates, start=1):
-        star_row = star_rows[candidate["tic_id"]]
-        try:
-            sectors = sectors_with_full_frame_images(candidate["tic_id"], float(star_row["ra"]), float(star_row["dec"]))
-        except Exception as error:
-            sectors = [sector]
-            print(f"  TIC {candidate['tic_id']}: sector list failed ({error}); Sector {sector} only", flush=True)
-        rows = []
-        for pixel_sector in sectors:
-            row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
-            row["check_verdict"] = candidate["verdict"]
-            row["sector"] = pixel_sector
+    sector_writer = IncrementalCsvWriter(sector_output_path, OUTPUT_COLUMNS, earlier_sector_rows)
+    candidate_writer = IncrementalCsvWriter(candidate_output_path, CANDIDATE_OUTPUT_COLUMNS, earlier_candidate_rows)
+    with sector_writer, candidate_writer:
+        for count, candidate in enumerate(candidates, start=1):
+            star_row = star_rows[candidate["tic_id"]]
             try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    row.update(check_pixels(candidate, star_row, pixel_sector, directory))
+                sectors = sectors_with_full_frame_images(candidate["tic_id"], float(star_row["ra"]),
+                                                         float(star_row["dec"]))
             except Exception as error:
-                row["error"] = f"{type(error).__name__}: {error}"
-            rows.append(row)
-        sector_rows.extend(rows)
-        summary = "; ".join(
-            f"S{row['sector']} {row.get('pixel_verdict') or 'error: ' + row['error']}"
-            + (f" (SNR {row['difference_image_snr']}, best star {row['best_source']})" if row.get("pixel_verdict") else "")
-            for row in rows
-        )
-        candidate_row = {column: candidate.get(column, "") for column in CANDIDATE_OUTPUT_COLUMNS}
-        candidate_row["check_verdict"] = candidate["verdict"]
-        candidate_row["sectors_checked"] = " ".join(str(row["sector"]) for row in rows)
-        candidate_row["pixel_verdicts_by_sector"] = summary
-        candidate_row["pixel_verdict"] = combined_pixel_verdict([row.get("pixel_verdict", "") for row in rows])
-        candidate_rows.append(candidate_row)
-        append_verification_record_entry(sector, candidate["tic_id"], candidate["period_days"], "pixel check",
-                                         candidate_row["pixel_verdict"] or "error", summary)
-        print(f"  {count} of {len(candidates)}: TIC {candidate['tic_id']} {candidate_row['pixel_verdict']}: {summary}",
-              flush=True)
-
-    for file_name, columns, rows in (("pixel_checks_by_sector.csv", OUTPUT_COLUMNS, sector_rows),
-                                     ("pixel_checks.csv", CANDIDATE_OUTPUT_COLUMNS, candidate_rows)):
-        with open(directory / file_name, "w", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=columns)
-            writer.writeheader()
-            writer.writerows(rows)
-        print(f"Wrote {(directory / file_name).relative_to(REPOSITORY_ROOT)}")
+                sectors = [sector]
+                print(f"  TIC {candidate['tic_id']}: sector list failed ({error}); Sector {sector} only", flush=True)
+            rows = []
+            for pixel_sector in sectors:
+                row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
+                row["check_verdict"] = candidate["verdict"]
+                row["sector"] = pixel_sector
+                try:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        row.update(check_pixels(candidate, star_row, pixel_sector, directory))
+                except Exception as error:
+                    row["error"] = f"{type(error).__name__}: {error}"
+                rows.append(row)
+            summary = "; ".join(
+                f"S{row['sector']} {row.get('pixel_verdict') or 'error: ' + row['error']}"
+                + (f" (SNR {row['difference_image_snr']}, best star {row['best_source']})"
+                   if row.get("pixel_verdict") else "")
+                for row in rows
+            )
+            candidate_row = {column: candidate.get(column, "") for column in CANDIDATE_OUTPUT_COLUMNS}
+            candidate_row["check_verdict"] = candidate["verdict"]
+            candidate_row["sectors_checked"] = " ".join(str(row["sector"]) for row in rows)
+            candidate_row["pixel_verdicts_by_sector"] = summary
+            candidate_row["pixel_verdict"] = combined_pixel_verdict([row.get("pixel_verdict", "") for row in rows])
+            append_verification_record_entry(sector, candidate["tic_id"], candidate["period_days"], "pixel check",
+                                             candidate_row["pixel_verdict"] or "error", summary)
+            for row in rows:
+                sector_writer.write_row(row)
+            candidate_writer.write_row(candidate_row)
+            print(f"  {count} of {len(candidates)}: TIC {candidate['tic_id']} {candidate_row['pixel_verdict']}: "
+                  f"{summary}", flush=True)
+    print(f"Wrote {sector_output_path.relative_to(REPOSITORY_ROOT)} and "
+          f"{candidate_output_path.relative_to(REPOSITORY_ROOT)}")
 
 
 if __name__ == "__main__":

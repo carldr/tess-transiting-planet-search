@@ -33,6 +33,7 @@ from leo_vetter.stellar import quadratic_ldc
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
 from download_qlp_sector_light_curves import light_curve_path
+from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows
 from search_qlp_sector import (
     detrend, load_light_curve, output_directory as search_output_directory, robust_standard_deviation,
 )
@@ -136,16 +137,6 @@ def selected_signals(sector, minimum_snr, minimum_transits):
                 yield signal
 
 
-def complete_vetting_rows(output_path):
-    """Return the rows of an earlier vetting.csv. A stopped run can leave a partial last line, so the script drops it."""
-    if not output_path.exists():
-        return []
-    text = output_path.read_text()
-    if not text.endswith("\n"):
-        text = text[:text.rfind("\n") + 1]
-    return list(csv.DictReader(text.splitlines()))
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
@@ -159,7 +150,7 @@ def main():
 
     output_directory(sector).mkdir(parents=True, exist_ok=True)
     output_path = output_directory(sector) / "vetting.csv"
-    previous_rows = complete_vetting_rows(output_path) if arguments.resume else []
+    previous_rows = complete_csv_rows(output_path) if arguments.resume else []
     vetted = {(row["tic_id"], row["signal_number"]) for row in previous_rows}
 
     star_rows = {int(row["tic_id"]): row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}
@@ -171,15 +162,10 @@ def main():
     print(f"Sector {sector}: {len(signals)} signals with SNR >= {arguments.min_snr} "
           f"and >= {arguments.min_transits} transits, {len(previous_rows)} vetted in an earlier run", flush=True)
 
-    with Pool(arguments.workers) as pool, open(output_path, "w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=OUTPUT_COLUMNS)
-        writer.writeheader()
-        writer.writerows(previous_rows)
-        file.flush()
+    with Pool(arguments.workers) as pool, IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, previous_rows) as writer:
         for count, row in enumerate(pool.imap_unordered(vet_signal, tasks, chunksize=2), start=len(previous_rows) + 1):
-            writer.writerow(row)
+            writer.write_row(row)
             if count % 500 == 0:
-                file.flush()
                 print(f"  {count} of {len(signals)} signals vetted", flush=True)
     print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}")
 

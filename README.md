@@ -62,6 +62,14 @@ Run each script from the repository root.
 
 Run these steps in order. The examples use Sector 98, the sector that Rabtsevich searched.
 
+A stop, such as a reboot or a power cut, loses at most the item in progress in the long steps:
+
+- Steps 2 and 3 skip the stars and chunks that are already done. Run them again to continue.
+- Steps 4 and 7–10 write each result to disk as soon as they have it. Add `--resume` to continue a stopped run.
+  Without `--resume`, they start again from the first item.
+
+Steps 1, 5 and 6 write their output only at the end. Run them again from the start.
+
 1. List the stars with a QLP light curve in the sector, with their TIC magnitude, radius, mass and temperature:
 
    ```
@@ -106,7 +114,6 @@ Run these steps in order. The examples use Sector 98, the sector that Rabtsevich
    The script writes `results/qlp_sector_0098_leo_vetting/vetting.csv`, with the names of the tests that each signal failed.
    It does not run the LEO-Vetter pixel-level tests.
    It uses all but two CPU cores. Add `--workers 9` to use 9 processes.
-   Add `--resume` to continue a stopped run. Without it, the script vets all signals again.
 
 5. Download the catalogues of known transit signals:
 

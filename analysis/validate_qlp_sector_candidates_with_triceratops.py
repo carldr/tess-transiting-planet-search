@@ -28,6 +28,7 @@ Run from the repository root, with the TRICERATOPS environment, after verify_qlp
     .venv_triceratops/bin/python analysis/validate_qlp_sector_candidates_with_triceratops.py 98
 
 Output: results/qlp_sector_<nnnn>_triceratops_validation/triceratops_validation.csv, one row per candidate.
+The script writes each row as soon as it has it. --resume keeps the rows of a stopped run and validates only the others.
 The script also appends the result of each candidate to its verification record.
 """
 
@@ -40,6 +41,7 @@ import numpy as np
 from build_qlp_sector_star_list import REPOSITORY_ROOT
 from candidate_verification_records import append_verification_record_entry
 from check_qlp_sector_candidate_pixels import PIXEL_SIZE_ARCSEC, UNRESOLVABLE_SEPARATION_PIXELS
+from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows
 from search_qlp_sector import robust_standard_deviation
 from verify_qlp_sector_candidates_over_all_sectors import (
     load_all_sectors, output_directory as all_sector_verification_output_directory, phase_time,
@@ -141,41 +143,43 @@ def validate(sector, candidate):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
-    sector = parser.parse_args().sector
-
-    verifications = list(csv.DictReader(
-        open(all_sector_verification_output_directory(sector) / "all_sector_verification.csv")))
-    candidates = [row for row in verifications if row["verdict"] == "passed"]
-    print(f"Sector {sector}: {len(candidates)} candidates passed the all-sector verification", flush=True)
-
-    rows = []
-    for count, candidate in enumerate(candidates, start=1):
-        row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                row.update(validate(sector, candidate))
-        except Exception as error:
-            row["error"] = f"{type(error).__name__}: {error}"
-        rows.append(row)
-        result = row["error"] or (
-            f"sectors {candidate['sectors_used']}; FPP {row['fpp_mean']} +/- {row['fpp_standard_deviation']}; "
-            f"NFPP {row['nfpp_mean']} +/- {row['nfpp_standard_deviation']}; most likely scenario "
-            f"{row['most_likely_scenario']}; nearby scenarios excluded: {row['nearby_scenarios_excluded']}; "
-            f"{RUNS_PER_CANDIDATE} runs"
-        )
-        append_verification_record_entry(sector, candidate["tic_id"], candidate["period_days"], "TRICERATOPS",
-                                         row["triceratops_verdict"] or "error", result)
-        print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['triceratops_verdict'] or 'error'}: {result}",
-              flush=True)
+    parser.add_argument("--resume", action="store_true",
+                        help="keep the candidates in an earlier triceratops_validation.csv and validate only the others")
+    arguments = parser.parse_args()
+    sector = arguments.sector
 
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     output_path = directory / "triceratops_validation.csv"
-    with open(output_path, "w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=OUTPUT_COLUMNS)
-        writer.writeheader()
-        writer.writerows(rows)
+    earlier_rows = complete_csv_rows(output_path) if arguments.resume else []
+    validated = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
+    verifications = list(csv.DictReader(
+        open(all_sector_verification_output_directory(sector) / "all_sector_verification.csv")))
+    passed = [row for row in verifications if row["verdict"] == "passed"]
+    candidates = [row for row in passed if (row["tic_id"], row["period_days"]) not in validated]
+    print(f"Sector {sector}: {len(passed)} candidates passed the all-sector verification, "
+          f"{len(earlier_rows)} validated in an earlier run", flush=True)
+
+    with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer:
+        for count, candidate in enumerate(candidates, start=1):
+            row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    row.update(validate(sector, candidate))
+            except Exception as error:
+                row["error"] = f"{type(error).__name__}: {error}"
+            result = row["error"] or (
+                f"sectors {candidate['sectors_used']}; FPP {row['fpp_mean']} +/- {row['fpp_standard_deviation']}; "
+                f"NFPP {row['nfpp_mean']} +/- {row['nfpp_standard_deviation']}; most likely scenario "
+                f"{row['most_likely_scenario']}; nearby scenarios excluded: {row['nearby_scenarios_excluded']}; "
+                f"{RUNS_PER_CANDIDATE} runs"
+            )
+            append_verification_record_entry(sector, candidate["tic_id"], candidate["period_days"], "TRICERATOPS",
+                                             row["triceratops_verdict"] or "error", result)
+            writer.write_row(row)
+            print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['triceratops_verdict'] or 'error'}: "
+                  f"{result}", flush=True)
     print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}")
 
 

@@ -33,6 +33,7 @@ Run from the repository root, after cross_match_qlp_sector_signals_with_known_ca
 
 The script saves the other-sector light curves in data/candidate_other_sector_light_curves/.
 Output: results/qlp_sector_<nnnn>_new_candidate_checks/candidate_checks.csv, one row per candidate.
+The script writes each row as soon as it has it. --resume keeps the rows of a stopped run and checks only the others.
 The script also appends the result of each candidate to its verification record.
 """
 
@@ -55,6 +56,7 @@ from cross_match_qlp_sector_signals_with_known_catalogues import (
     CATALOGUE_DIRECTORY, output_directory as cross_match_output_directory,
 )
 from download_qlp_sector_light_curves import light_curve_path
+from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows
 from search_qlp_sector import (
     DURATIONS_DAYS, FREQUENCY_FACTOR, MAXIMUM_PERIOD_DAYS, MINIMUM_PERIOD_DAYS, detrend, load_light_curve,
     output_directory as search_output_directory, robust_standard_deviation, select_usable_cadences,
@@ -499,37 +501,43 @@ def check_candidate(candidate, sector, ephemeris_sources, stars, gaia_dr2_source
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
-    sector = parser.parse_args().sector
-
-    candidates = list(csv.DictReader(open(cross_match_output_directory(sector) / "new_candidates.csv")))
-    print(f"Sector {sector}: {len(candidates)} new candidates", flush=True)
-    ephemeris_sources, stars = load_ephemeris_sources(sector)
-    gaia_dr2_source_ids = gaia_dr2_source_ids_by_tic_id({candidate["tic_id"] for candidate in candidates})
-
-    # The candidates run one at a time: lightkurve redirects stdout during a download, which breaks other threads.
-    rows = []
-    for count, candidate in enumerate(candidates, start=1):
-        row = check_candidate(candidate, sector, ephemeris_sources, stars,
-                              gaia_dr2_source_ids.get(int(candidate["tic_id"])))
-        rows.append(row)
-        append_verification_record_entry(
-            sector, row["tic_id"], row["period_days"], "independent data checks", row["verdict"],
-            f"other sectors: {row['other_sector_results'] or 'none'}; joint search SNR {row['joint_search_snr']} "
-            f"against highest null SNR {row['joint_search_highest_null_snr']}; Gaia RUWE {row['gaia_ruwe']}; "
-            f"companion radius {row['companion_radius_earth_radii']} Earth radii; "
-            f"refuted by: {row['refuted_by'] or 'nothing'}; cautions: {row['cautions'] or 'none'}"
-            f"{'; error: ' + row['error'] if row['error'] else ''}",
-        )
-        print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['verdict']}"
-              f"{' (' + row['refuted_by'] + ')' if row['refuted_by'] else ''}", flush=True)
+    parser.add_argument("--resume", action="store_true",
+                        help="keep the candidates in an earlier candidate_checks.csv and check only the others")
+    arguments = parser.parse_args()
+    sector = arguments.sector
 
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     output_path = directory / "candidate_checks.csv"
-    with open(output_path, "w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=OUTPUT_COLUMNS)
-        writer.writeheader()
-        writer.writerows(rows)
+    earlier_rows = complete_csv_rows(output_path) if arguments.resume else []
+    checked = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
+    all_candidates = list(csv.DictReader(open(cross_match_output_directory(sector) / "new_candidates.csv")))
+    candidates = [candidate for candidate in all_candidates
+                  if (candidate["tic_id"], candidate["period_days"]) not in checked]
+    print(f"Sector {sector}: {len(all_candidates)} new candidates, {len(earlier_rows)} checked in an earlier run",
+          flush=True)
+    ephemeris_sources, stars = load_ephemeris_sources(sector)
+    gaia_dr2_source_ids = gaia_dr2_source_ids_by_tic_id({candidate["tic_id"] for candidate in candidates})
+
+    # The candidates run one at a time: lightkurve redirects stdout during a download, which breaks other threads.
+    rows = list(earlier_rows)
+    with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer:
+        for count, candidate in enumerate(candidates, start=1):
+            row = check_candidate(candidate, sector, ephemeris_sources, stars,
+                                  gaia_dr2_source_ids.get(int(candidate["tic_id"])))
+            rows.append(row)
+            append_verification_record_entry(
+                sector, row["tic_id"], row["period_days"], "independent data checks", row["verdict"],
+                f"other sectors: {row['other_sector_results'] or 'none'}; joint search SNR {row['joint_search_snr']} "
+                f"against highest null SNR {row['joint_search_highest_null_snr']}; Gaia RUWE {row['gaia_ruwe']}; "
+                f"companion radius {row['companion_radius_earth_radii']} Earth radii; "
+                f"refuted by: {row['refuted_by'] or 'nothing'}; cautions: {row['cautions'] or 'none'}"
+                f"{'; error: ' + row['error'] if row['error'] else ''}",
+            )
+            writer.write_row(row)
+            print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['verdict']}"
+                  f"{' (' + row['refuted_by'] + ')' if row['refuted_by'] else ''}", flush=True)
+
     counts = {name: sum(row["verdict"] == name for row in rows) for name in ("supported", "unconfirmed", "refuted")}
     print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}: {counts}")
 

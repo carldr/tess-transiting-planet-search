@@ -31,6 +31,7 @@ Run from the repository root, after check_qlp_sector_candidate_pixels.py:
 Output, in results/qlp_sector_<nnnn>_all_sector_verification/:
 - all_sector_verification.csv: one row per candidate;
 - tic<TIC ID>_<period>.png: the folded transit of each sector with the model, and the folded light curve at phase 0.5.
+The script writes each row as soon as it has it. --resume keeps the rows of a stopped run and verifies only the others.
 The script also appends the result of each candidate to its verification record.
 """
 
@@ -65,6 +66,7 @@ from check_qlp_sector_new_candidates import (
     other_sector_products, output_directory as candidate_checks_output_directory,
 )
 from download_qlp_sector_light_curves import light_curve_path
+from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows
 from search_qlp_sector import (
     BIWEIGHT_WINDOW_LENGTH_DAYS, load_light_curve, robust_standard_deviation,
 )
@@ -541,51 +543,56 @@ def draw_figure(path, sectors, all_sectors, model, theta, duration, candidate, v
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
-    sector = parser.parse_args().sector
+    parser.add_argument("--resume", action="store_true",
+                        help="keep the candidates in an earlier all_sector_verification.csv and verify only the others")
+    arguments = parser.parse_args()
+    sector = arguments.sector
 
+    directory = output_directory(sector)
+    directory.mkdir(parents=True, exist_ok=True)
+    output_path = directory / "all_sector_verification.csv"
+    earlier_rows = complete_csv_rows(output_path) if arguments.resume else []
+    verified = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     pixel_checks = list(csv.DictReader(open(pixel_checks_output_directory(sector) / "pixel_checks.csv")))
     checks = {(row["tic_id"], row["period_days"]): row
               for row in csv.DictReader(open(candidate_checks_output_directory(sector) / "candidate_checks.csv"))}
     star_rows = {row["tic_id"]: row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}
-    candidates = [row for row in pixel_checks if row["pixel_verdict"] in PIXEL_VERDICTS_TO_VERIFY]
-    directory = output_directory(sector)
-    directory.mkdir(parents=True, exist_ok=True)
-    print(f"Sector {sector}: {len(candidates)} candidates on the target or unresolved", flush=True)
+    to_verify = [row for row in pixel_checks if row["pixel_verdict"] in PIXEL_VERDICTS_TO_VERIFY]
+    candidates = [row for row in to_verify if (row["tic_id"], row["period_days"]) not in verified]
+    print(f"Sector {sector}: {len(to_verify)} candidates on the target or unresolved, "
+          f"{len(earlier_rows)} verified in an earlier run", flush=True)
 
-    rows = []
-    for count, pixel_check in enumerate(candidates, start=1):
-        candidate = {**checks[(pixel_check["tic_id"], pixel_check["period_days"])], **pixel_check}
-        row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                row.update(verify(sector, candidate, star_rows[candidate["tic_id"]], candidate["gaia_source_id"],
-                                  directory))
-        except Exception as error:
-            row["error"] = f"{type(error).__name__}: {error}"
-        rows.append(row)
-        result = row["error"] or (
-            f"sectors {row['sectors_used']}; P {row['fit_period_days']} +/- {row['fit_period_error_days']} d; "
-            f"T0 {row['fit_epoch_btjd']} +/- {row['fit_epoch_error_days']} BTJD; depth {row['fit_depth_ppm']} "
-            f"+/- {row['fit_depth_error_ppm']} ppm; duration {row['fit_duration_hours']} h; b {row['fit_impact_parameter']}; "
-            f"Rp {row['planet_radius_earth_radii']} +/- {row['planet_radius_error_earth_radii']} Earth radii; "
-            f"density ratio {row['stellar_density_fit_to_tic_ratio']}; odd-even {row['odd_even_difference_sigma']} sigma; "
-            f"sector depths {row['depth_ppm_by_sector']} (p {row['sector_depth_consistency_p_value']}); "
-            f"secondary {row['secondary_depth_ppm']} +/- {row['secondary_depth_error_ppm']} ppm "
-            f"(planet maximum {row['secondary_maximum_planet_depth_ppm']}); Gaia RV variable {row.get('gaia_rv_variable', '')}; "
-            f"LAMOST: {row['lamost_spectra'] or 'none'}; refuted by: {row['refuted_by'] or 'nothing'}; "
-            f"cautions: {row['cautions'] or 'none'}"
-        )
-        append_verification_record_entry(sector, candidate["tic_id"], candidate["period_days"],
-                                         "all-sector verification", row["verdict"] or "error", result)
-        print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['verdict'] or row['error']}: {result}",
-              flush=True)
-
-    output_path = directory / "all_sector_verification.csv"
-    with open(output_path, "w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=OUTPUT_COLUMNS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
+    with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer:
+        for count, pixel_check in enumerate(candidates, start=1):
+            candidate = {**checks[(pixel_check["tic_id"], pixel_check["period_days"])], **pixel_check}
+            row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    row.update(verify(sector, candidate, star_rows[candidate["tic_id"]], candidate["gaia_source_id"],
+                                      directory))
+            except Exception as error:
+                row["error"] = f"{type(error).__name__}: {error}"
+            result = row["error"] or (
+                f"sectors {row['sectors_used']}; P {row['fit_period_days']} +/- {row['fit_period_error_days']} d; "
+                f"T0 {row['fit_epoch_btjd']} +/- {row['fit_epoch_error_days']} BTJD; depth {row['fit_depth_ppm']} "
+                f"+/- {row['fit_depth_error_ppm']} ppm; duration {row['fit_duration_hours']} h; "
+                f"b {row['fit_impact_parameter']}; "
+                f"Rp {row['planet_radius_earth_radii']} +/- {row['planet_radius_error_earth_radii']} Earth radii; "
+                f"density ratio {row['stellar_density_fit_to_tic_ratio']}; "
+                f"odd-even {row['odd_even_difference_sigma']} sigma; "
+                f"sector depths {row['depth_ppm_by_sector']} (p {row['sector_depth_consistency_p_value']}); "
+                f"secondary {row['secondary_depth_ppm']} +/- {row['secondary_depth_error_ppm']} ppm "
+                f"(planet maximum {row['secondary_maximum_planet_depth_ppm']}); "
+                f"Gaia RV variable {row.get('gaia_rv_variable', '')}; "
+                f"LAMOST: {row['lamost_spectra'] or 'none'}; refuted by: {row['refuted_by'] or 'nothing'}; "
+                f"cautions: {row['cautions'] or 'none'}"
+            )
+            append_verification_record_entry(sector, candidate["tic_id"], candidate["period_days"],
+                                             "all-sector verification", row["verdict"] or "error", result)
+            writer.write_row(row)
+            print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['verdict'] or row['error']}: {result}",
+                  flush=True)
     print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}")
 
 
