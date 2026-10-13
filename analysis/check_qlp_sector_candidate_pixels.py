@@ -32,8 +32,8 @@ Output, in results/qlp_sector_<nnnn>_candidate_pixel_checks/:
 - pixel_checks.csv: one row per candidate, with the combined verdict;
 - pixel_checks_by_sector.csv: one row per candidate and sector;
 - tic<TIC ID>_<period>_s<sector>.png: the out-of-transit image and the difference image, with the stars marked.
-The script writes the rows of each candidate as soon as it has them. --resume keeps the candidates of a stopped run
-and checks only the others.
+The script writes the rows of each candidate as soon as it has them. It keeps the candidates of an earlier run with a
+pixel verdict, and checks only the other candidates. --restart checks all candidates again.
 The script also appends the result of each candidate to its verification record.
 """
 
@@ -59,7 +59,7 @@ from transitDiffImage.tessprfmodel import SimpleTessPRF
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
 from candidate_verification_records import append_verification_record_entry
 from check_qlp_sector_new_candidates import output_directory as candidate_checks_output_directory
-from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows
+from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows, earlier_rows_to_keep
 
 CUTOUT_DIRECTORY = REPOSITORY_ROOT / "data/candidate_tesscut_cutouts"
 CUTOUT_SIZE_PIXELS = 21
@@ -329,18 +329,21 @@ def combined_pixel_verdict(sector_verdicts):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
-    parser.add_argument("--resume", action="store_true",
-                        help="keep the candidates in an earlier pixel_checks.csv and check only the others")
+    parser.add_argument("--restart", action="store_true",
+                        help="check all candidates again, not only those without a row in pixel_checks.csv")
     arguments = parser.parse_args()
     sector = arguments.sector
 
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     sector_output_path, candidate_output_path = directory / "pixel_checks_by_sector.csv", directory / "pixel_checks.csv"
-    earlier_candidate_rows = complete_csv_rows(candidate_output_path) if arguments.resume else []
+    # A candidate row with no pixel verdict has an error in each sector, so the script checks that candidate again.
+    earlier_candidate_rows = [row for row in earlier_rows_to_keep(candidate_output_path, arguments.restart)
+                              if row["pixel_verdict"]]
     checked = {(row["tic_id"], row["period_days"]) for row in earlier_candidate_rows}
-    # A stop between the two files can leave sector rows of a candidate with no candidate row. The script drops them.
-    earlier_sector_rows = [row for row in (complete_csv_rows(sector_output_path) if arguments.resume else [])
+    # The script keeps the sector rows of the kept candidates only. A stop between the two files can leave sector rows
+    # of a candidate with no candidate row.
+    earlier_sector_rows = [row for row in complete_csv_rows(sector_output_path)
                            if (row["tic_id"], row["period_days"]) in checked]
     checks = list(csv.DictReader(open(candidate_checks_output_directory(sector) / "candidate_checks.csv")))
     not_refuted = [row for row in checks if row["verdict"] != "refuted"]

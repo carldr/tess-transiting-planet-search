@@ -11,6 +11,7 @@ Run from the repository root, for example for Sector 98:
     .venv/bin/python analysis/search_qlp_sector.py 98
 
 The script works in chunks of 1000 stars and skips chunks that are already done, so it continues an interrupted run.
+--restart deletes the chunks of an earlier run and searches all stars again.
 
 Output: results/qlp_sector_<nnnn>_bls_search/chunk_<nnnn>.csv, one row per signal, with the columns
 tic_id, signal_number, period_days, epoch_btjd, duration_hours, depth_ppm, snr, sde, transit_count, point_count,
@@ -144,8 +145,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
     parser.add_argument("--workers", type=int, default=max(1, os.cpu_count() - 2))
+    parser.add_argument("--restart", action="store_true", help="delete the chunks of an earlier run and search all stars")
     arguments = parser.parse_args()
     sector = arguments.sector
+    if arguments.restart:
+        for chunk_path in output_directory(sector).glob("chunk_*.csv"):
+            chunk_path.unlink()
 
     light_curve_paths = sorted(
         (sector_directory(sector) / "light_curves").glob("*/*.npz"), key=lambda path: int(path.stem)

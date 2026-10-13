@@ -14,7 +14,8 @@ LEO-Vetter also has pixel-level tests; this script does not run them.
 Run from the repository root, for example for Sector 98:
     .venv/bin/python analysis/vet_qlp_sector_signals.py 98
 
---workers sets the number of processes. --resume keeps the signals of a stopped run and vets only the others.
+--workers sets the number of processes. The script writes each row as soon as it has it. It keeps the rows of an
+earlier run without an error, and vets only the other signals. --restart vets all signals again.
 
 Output: results/qlp_sector_<nnnn>_leo_vetting/vetting.csv, one row per vetted signal, with the search values,
 the main LEO-Vetter metrics, passes_false_alarm_tests, passes_false_positive_tests and the names of the failed tests.
@@ -33,7 +34,7 @@ from leo_vetter.stellar import quadratic_ldc
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
 from download_qlp_sector_light_curves import light_curve_path
-from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows
+from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
 from search_qlp_sector import (
     detrend, load_light_curve, output_directory as search_output_directory, robust_standard_deviation,
 )
@@ -143,14 +144,14 @@ def main():
     parser.add_argument("--min-snr", type=float, default=7.0)
     parser.add_argument("--min-transits", type=int, default=3)
     parser.add_argument("--workers", type=int, default=max(1, os.cpu_count() - 2))
-    parser.add_argument("--resume", action="store_true",
-                        help="keep the signals in an earlier vetting.csv of this sector and vet only the others")
+    parser.add_argument("--restart", action="store_true",
+                        help="vet all signals again, not only those without a row in vetting.csv")
     arguments = parser.parse_args()
     sector = arguments.sector
 
     output_directory(sector).mkdir(parents=True, exist_ok=True)
     output_path = output_directory(sector) / "vetting.csv"
-    previous_rows = complete_csv_rows(output_path) if arguments.resume else []
+    previous_rows = earlier_rows_to_keep(output_path, arguments.restart)
     vetted = {(row["tic_id"], row["signal_number"]) for row in previous_rows}
 
     star_rows = {int(row["tic_id"]): row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}

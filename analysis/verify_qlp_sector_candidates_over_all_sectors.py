@@ -31,7 +31,8 @@ Run from the repository root, after check_qlp_sector_candidate_pixels.py:
 Output, in results/qlp_sector_<nnnn>_all_sector_verification/:
 - all_sector_verification.csv: one row per candidate;
 - tic<TIC ID>_<period>.png: the folded transit of each sector with the model, and the folded light curve at phase 0.5.
-The script writes each row as soon as it has it. --resume keeps the rows of a stopped run and verifies only the others.
+The script writes each row as soon as it has it. It keeps the rows of an earlier run without an error, and verifies
+only the other candidates. --restart verifies all candidates again.
 The script also appends the result of each candidate to its verification record.
 """
 
@@ -66,7 +67,7 @@ from check_qlp_sector_new_candidates import (
     other_sector_products, output_directory as candidate_checks_output_directory,
 )
 from download_qlp_sector_light_curves import light_curve_path
-from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows
+from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
 from search_qlp_sector import (
     BIWEIGHT_WINDOW_LENGTH_DAYS, load_light_curve, robust_standard_deviation,
 )
@@ -543,15 +544,15 @@ def draw_figure(path, sectors, all_sectors, model, theta, duration, candidate, v
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
-    parser.add_argument("--resume", action="store_true",
-                        help="keep the candidates in an earlier all_sector_verification.csv and verify only the others")
+    parser.add_argument("--restart", action="store_true",
+                        help="verify all candidates again, not only those without a row in all_sector_verification.csv")
     arguments = parser.parse_args()
     sector = arguments.sector
 
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     output_path = directory / "all_sector_verification.csv"
-    earlier_rows = complete_csv_rows(output_path) if arguments.resume else []
+    earlier_rows = earlier_rows_to_keep(output_path, arguments.restart)
     verified = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     pixel_checks = list(csv.DictReader(open(pixel_checks_output_directory(sector) / "pixel_checks.csv")))
     checks = {(row["tic_id"], row["period_days"]): row

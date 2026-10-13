@@ -28,7 +28,8 @@ Run from the repository root, with the TRICERATOPS environment, after verify_qlp
     .venv_triceratops/bin/python analysis/validate_qlp_sector_candidates_with_triceratops.py 98
 
 Output: results/qlp_sector_<nnnn>_triceratops_validation/triceratops_validation.csv, one row per candidate.
-The script writes each row as soon as it has it. --resume keeps the rows of a stopped run and validates only the others.
+The script writes each row as soon as it has it. It keeps the rows of an earlier run without an error, and validates
+only the other candidates. --restart validates all candidates again.
 The script also appends the result of each candidate to its verification record.
 """
 
@@ -41,7 +42,7 @@ import numpy as np
 from build_qlp_sector_star_list import REPOSITORY_ROOT
 from candidate_verification_records import append_verification_record_entry
 from check_qlp_sector_candidate_pixels import PIXEL_SIZE_ARCSEC, UNRESOLVABLE_SEPARATION_PIXELS
-from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows
+from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
 from search_qlp_sector import robust_standard_deviation
 from verify_qlp_sector_candidates_over_all_sectors import (
     load_all_sectors, output_directory as all_sector_verification_output_directory, phase_time,
@@ -143,15 +144,15 @@ def validate(sector, candidate):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
-    parser.add_argument("--resume", action="store_true",
-                        help="keep the candidates in an earlier triceratops_validation.csv and validate only the others")
+    parser.add_argument("--restart", action="store_true",
+                        help="validate all candidates again, not only those without a row in triceratops_validation.csv")
     arguments = parser.parse_args()
     sector = arguments.sector
 
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     output_path = directory / "triceratops_validation.csv"
-    earlier_rows = complete_csv_rows(output_path) if arguments.resume else []
+    earlier_rows = earlier_rows_to_keep(output_path, arguments.restart)
     validated = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     verifications = list(csv.DictReader(
         open(all_sector_verification_output_directory(sector) / "all_sector_verification.csv")))

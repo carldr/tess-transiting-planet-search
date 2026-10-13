@@ -62,13 +62,17 @@ Run each script from the repository root.
 
 Run these steps in order. The examples use Sector 98, the sector that Rabtsevich searched.
 
-A stop, such as a reboot or a power cut, loses at most the item in progress in the long steps:
+Steps 2–4 and 7–10 continue a stopped run by default. A stop, such as a reboot or a power cut, loses at most the item in progress:
 
-- Steps 2 and 3 skip the stars and chunks that are already done. Run them again to continue.
-- Steps 4 and 7–10 write each result to disk as soon as they have it. Add `--resume` to continue a stopped run.
-  Without `--resume`, they start again from the first item.
+- Steps 2 and 3 skip the stars and chunks that are already done.
+- Steps 4 and 7–10 write each result to disk as soon as they have it. They keep the earlier results without an error, and do the other items.
+  They do the items with an error again, so they retry a temporary failure, such as an archive outage.
 
-Steps 1, 5 and 6 write their output only at the end. Run them again from the start.
+Run the same command again to continue.
+Steps 1, 5 and 6 write their output only at the end, and always start from the beginning.
+
+Add `--restart` to each later step after you change the code or the output of an earlier step.
+Otherwise the later steps keep their results from the old input.
 
 1. List the stars with a QLP light curve in the sector, with their TIC magnitude, radius, mass and temperature:
 
@@ -260,7 +264,7 @@ A candidate goes to the next step only when it meets the condition of that step:
 | 9 | `verify_qlp_sector_candidates_over_all_sectors.py` | The verdict is "passed". |
 | 10 | `validate_qlp_sector_candidates_with_triceratops.py` | The verdict is "likely planet" or "validated without imaging". |
 
-Before a CTOI submission, download the catalogues again (step 5), and run steps 6 to 10 again.
+Before a CTOI submission, download the catalogues again (step 5), and run steps 6 to 10 again, with `--restart` on steps 7 to 10.
 A CTOI is published under the name of the person who submits it.
 
 Each of steps 6 to 10 appends one row per candidate to the verification record of the candidate, `results/candidate_verification_records/tic<TIC ID>_period_<period>_days.md`.

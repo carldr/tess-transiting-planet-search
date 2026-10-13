@@ -33,7 +33,8 @@ Run from the repository root, after cross_match_qlp_sector_signals_with_known_ca
 
 The script saves the other-sector light curves in data/candidate_other_sector_light_curves/.
 Output: results/qlp_sector_<nnnn>_new_candidate_checks/candidate_checks.csv, one row per candidate.
-The script writes each row as soon as it has it. --resume keeps the rows of a stopped run and checks only the others.
+The script writes each row as soon as it has it. It keeps the rows of an earlier run without an error, and checks
+only the other candidates. --restart checks all candidates again.
 The script also appends the result of each candidate to its verification record.
 """
 
@@ -56,7 +57,7 @@ from cross_match_qlp_sector_signals_with_known_catalogues import (
     CATALOGUE_DIRECTORY, output_directory as cross_match_output_directory,
 )
 from download_qlp_sector_light_curves import light_curve_path
-from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows
+from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
 from search_qlp_sector import (
     DURATIONS_DAYS, FREQUENCY_FACTOR, MAXIMUM_PERIOD_DAYS, MINIMUM_PERIOD_DAYS, detrend, load_light_curve,
     output_directory as search_output_directory, robust_standard_deviation, select_usable_cadences,
@@ -501,15 +502,15 @@ def check_candidate(candidate, sector, ephemeris_sources, stars, gaia_dr2_source
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
-    parser.add_argument("--resume", action="store_true",
-                        help="keep the candidates in an earlier candidate_checks.csv and check only the others")
+    parser.add_argument("--restart", action="store_true",
+                        help="check all candidates again, not only those without a row in candidate_checks.csv")
     arguments = parser.parse_args()
     sector = arguments.sector
 
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     output_path = directory / "candidate_checks.csv"
-    earlier_rows = complete_csv_rows(output_path) if arguments.resume else []
+    earlier_rows = earlier_rows_to_keep(output_path, arguments.restart)
     checked = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     all_candidates = list(csv.DictReader(open(cross_match_output_directory(sector) / "new_candidates.csv")))
     candidates = [candidate for candidate in all_candidates

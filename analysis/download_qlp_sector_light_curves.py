@@ -4,7 +4,7 @@ The script reads data/qlp_sector_<nnnn>/star_list.csv (from build_qlp_sector_sta
 or brighter than --max-tmag. For each star it downloads the QLP FITS file into memory and saves only
 TIME, SAP_FLUX and QUALITY. A QLP FITS file of Sector 98 is about 1.5 MB; the saved arrays are about 0.25 MB.
 
-The script skips stars that it already saved, so it continues an interrupted run.
+The script skips stars that it already saved, so it continues an interrupted run. --restart downloads all stars again.
 It writes the stars that failed to download into failed_downloads.csv; run the script again to retry them.
 
 Run from the repository root, for example for Sector 98:
@@ -35,9 +35,9 @@ def light_curve_path(sector, tic_id):
     return sector_directory(sector) / "light_curves" / f"{tic_id % 1000:03d}" / f"{tic_id}.npz"
 
 
-def download_and_save(sector, tic_id, url):
+def download_and_save(sector, tic_id, url, restart):
     path = light_curve_path(sector, tic_id)
-    if path.exists():
+    if path.exists() and not restart:
         return tic_id, "skipped", 0
     for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
         try:
@@ -65,6 +65,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
     parser.add_argument("--max-tmag", type=float, default=11.5)
+    parser.add_argument("--restart", action="store_true", help="download all light curves again, over the saved ones")
     arguments = parser.parse_args()
     sector = arguments.sector
 
@@ -80,7 +81,8 @@ def main():
     start = time.time()
     with ThreadPoolExecutor(DOWNLOAD_THREADS) as executor:
         futures = [
-            executor.submit(download_and_save, sector, int(row["tic_id"]), row["light_curve_url"]) for row in stars
+            executor.submit(download_and_save, sector, int(row["tic_id"]), row["light_curve_url"], arguments.restart)
+            for row in stars
         ]
         for count, future in enumerate(as_completed(futures), start=1):
             tic_id, status, size = future.result()

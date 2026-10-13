@@ -1,7 +1,7 @@
 """Write a results CSV one row at a time, so that a stopped run can continue.
 
-IncrementalCsvWriter writes each row to disk as soon as the step has it. A step that runs with --resume reads the
-rows of its earlier run with complete_csv_rows, gives them to the writer, and skips them.
+IncrementalCsvWriter writes each row to disk as soon as the step has it. A step reads the rows of its earlier run
+with earlier_rows_to_keep, gives them to the writer, and skips their items. --restart makes the step start again.
 """
 
 import csv
@@ -16,6 +16,16 @@ def complete_csv_rows(path):
     if not text.endswith("\n"):
         text = text[:text.rfind("\n") + 1]
     return list(csv.DictReader(text.splitlines()))
+
+
+def earlier_rows_to_keep(path, restart):
+    """Return no rows with --restart. Otherwise, return the complete rows of the earlier run that have no error.
+
+    The step does the items of the other rows again, so it retries a temporary failure, such as an archive outage.
+    """
+    if restart:
+        return []
+    return [row for row in complete_csv_rows(path) if not row.get("error")]
 
 
 class IncrementalCsvWriter:
