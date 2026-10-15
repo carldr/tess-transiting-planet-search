@@ -5,7 +5,9 @@ The script takes each candidate with pixel verdict "on target" or "unresolved", 
    detrends each light curve with the transits masked, so the detrending does not make the transits shallower;
 2. fits one transit model to all sectors with batman and emcee. Each sector model is integrated over the exposure
    time of that sector. The fit gives the period, the epoch, the depth, Rp/R*, the impact parameter, a/R* and the
-   duration, each with its 1-sigma error. The planet radius uses the TIC stellar radius and its error;
+   duration, each with its 1-sigma error. The planet radius uses the TIC stellar radius and its error. The chain
+   runs until the emcee autocorrelation test says it is converged, and a seed from the TIC ID makes a rerun give
+   the same chain;
 3. compares the stellar density from a/R* with the TIC stellar density. An eclipsing binary on another star often
    gives a transit shape that does not fit the target;
 4. measures the depth of the odd and the even transits with the fitted shape. Different depths mean an eclipsing
@@ -101,8 +103,12 @@ FULL_FRAME_IMAGE_EXPOSURE_SECONDS_BY_FIRST_SECTOR = {1: 1800, 27: 600, 56: 200}
 # batman integrates the model over the exposure in steps of at most this many seconds.
 SUPERSAMPLE_STEP_SECONDS = 120
 MCMC_WALKERS = 40
-MCMC_STEPS = 4000
-MCMC_BURN_IN_STEPS = 1500
+MCMC_MAXIMUM_STEPS = 100_000
+MCMC_CONVERGENCE_CHECK_STEPS = 1000
+MCMC_CONVERGED_AUTOCORRELATION_TIMES = 50
+MCMC_AUTOCORRELATION_TOLERANCE = 0.01
+# The fit drops the first steps of the chain, this many autocorrelation times.
+MCMC_BURN_IN_AUTOCORRELATION_TIMES = 5
 # The depth at mid-transit comes from the model of this many random samples of the chain.
 DEPTH_SAMPLES = 2000
 ODD_EVEN_SIGMA_LIMIT = 3.0
@@ -128,8 +134,8 @@ OUTPUT_COLUMNS = [
     "depth_ppm_by_sector", "sector_depth_consistency_p_value", "cutout_depth_ppm_by_sector_and_aperture",
     "cutout_sector_depth_consistency_p_value", "secondary_depth_ppm", "secondary_depth_error_ppm",
     "secondary_maximum_planet_depth_ppm", "ellipsoidal_amplitude_ppm_by_sector", "ellipsoidal_amplitude_ppm",
-    "ellipsoidal_amplitude_error_ppm", "ellipsoidal_companion_mass_solar_masses", "gaia_source_id", "gaia_rv_nb_transits", "gaia_rv_chisq_pvalue",
-    "gaia_rv_renormalised_gof", "gaia_rv_amplitude_robust_km_s", "gaia_vbroad_km_s", "gaia_rv_variable",
+    "ellipsoidal_amplitude_error_ppm", "ellipsoidal_companion_mass_solar_masses", "gaia_source_id",
+    "gaia_rv_nb_transits", "gaia_rv_chisq_pvalue", "gaia_rv_renormalised_gof", "gaia_rv_amplitude_robust_km_s", "gaia_vbroad_km_s", "gaia_rv_variable",
     "gaia_rv_epoch_scatter_km_s", "gaia_rv_semi_amplitude_upper_limit_km_s",
     "gaia_rv_companion_mass_upper_limit_solar_masses",
     "lamost_spectra", "refuted_by", "cautions", "verdict", "error", "verification_date_utc", "code_version",
@@ -282,6 +288,26 @@ def log_probability(theta, model, errors, period_guess, epoch_guess):
         return -np.inf
     return -0.5 * sum(np.sum(((flux - curve) / error) ** 2) for (_, _, _, _, flux), curve, error
                       in zip(model.sectors, model.light_curves(theta), errors))
+
+
+def run_mcmc_until_converged(sampler, walkers):
+    """Run the chain until it is converged, and return its longest autocorrelation time, in steps.
+
+    The test of the emcee documentation: the chain is longer than MCMC_CONVERGED_AUTOCORRELATION_TIMES
+    autocorrelation times, and the estimate changed by less than MCMC_AUTOCORRELATION_TOLERANCE since the last
+    check. A chain that is not converged after MCMC_MAXIMUM_STEPS gives an error, so the candidate gets no verdict.
+    """
+    previous = np.inf
+    for _ in sampler.sample(walkers, iterations=MCMC_MAXIMUM_STEPS):
+        if sampler.iteration % MCMC_CONVERGENCE_CHECK_STEPS:
+            continue
+        autocorrelation_time = float(np.max(sampler.get_autocorr_time(tol=0)))
+        if (sampler.iteration > MCMC_CONVERGED_AUTOCORRELATION_TIMES * autocorrelation_time
+                and abs(previous - autocorrelation_time) < MCMC_AUTOCORRELATION_TOLERANCE * autocorrelation_time):
+            return autocorrelation_time
+        previous = autocorrelation_time
+    raise RuntimeError(f"MCMC not converged after {MCMC_MAXIMUM_STEPS} steps, autocorrelation time "
+                       f"{autocorrelation_time:.0f} steps")
 
 
 def observed_depths(samples):
@@ -458,8 +484,8 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     sampler = emcee.EnsembleSampler(MCMC_WALKERS, len(best), log_probability, args=arguments)
     # A seed from the TIC ID makes a rerun give the same chain, so a rerun does not change the input of step 10.
     sampler.random_state = np.random.RandomState(int(candidate["tic_id"]) % 2 ** 32).get_state()
-    sampler.run_mcmc(walkers, MCMC_STEPS)
-    chain = sampler.get_chain(discard=MCMC_BURN_IN_STEPS, flat=True)
+    autocorrelation_time = run_mcmc_until_converged(sampler, walkers)
+    chain = sampler.get_chain(discard=int(MCMC_BURN_IN_AUTOCORRELATION_TIMES * autocorrelation_time), flat=True)
     epoch, period, radius_ratio, impact_parameter = chain[:, 0], chain[:, 1], chain[:, 2], chain[:, 3]
     scaled_semi_major_axis = 10 ** chain[:, 4]
     durations = transit_duration_days(period, radius_ratio, impact_parameter, scaled_semi_major_axis)
@@ -517,10 +543,12 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
             ellipsoidal_by_sector[number] = result
     if ellipsoidal_by_sector:
         ellipsoidal, ellipsoidal_error = combined_ellipsoidal_amplitude(list(ellipsoidal_by_sector.values()))
-        ellipsoidal_mass = companion_mass_from_ellipsoidal_amplitude(ellipsoidal, star["mass"], 10 ** median[4],
-                                                                     median[3])
     else:
-        ellipsoidal = ellipsoidal_error = ellipsoidal_mass = np.nan
+        ellipsoidal = ellipsoidal_error = np.nan
+    ellipsoidal_detected = ellipsoidal >= ELLIPSOIDAL_SIGMA_LIMIT * ellipsoidal_error
+    # A mass from an amplitude that is not detected has no meaning, so the row gives it only for a detection.
+    ellipsoidal_mass = (companion_mass_from_ellipsoidal_amplitude(ellipsoidal, star["mass"], 10 ** median[4], median[3])
+                        if ellipsoidal_detected else np.nan)
 
     row = {
         "sectors_used": " ".join(str(number) for number, *_ in sectors),
@@ -542,7 +570,7 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
             f"S{number}: {value * 1e6:.0f} +/- {error * 1e6:.0f}" for number, (value, error) in ellipsoidal_by_sector.items()),
         "ellipsoidal_amplitude_ppm": f"{ellipsoidal * 1e6:.0f}",
         "ellipsoidal_amplitude_error_ppm": f"{ellipsoidal_error * 1e6:.0f}",
-        "ellipsoidal_companion_mass_solar_masses": f"{ellipsoidal_mass:.3g}",
+        "ellipsoidal_companion_mass_solar_masses": f"{ellipsoidal_mass:.3g}" if ellipsoidal_detected else "",
         "planet_radius_earth_radii": f"{radius_median:.2f}", "planet_radius_error_earth_radii": f"{radius_error:.2f}",
     }
     for name, samples, factor, digits in (
@@ -583,7 +611,7 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     if row.get("gaia_rv_variable") is True:
         cautions.append("Gaia radial velocity variable")
     # Known planets also give this signal sometimes, so it is a caution and not a refutation.
-    if ellipsoidal >= ELLIPSOIDAL_SIGMA_LIMIT * ellipsoidal_error:
+    if ellipsoidal_detected:
         cautions.append("ellipsoidal variation detected")
     row["refuted_by"] = "; ".join(refuted_by)
     row["cautions"] = "; ".join(cautions)
@@ -638,7 +666,7 @@ def verification_record_result(row):
         f"secondary {row['secondary_depth_ppm']} +/- {row['secondary_depth_error_ppm']} ppm "
         f"(planet maximum {row['secondary_maximum_planet_depth_ppm']}); "
         f"ellipsoidal {row['ellipsoidal_amplitude_ppm']} +/- {row['ellipsoidal_amplitude_error_ppm']} ppm "
-        f"(companion mass {row['ellipsoidal_companion_mass_solar_masses']} solar masses); "
+        f"(companion mass {row['ellipsoidal_companion_mass_solar_masses'] or 'not detected'}); "
         f"Gaia RV variable {row['gaia_rv_variable']}, companion mass below "
         f"{row['gaia_rv_companion_mass_upper_limit_solar_masses'] or 'unknown'} solar masses; "
         f"LAMOST: {row['lamost_spectra'] or 'none'}; refuted by: {row['refuted_by'] or 'nothing'}; "
