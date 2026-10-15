@@ -234,8 +234,17 @@ Commit the output of each step when the step is done. The repository does not ho
    | Depth in each sector, with the same apertures in the TESScut cutout of each sector | Never. Different depths are a caution. |
    | Gaia DR3 radial velocity | Never. A variable radial velocity means a stellar companion, and is a caution. |
    | LAMOST DR7 spectra | Never. The script lists the class and the radial velocity of each spectrum. |
+   | Ellipsoidal variation at half the period | Never. A variation of 3 sigma or more is a caution, and the script gives the companion mass that it needs. A planet gives a few ppm at most, but a low-mass star gives hundreds of ppm. |
 
    The verdict is "refuted" or "passed".
+   Some known planets also show an ellipsoidal variation of 3 sigma, so this test does not refute a candidate.
+   To measure how often the test gives a false detection, run the test on known planets of hot stars:
+
+   ```
+   .venv/bin/python analysis/calibrate_ellipsoidal_variation_test_on_known_planets.py
+   ```
+
+   The script prints the spread of the significance for the planets that cannot cause a detectable variation, and writes `results/ellipsoidal_variation_test_calibration/`.
    The script writes `results/qlp_sector_0098_all_sector_verification/all_sector_verification.csv`, and one image per candidate with the folded transit of each sector.
 
 10. Compute the false positive probability of each candidate that passed step 9:

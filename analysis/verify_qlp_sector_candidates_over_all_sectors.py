@@ -19,7 +19,11 @@ The script takes each candidate with pixel verdict "on target" or "unresolved", 
 7. reads the Gaia DR3 radial velocity statistics. The star is RV-variable when rv_chisq_pvalue <= 0.01,
    rv_renormalised_gof > 4 and rv_nb_transits >= 10 (Katz et al. 2023). A planet cannot cause a variation that
    Gaia can detect, so this means a stellar companion or a pulsating star;
-8. lists the LAMOST DR7 low-resolution spectra within LAMOST_RADIUS_ARCSEC, with their class and radial velocity.
+8. lists the LAMOST DR7 low-resolution spectra within LAMOST_RADIUS_ARCSEC, with their class and radial velocity;
+9. fits the ellipsoidal variation of each sector, before the detrending, with ellipsoidal_variation.py, and
+   combines the sectors. It gives the companion mass that this amplitude needs. A variation of
+   ELLIPSOIDAL_SIGMA_LIMIT sigma or more is a caution: it can mean a stellar companion, but some known planets
+   also show it (calibrate_ellipsoidal_variation_test_on_known_planets.py).
 
 The verdict is "refuted" when the odd and even depths differ by ODD_EVEN_SIGMA_LIMIT sigma or more, when the
 secondary eclipse is deeper than a planet can give by SECONDARY_SIGMA_LIMIT sigma, or when the companion radius is
@@ -67,6 +71,9 @@ from check_qlp_sector_new_candidates import (
     other_sector_products, output_directory as candidate_checks_output_directory,
 )
 from download_qlp_sector_light_curves import light_curve_path
+from ellipsoidal_variation import (
+    combined_ellipsoidal_amplitude, companion_mass_from_ellipsoidal_amplitude, ellipsoidal_amplitude,
+)
 from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
 from search_qlp_sector import (
     BIWEIGHT_WINDOW_LENGTH_DAYS, load_light_curve, robust_standard_deviation,
@@ -98,6 +105,7 @@ MCMC_BURN_IN_STEPS = 1500
 DEPTH_SAMPLES = 2000
 ODD_EVEN_SIGMA_LIMIT = 3.0
 SECONDARY_SIGMA_LIMIT = 3.0
+ELLIPSOIDAL_SIGMA_LIMIT = 3.0
 SECTOR_DEPTH_CONSISTENCY_P_VALUE = 0.001
 SECONDARY_ECLIPSE_WAVELENGTH_METRES = 800e-9
 GAIA_RV_VARIABLE_P_VALUE = 0.01
@@ -115,7 +123,8 @@ OUTPUT_COLUMNS = [
     "stellar_density_fit_to_tic_ratio", "odd_depth_ppm", "even_depth_ppm", "odd_even_difference_sigma",
     "depth_ppm_by_sector", "sector_depth_consistency_p_value", "cutout_depth_ppm_by_sector_and_aperture",
     "cutout_sector_depth_consistency_p_value", "secondary_depth_ppm", "secondary_depth_error_ppm",
-    "secondary_maximum_planet_depth_ppm", "gaia_source_id", "gaia_rv_nb_transits", "gaia_rv_chisq_pvalue",
+    "secondary_maximum_planet_depth_ppm", "ellipsoidal_amplitude_ppm_by_sector", "ellipsoidal_amplitude_ppm",
+    "ellipsoidal_amplitude_error_ppm", "ellipsoidal_companion_mass_solar_masses", "gaia_source_id", "gaia_rv_nb_transits", "gaia_rv_chisq_pvalue",
     "gaia_rv_renormalised_gof", "gaia_rv_amplitude_robust_km_s", "gaia_vbroad_km_s", "gaia_rv_variable",
     "lamost_spectra", "refuted_by", "cautions", "verdict", "error", "verification_date_utc", "code_version",
 ]
@@ -205,16 +214,25 @@ def cutout_aperture_depths(candidate, star_row, sectors, period, epoch, duration
     return {sector: values for sector, values in depths.items() if values}
 
 
-def load_all_sectors(sector, candidate, period, epoch, duration):
-    """Return [(sector, author, exposure seconds, time, detrended flux)] for this sector and each other sector."""
+def load_all_sectors_without_detrending(sector, candidate):
+    """Return [(sector, author, exposure seconds, time, normalised flux)] for this sector and each other sector."""
     tic_id = int(candidate["tic_id"])
     sectors = [(sector, "QLP", full_frame_image_exposure_seconds(sector),
                 *load_light_curve(light_curve_path(sector, tic_id)))]
     for product_sector, author, product in other_sector_products(tic_id, sector):
         sectors.append((product_sector, author, float(product.exptime[0].to_value(units.s)),
                         *load_other_sector_light_curve(product, author)))
+    return sectors
+
+
+def detrend_all_sectors(sectors, period, epoch, duration):
     return [(number, author, exposure, *detrend_with_transits_masked(time, flux, period, epoch, duration))
             for number, author, exposure, time, flux in sectors]
+
+
+def load_all_sectors(sector, candidate, period, epoch, duration):
+    """Return [(sector, author, exposure seconds, time, detrended flux)] for this sector and each other sector."""
+    return detrend_all_sectors(load_all_sectors_without_detrending(sector, candidate), period, epoch, duration)
 
 
 class TransitModel:
@@ -365,7 +383,9 @@ def lamost_spectra(ra, dec):
 def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     period_guess = float(candidate["joint_search_period_days"] or candidate["period_days"])
     duration = float(candidate["duration_hours"]) / 24
-    all_sectors = load_all_sectors(sector, candidate, period_guess, float(candidate["epoch_btjd"]), duration)
+    sectors_without_detrending = load_all_sectors_without_detrending(sector, candidate)
+    all_sectors = detrend_all_sectors(sectors_without_detrending, period_guess, float(candidate["epoch_btjd"]),
+                                      duration)
     # The reference epoch is the transit nearest the middle of the data, so the epoch and the period do not
     # correlate.
     all_times = np.concatenate([time for _, _, _, time, _ in all_sectors])
@@ -449,6 +469,18 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         cutout_p_value = np.nan
     density_ratio = float(np.median(fit_density) / density) if np.isfinite(density.value) else np.nan
     radius_median, radius_error = median_and_error(planet_radius)
+    # The detrending removes a variation at half the period, so the ellipsoidal fit takes the flux before it.
+    ellipsoidal_by_sector = {}
+    for number, _, _, time, flux in sectors_without_detrending:
+        result = ellipsoidal_amplitude(time, flux, median[1], median[0], duration_median, rng)
+        if result is not None:
+            ellipsoidal_by_sector[number] = result
+    if ellipsoidal_by_sector:
+        ellipsoidal, ellipsoidal_error = combined_ellipsoidal_amplitude(list(ellipsoidal_by_sector.values()))
+        ellipsoidal_mass = companion_mass_from_ellipsoidal_amplitude(ellipsoidal, star["mass"], 10 ** median[4],
+                                                                     median[3])
+    else:
+        ellipsoidal = ellipsoidal_error = ellipsoidal_mass = np.nan
 
     row = {
         "sectors_used": " ".join(str(number) for number, *_ in sectors),
@@ -466,6 +498,11 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         "cutout_sector_depth_consistency_p_value": f"{cutout_p_value:.3g}",
         "secondary_depth_ppm": f"{secondary * 1e6:.0f}", "secondary_depth_error_ppm": f"{secondary_error * 1e6:.0f}",
         "secondary_maximum_planet_depth_ppm": f"{secondary_maximum * 1e6:.0f}",
+        "ellipsoidal_amplitude_ppm_by_sector": "; ".join(
+            f"S{number}: {value * 1e6:.0f} +/- {error * 1e6:.0f}" for number, (value, error) in ellipsoidal_by_sector.items()),
+        "ellipsoidal_amplitude_ppm": f"{ellipsoidal * 1e6:.0f}",
+        "ellipsoidal_amplitude_error_ppm": f"{ellipsoidal_error * 1e6:.0f}",
+        "ellipsoidal_companion_mass_solar_masses": f"{ellipsoidal_mass:.3g}",
         "planet_radius_earth_radii": f"{radius_median:.2f}", "planet_radius_error_earth_radii": f"{radius_error:.2f}",
     }
     for name, samples, factor, digits in (
@@ -501,6 +538,9 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         cautions.append("depths differ between sectors")
     if row.get("gaia_rv_variable") is True:
         cautions.append("Gaia radial velocity variable")
+    # Known planets also give this signal sometimes, so it is a caution and not a refutation.
+    if ellipsoidal >= ELLIPSOIDAL_SIGMA_LIMIT * ellipsoidal_error:
+        cautions.append("ellipsoidal variation detected")
     row["refuted_by"] = "; ".join(refuted_by)
     row["cautions"] = "; ".join(cautions)
     row["verdict"] = "refuted" if refuted_by else "passed"
@@ -553,6 +593,8 @@ def verification_record_result(row):
         f"sector depths {row['depth_ppm_by_sector']} (p {row['sector_depth_consistency_p_value']}); "
         f"secondary {row['secondary_depth_ppm']} +/- {row['secondary_depth_error_ppm']} ppm "
         f"(planet maximum {row['secondary_maximum_planet_depth_ppm']}); "
+        f"ellipsoidal {row['ellipsoidal_amplitude_ppm']} +/- {row['ellipsoidal_amplitude_error_ppm']} ppm "
+        f"(companion mass {row['ellipsoidal_companion_mass_solar_masses']} solar masses); "
         f"Gaia RV variable {row['gaia_rv_variable']}; "
         f"LAMOST: {row['lamost_spectra'] or 'none'}; refuted by: {row['refuted_by'] or 'nothing'}; "
         f"cautions: {row['cautions'] or 'none'}"
