@@ -85,6 +85,9 @@ def detrend(time, flux):
 
 def search_light_curve(time, flux):
     """Return a list of signals, each a dict of the output columns except tic_id."""
+    # Some QLP files have a finite flux at only a few cadences, and the detrending fails on so few points.
+    if len(time) < MINIMUM_POINT_COUNT:
+        return []
     time, flux = detrend(time, flux)
     signals = []
     for signal_number in range(1, SIGNALS_PER_STAR + 1):
