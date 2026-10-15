@@ -485,7 +485,10 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     walkers = best + scales * rng.standard_normal((MCMC_WALKERS, len(best)))
     walkers[:, 3] = np.abs(walkers[:, 3])
     walkers[:, 5:] = np.clip(walkers[:, 5:], 0.01, 0.99)
-    sampler = emcee.EnsembleSampler(MCMC_WALKERS, len(best), log_probability, args=arguments)
+    # The impact parameter, a/R* and Rp/R* are strongly correlated. Differential evolution moves sample such a
+    # posterior with a much shorter autocorrelation time than the default stretch move (emcee documentation, "Moves").
+    sampler = emcee.EnsembleSampler(MCMC_WALKERS, len(best), log_probability, args=arguments,
+                                    moves=[(emcee.moves.DEMove(), 0.8), (emcee.moves.DESnookerMove(), 0.2)])
     # A seed from the TIC ID makes a rerun give the same chain, so a rerun does not change the input of step 10.
     sampler.random_state = np.random.RandomState(int(candidate["tic_id"]) % 2 ** 32).get_state()
     autocorrelation_time = run_mcmc_until_converged(sampler, walkers)
