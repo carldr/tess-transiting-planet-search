@@ -172,18 +172,21 @@ def main():
     parser.add_argument("sector", type=int)
     parser.add_argument("--restart", action="store_true",
                         help="validate all candidates again, not only those without a row in triceratops_validation.csv")
+    parser.add_argument("--tic-id", dest="tic_ids", action="append", default=[],
+                        help="validate only the candidates of this TIC ID; give it more than once for more TIC IDs")
     arguments = parser.parse_args()
     sector = arguments.sector
 
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     output_path = directory / "triceratops_validation.csv"
-    earlier_rows = earlier_rows_to_keep(output_path, arguments.restart)
+    earlier_rows = earlier_rows_to_keep(output_path, arguments.restart, arguments.tic_ids)
     validated = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     verifications = list(csv.DictReader(
         open(all_sector_verification_output_directory(sector) / "all_sector_verification.csv")))
     passed = [row for row in verifications if row["verdict"] == "passed"]
-    candidates = [row for row in passed if (row["tic_id"], row["period_days"]) not in validated]
+    candidates = [row for row in passed if (row["tic_id"], row["period_days"]) not in validated
+                  and (not arguments.tic_ids or row["tic_id"] in arguments.tic_ids)]
     print(f"Sector {sector}: {len(passed)} candidates passed the all-sector verification, "
           f"{len(earlier_rows)} validated in an earlier run", flush=True)
 

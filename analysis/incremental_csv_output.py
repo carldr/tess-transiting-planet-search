@@ -2,6 +2,7 @@
 
 IncrementalCsvWriter writes each row to disk as soon as the step has it. A step reads the rows of its earlier run
 with earlier_rows_to_keep, gives them to the writer, and skips their items. --restart makes the step start again.
+--tic-id limits a step to the candidates of the given TIC IDs, and limits --restart to their rows.
 """
 
 import csv
@@ -18,14 +19,16 @@ def complete_csv_rows(path):
     return list(csv.DictReader(text.splitlines()))
 
 
-def earlier_rows_to_keep(path, restart):
-    """Return no rows with --restart. Otherwise, return the complete rows of the earlier run that have no error.
+def earlier_rows_to_keep(path, restart, tic_ids=()):
+    """Return the complete rows of the earlier run that have no error.
 
     The step does the items of the other rows again, so it retries a temporary failure, such as an archive outage.
+    With --restart, the function also drops the rows of tic_ids, or every row when tic_ids is empty.
     """
+    rows = [row for row in complete_csv_rows(path) if not row.get("error")]
     if restart:
-        return []
-    return [row for row in complete_csv_rows(path) if not row.get("error")]
+        return [row for row in rows if tic_ids and row["tic_id"] not in tic_ids]
+    return rows
 
 
 class IncrementalCsvWriter:

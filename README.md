@@ -73,6 +73,8 @@ Steps 1, 5 and 6 write their output only at the end, and always start from the b
 
 Add `--restart` to each later step after you change the code or the output of an earlier step.
 Otherwise the later steps keep their results from the old input.
+Add `--tic-id <TIC ID>` to steps 7 to 10 to do only the candidates of that star. Give it more than once for more stars.
+With `--restart`, the step then does only those candidates again, and keeps the results of the other candidates.
 
 Commit the output of each step when the step is done. The repository does not hold `data/`, so a disk failure loses all uncommitted results.
 
@@ -274,7 +276,7 @@ Before a CTOI submission:
 2. Make sure that the candidate is still in `new_candidates.csv`. If it is not, a TOI, CTOI, TCE or TESS EB now matches it.
 3. Find the code version of the candidate's rows for steps 7 to 10 in its verification record.
 4. Run `git diff --stat <code version> HEAD -- analysis/` to list the changes to the code since then.
-5. If a change can change a result of steps 7 to 10, run steps 7 to 10 again with `--restart`.
+5. If a change can change a result of steps 7 to 10, run steps 7 to 10 again with `--restart --tic-id <TIC ID>`.
 
 A CTOI is published under the name of the person who submits it.
 
@@ -301,7 +303,7 @@ It downloads the ExoFOP target page of the star and prints each TOI, CTOI, follo
 Observers do not publish their follow-up schedules, so ExoFOP shows an observation only after the observer uploads it.
 The script also lists the TESS sectors that observe the star and that step 9 did not use.
 Steps 7 to 10 find the other sectors of a candidate on MAST each time they check it.
-So after SPOC or QLP releases such a sector, run steps 7 to 10 again with `--restart` on the sector of the candidate.
+So after SPOC or QLP releases such a sector, run steps 7 to 10 again with `--restart --tic-id <TIC ID>` on the sector of the candidate.
 The script only reads ExoFOP.
 
 The script writes `results/candidate_exofop_and_future_tess_sector_checks/candidate_exofop_and_future_tess_sector_checks.csv`, one row per TIC ID.

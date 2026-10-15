@@ -343,6 +343,8 @@ def main():
     parser.add_argument("sector", type=int)
     parser.add_argument("--restart", action="store_true",
                         help="check all candidates again, not only those without a row in pixel_checks.csv")
+    parser.add_argument("--tic-id", dest="tic_ids", action="append", default=[],
+                        help="check only the candidates of this TIC ID; give it more than once for more TIC IDs")
     arguments = parser.parse_args()
     sector = arguments.sector
 
@@ -350,8 +352,10 @@ def main():
     directory.mkdir(parents=True, exist_ok=True)
     sector_output_path, candidate_output_path = directory / "pixel_checks_by_sector.csv", directory / "pixel_checks.csv"
     # A candidate row with no pixel verdict has an error in each sector, so the script checks that candidate again.
-    earlier_candidate_rows = [row for row in earlier_rows_to_keep(candidate_output_path, arguments.restart)
-                              if row["pixel_verdict"]]
+    earlier_candidate_rows = [
+        row for row in earlier_rows_to_keep(candidate_output_path, arguments.restart, arguments.tic_ids)
+        if row["pixel_verdict"]
+    ]
     checked = {(row["tic_id"], row["period_days"]) for row in earlier_candidate_rows}
     # The script keeps the sector rows of the kept candidates only. A stop between the two files can leave sector rows
     # of a candidate with no candidate row.
@@ -359,7 +363,8 @@ def main():
                            if (row["tic_id"], row["period_days"]) in checked]
     checks = list(csv.DictReader(open(candidate_checks_output_directory(sector) / "candidate_checks.csv")))
     not_refuted = [row for row in checks if row["verdict"] != "refuted"]
-    candidates = [row for row in not_refuted if (row["tic_id"], row["period_days"]) not in checked]
+    candidates = [row for row in not_refuted if (row["tic_id"], row["period_days"]) not in checked
+                  and (not arguments.tic_ids or row["tic_id"] in arguments.tic_ids)]
     star_rows = {row["tic_id"]: row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}
     print(f"Sector {sector}: {len(not_refuted)} candidates not refuted, {len(checked)} checked in an earlier run",
           flush=True)

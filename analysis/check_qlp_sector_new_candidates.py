@@ -525,17 +525,20 @@ def main():
     parser.add_argument("sector", type=int)
     parser.add_argument("--restart", action="store_true",
                         help="check all candidates again, not only those without a row in candidate_checks.csv")
+    parser.add_argument("--tic-id", dest="tic_ids", action="append", default=[],
+                        help="check only the candidates of this TIC ID; give it more than once for more TIC IDs")
     arguments = parser.parse_args()
     sector = arguments.sector
 
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     output_path = directory / "candidate_checks.csv"
-    earlier_rows = earlier_rows_to_keep(output_path, arguments.restart)
+    earlier_rows = earlier_rows_to_keep(output_path, arguments.restart, arguments.tic_ids)
     checked = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     all_candidates = list(csv.DictReader(open(cross_match_output_directory(sector) / "new_candidates.csv")))
     candidates = [candidate for candidate in all_candidates
-                  if (candidate["tic_id"], candidate["period_days"]) not in checked]
+                  if (candidate["tic_id"], candidate["period_days"]) not in checked
+                  and (not arguments.tic_ids or candidate["tic_id"] in arguments.tic_ids)]
     print(f"Sector {sector}: {len(all_candidates)} new candidates, {len(earlier_rows)} checked in an earlier run",
           flush=True)
     ephemeris_sources, stars = load_ephemeris_sources(sector)
