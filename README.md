@@ -26,7 +26,8 @@ His star is the known-positive test: the search must find his 3.18 d and 11.13 d
 | `.venv_triceratops/` | A separate Python 3.12.13 environment for TRICERATOPS, which needs numpy 1 and an older scipy. `requirements_triceratops.txt` lists its packages. |
 
 The files under `reference/` and `data/` are downloads. Do not edit them.
-The repository does not hold `data/`, the Python environments, or the `*_gaia_background.csv` files that TRICERATOPS writes to the working directory.
+The repository does not hold `data/` or the Python environments.
+Step 10 moves the Gaia background star list that TRICERATOPS writes to `data/triceratops_gaia_background/`.
 
 ## Set up
 

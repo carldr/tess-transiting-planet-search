@@ -35,8 +35,10 @@ The script also appends the result of each candidate to its verification record.
 
 import argparse
 import csv
+import os
 import warnings
 from datetime import datetime, timezone
+from pathlib import Path
 
 import numpy as np
 
@@ -49,6 +51,7 @@ from verify_qlp_sector_candidates_over_all_sectors import (
     load_all_sectors, output_directory as all_sector_verification_output_directory, phase_time,
 )
 
+GAIA_BACKGROUND_DIRECTORY = REPOSITORY_ROOT / "data/triceratops_gaia_background"
 APERTURE_RADIUS_PIXELS = 2.5
 # The folded light curve keeps the cadences within this many transit durations of mid-transit.
 FOLDED_WINDOW_DURATIONS = 3.0
@@ -106,6 +109,13 @@ def validate(sector, candidate):
 
     sectors = np.array([int(value) for value in candidate["sectors_used"].split()])
     target = triceratops.target(ID=int(candidate["tic_id"]), sectors=sectors)
+    # TRICERATOPS writes its Gaia background star list to the working directory. This moves it to
+    # GAIA_BACKGROUND_DIRECTORY, and gives TRICERATOPS the new path. It writes no list when Gaia has no field stars.
+    if target.trilegal_fname is not None:
+        GAIA_BACKGROUND_DIRECTORY.mkdir(parents=True, exist_ok=True)
+        background_path = GAIA_BACKGROUND_DIRECTORY / Path(target.trilegal_fname).name
+        os.replace(target.trilegal_fname, background_path)
+        target.trilegal_fname = str(background_path)
     target.calc_depths(float(candidate["fit_depth_ppm"]) * 1e-6,
                        all_ap_pixels=[circular_aperture(coordinates[0]) for coordinates in target.pix_coords],
                        dilution_corrected=False)

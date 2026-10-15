@@ -5,7 +5,8 @@
 # Downloads. The README gives the commands that download them again.
 data/
 
-# TRICERATOPS writes its TRILEGAL background star list to the working directory.
+# TRICERATOPS writes its Gaia background star list to the working directory. Step 10 moves it to data/, but a
+# stop before the move leaves it here.
 *_gaia_background.csv
 
 __pycache__/
