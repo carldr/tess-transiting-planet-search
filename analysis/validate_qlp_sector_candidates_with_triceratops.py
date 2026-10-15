@@ -55,6 +55,7 @@ GAIA_BACKGROUND_DIRECTORY = REPOSITORY_ROOT / "data/triceratops_gaia_background"
 APERTURE_RADIUS_PIXELS = 2.5
 # The folded light curve keeps the cadences within this many transit durations of mid-transit.
 FOLDED_WINDOW_DURATIONS = 3.0
+PHASE_BINS_PER_DURATION = 20
 SIMULATIONS_PER_SCENARIO = 1_000_000
 RUNS_PER_CANDIDATE = 5
 LIKELY_PLANET_FPP = 0.5
@@ -93,8 +94,18 @@ def folded_light_curve(sector, candidate):
     time_from_mid_transit = phase_time(time, period, epoch)
     near = np.abs(time_from_mid_transit) < FOLDED_WINDOW_DURATIONS * duration
     out_of_transit = np.abs(time_from_mid_transit) > duration
-    return (time_from_mid_transit[near], flux[near], robust_standard_deviation(flux[out_of_transit]),
-            exposure / 86400)
+    # The run time of TRICERATOPS grows with the number of points, so the script also bins the folded light curve
+    # in phase, to the exposure time or 1 / PHASE_BINS_PER_DURATION of the duration, whichever is shorter. A bin
+    # much shorter than the transit does not change its shape. The error of a bin is the scatter over the root of
+    # the median bin count.
+    bin_width = min(exposure / 86400, duration / PHASE_BINS_PER_DURATION)
+    phase_bins = np.floor((time_from_mid_transit[near] + FOLDED_WINDOW_DURATIONS * duration) / bin_width).astype(int)
+    counts = np.bincount(phase_bins)
+    filled = counts > 0
+    binned_time = np.bincount(phase_bins, time_from_mid_transit[near])[filled] / counts[filled]
+    binned_flux = np.bincount(phase_bins, flux[near])[filled] / counts[filled]
+    binned_error = robust_standard_deviation(flux[out_of_transit]) / np.sqrt(np.median(counts[filled]))
+    return binned_time, binned_flux, binned_error, exposure / 86400
 
 
 def circular_aperture(target_pixel):
