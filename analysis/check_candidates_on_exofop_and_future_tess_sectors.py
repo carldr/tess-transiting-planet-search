@@ -7,7 +7,10 @@ with the verdict "likely planet" or "validated without imaging". For each TIC ID
 2. compares it with the copy from the last run, and prints each entry that is new;
 3. writes the new copy in place of the old one;
 4. finds the TESS sectors that observe the star with tess-point, and the sectors that the all-sector verification
-   did not use. A sector in the second list has new data when QLP or SPOC release it.
+   did not use. A sector in the second list has new data when QLP or SPOC release it;
+5. finds the sectors with a SPOC, TESS-SPOC or QLP light curve on MAST that the all-sector verification did not use.
+   Each such sector is new data: run steps 7 to 10 again for the candidate. The all-sector verification also drops
+   a sector without a transit, so a long-period candidate can keep such a sector in this list.
 
 The script only reads ExoFOP. It does not submit anything.
 
@@ -30,6 +33,7 @@ from datetime import datetime, timezone
 from tess_stars2px import tess_stars2px_function_entry
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT
+from check_qlp_sector_new_candidates import other_sector_products
 
 TRICERATOPS_VERDICTS_TO_CHECK = {"likely planet", "validated without imaging"}
 EXOFOP_TARGET_JSON_URL = "https://exofop.ipac.caltech.edu/tess/target.php?id={tic_id}&json"
@@ -42,7 +46,8 @@ EXOFOP_TARGET_PAGE_DIRECTORY = OUTPUT_DIRECTORY / "exofop_target_pages"
 OUTPUT_COLUMNS = [
     "tic_id", "candidates", "confirmed_planets", "tois", "ctois",
     *[f"exofop_{section}_count" for section in EXOFOP_SECTIONS_TO_COMPARE if section not in ("tois", "ctois")],
-    "new_exofop_entries", "tess_sectors", "tess_sectors_not_in_all_sector_verification", "check_date_utc",
+    "new_exofop_entries", "tess_sectors", "tess_sectors_not_in_all_sector_verification",
+    "released_tess_sectors_not_in_all_sector_verification", "check_date_utc",
 ]
 
 
@@ -96,6 +101,8 @@ def check_tic_id(tic_id, candidates):
     ra, dec = float(page["coordinates"]["ra"]), float(page["coordinates"]["dec"])
     tess_sectors = sorted(set(int(sector) for sector in tess_stars2px_function_entry(int(tic_id), ra, dec)[3]))
     sectors_used = {int(sector) for candidate in candidates for sector in candidate["sectors_used"].split()}
+    # Sector 0 does not exist, so other_sector_products returns every sector with a light curve.
+    sectors_with_light_curves = {sector for sector, _, _ in other_sector_products(int(tic_id), 0)}
     return {
         "tic_id": tic_id,
         "candidates": "; ".join(f"S{candidate['sector']} P {candidate['fit_period_days']} d "
@@ -109,6 +116,8 @@ def check_tic_id(tic_id, candidates):
         "tess_sectors": " ".join(str(sector) for sector in tess_sectors),
         "tess_sectors_not_in_all_sector_verification": " ".join(
             str(sector) for sector in tess_sectors if sector not in sectors_used),
+        "released_tess_sectors_not_in_all_sector_verification": " ".join(
+            str(sector) for sector in sorted(sectors_with_light_curves) if sector not in sectors_used),
         "check_date_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"),
     }
 
@@ -122,8 +131,8 @@ def main():
         row = check_tic_id(tic_id, tic_candidates)
         rows.append(row)
         print(f"TIC {tic_id}: TOIs [{row['tois']}], CTOIs [{row['ctois']}], "
-              f"TESS sectors not in the all-sector verification [{row['tess_sectors_not_in_all_sector_verification']}]",
-              flush=True)
+              f"TESS sectors not in the all-sector verification [{row['tess_sectors_not_in_all_sector_verification']}], "
+              f"of which released [{row['released_tess_sectors_not_in_all_sector_verification']}]", flush=True)
         for description in row["new_exofop_entries"].split(" | ") if row["new_exofop_entries"] else []:
             print(f"  new on ExoFOP: {description}", flush=True)
 

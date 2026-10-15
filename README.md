@@ -314,8 +314,9 @@ The script checks each TIC ID with a step 10 verdict of "likely planet" or "vali
 It downloads the ExoFOP target page of the star and prints each TOI, CTOI, follow-up observation or file that the last run did not have.
 Observers do not publish their follow-up schedules, so ExoFOP shows an observation only after the observer uploads it.
 The script also lists the TESS sectors that observe the star and that step 9 did not use.
+The column `released_tess_sectors_not_in_all_sector_verification` gives those of them with a light curve on MAST.
 Steps 7 to 10 find the other sectors of a candidate on MAST each time they check it.
-So after SPOC or QLP releases such a sector, run steps 7 to 10 again with `--restart --tic-id <TIC ID>` on the sector of the candidate.
+So when that column has a sector, run steps 7 to 10 again with `--restart --tic-id <TIC ID>` on the sector of the candidate.
 The script only reads ExoFOP.
 
 The script writes `results/candidate_exofop_and_future_tess_sector_checks/candidate_exofop_and_future_tess_sector_checks.csv`, one row per TIC ID.
