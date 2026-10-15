@@ -2,7 +2,7 @@
 
 This project searches TESS light curves for transiting planets that nobody has reported yet.
 It follows the method of Pavel Rabtsevich, who found two candidate signals around the star TIC 4206066.
-His star is the known-positive test: the search must find his 3.18 d signal in Sector 98 before we trust it on other stars.
+His star is the known-positive test: the search must find his 3.18 d and 11.13 d signals in Sector 98 before we trust it on other stars.
 
 ## Layout
 
@@ -73,6 +73,8 @@ Steps 1, 5 and 6 write their output only at the end, and always start from the b
 
 Add `--restart` to each later step after you change the code or the output of an earlier step.
 Otherwise the later steps keep their results from the old input.
+
+Commit the output of each step when the step is done. The repository does not hold `data/`, so a disk failure loses all uncommitted results.
 
 1. List the stars with a QLP light curve in the sector, with their TIC magnitude, radius, mass and temperature:
 
@@ -266,7 +268,14 @@ A candidate goes to the next step only when it meets the condition of that step:
 | 9 | `verify_qlp_sector_candidates_over_all_sectors.py` | The verdict is "passed". |
 | 10 | `validate_qlp_sector_candidates_with_triceratops.py` | The verdict is "likely planet" or "validated without imaging". |
 
-Before a CTOI submission, download the catalogues again (step 5), and run steps 6 to 10 again, with `--restart` on steps 7 to 10.
+Before a CTOI submission:
+
+1. Download the catalogues again (step 5), and run step 6 again.
+2. Make sure that the candidate is still in `new_candidates.csv`. If it is not, a TOI, CTOI, TCE or TESS EB now matches it.
+3. Find the code version of the candidate's rows for steps 7 to 10 in its verification record.
+4. Run `git diff --stat <code version> HEAD -- analysis/` to list the changes to the code since then.
+5. If a change can change a result of steps 7 to 10, run steps 7 to 10 again with `--restart`.
+
 A CTOI is published under the name of the person who submits it.
 
 Each of steps 6 to 10 appends one row per candidate to the verification record of the candidate, `results/candidate_verification_records/tic<TIC ID>_period_<period>_days.md`.
@@ -291,7 +300,8 @@ The script checks each TIC ID with a step 10 verdict of "likely planet" or "vali
 It downloads the ExoFOP target page of the star and prints each TOI, CTOI, follow-up observation or file that the last run did not have.
 Observers do not publish their follow-up schedules, so ExoFOP shows an observation only after the observer uploads it.
 The script also lists the TESS sectors that observe the star and that step 9 did not use.
-Run steps 2 to 10 on such a sector after QLP releases it.
+Steps 7 to 10 find the other sectors of a candidate on MAST each time they check it.
+So after SPOC or QLP releases such a sector, run steps 7 to 10 again with `--restart` on the sector of the candidate.
 The script only reads ExoFOP.
 
 The script writes `results/candidate_exofop_and_future_tess_sector_checks/candidate_exofop_and_future_tess_sector_checks.csv`, one row per TIC ID.
