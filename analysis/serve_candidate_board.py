@@ -2,7 +2,8 @@
 
 The board has one card per new candidate of step 6. A card is in the column of the first step that has not passed it:
 a step that has not checked it yet, or the step that stopped it. A candidate that passed step 10 is in the column
-"Passed all steps", or in the column of its decision in results/candidate_decisions.csv. The page reads the results
+"Passed all steps", or in the column of its decision in results/candidate_decisions.csv. Before it has passed all
+steps, a card with a decision stays in the column of its step and shows the decision. The page reads the results
 again every REFRESH_SECONDS, so it shows each result as soon as a step writes it. The steps write their progress to
 results/pipeline_status/ (pipeline_status.py), and a card shows the progress while a step works on it.
 
@@ -133,9 +134,13 @@ def candidate_card(sector, new_candidate, step_rows, decisions, running):
         if verdict not in step["passing_verdicts"]:
             card["column"], card["stop_reason"] = f"stopped_{step['number']}", stop_reason(step, row)
             break
+    # A decision is about a candidate that passed all steps. While a step checks the candidate again, or after a step
+    # stops it, the card stays in the column of that step and shows the decision.
     decision = decisions.get(key)
     if decision and decision["decision"] in CANDIDATE_DECISIONS:
-        card["column"], card["decision_note"] = decision["decision"], decision.get("note", "")
+        card["decision"], card["decision_note"] = decision["decision"], decision.get("note", "")
+        if card["column"] == "passed":
+            card["column"] = decision["decision"]
     return card
 
 
@@ -293,7 +298,7 @@ function cardHtml(card, index) {
     <div class="trail">${trail}</div>
     ${card.stop_reason ? `<div class="stop">${text(card.stop_reason)}</div>` : ""}
     ${card.error ? `<div class="error">error: ${text(card.error)}</div>` : ""}
-    ${card.decision_note ? `<div class="line">${text(card.decision_note)}</div>` : ""}
+    ${card.decision ? `<div class="line"><b>${text(card.decision)}</b>${card.decision_note ? ": " + text(card.decision_note) : ""}</div>` : ""}
     <div>${card.cautions.map(caution => `<span class="tag">${text(caution)}</span>`).join("")}</div>
     ${running}</div>`;
 }
