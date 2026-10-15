@@ -278,6 +278,25 @@ A result with an error gets no record row, because the next run does that candid
 A run with `--restart` adds a new row, so the record keeps the full history of the candidate.
 Commit the records with the results.
 
+### Check the candidates for follow-up
+
+Run this command after step 10, and again at intervals, such as once a month:
+
+```
+.venv/bin/python analysis/check_candidates_on_exofop_and_future_tess_sectors.py
+```
+
+The script checks each TIC ID with a step 10 verdict of "likely planet" or "validated without imaging", in all sectors.
+It downloads the ExoFOP target page of the star and prints each TOI, CTOI, follow-up observation or file that the last run did not have.
+Observers do not publish their follow-up schedules, so ExoFOP shows an observation only after the observer uploads it.
+The script also lists the TESS sectors that observe the star and that step 9 did not use.
+Run steps 2 to 10 on such a sector after QLP releases it.
+The script only reads ExoFOP.
+
+The script writes `results/candidate_exofop_and_future_tess_sector_checks/candidate_exofop_and_future_tess_sector_checks.csv`, one row per TIC ID.
+It keeps the last ExoFOP page of each star in `exofop_target_pages/` in the same folder, to compare with the next run.
+Commit the folder after each run.
+
 ### Test star
 
 | command | what it does |
