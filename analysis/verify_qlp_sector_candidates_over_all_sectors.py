@@ -418,6 +418,8 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     walkers[:, 3] = np.abs(walkers[:, 3])
     walkers[:, 5:] = np.clip(walkers[:, 5:], 0.01, 0.99)
     sampler = emcee.EnsembleSampler(MCMC_WALKERS, len(best), log_probability, args=arguments)
+    # A seed from the TIC ID makes a rerun give the same chain, so a rerun does not change the input of step 10.
+    sampler.random_state = np.random.RandomState(int(candidate["tic_id"]) % 2 ** 32).get_state()
     sampler.run_mcmc(walkers, MCMC_STEPS)
     chain = sampler.get_chain(discard=MCMC_BURN_IN_STEPS, flat=True)
     epoch, period, radius_ratio, impact_parameter = chain[:, 0], chain[:, 1], chain[:, 2], chain[:, 3]
