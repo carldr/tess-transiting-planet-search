@@ -287,7 +287,8 @@ Before a CTOI submission:
 2. Make sure that the candidate is still in `new_candidates.csv`. If it is not, a TOI, CTOI, TCE or TESS EB now matches it.
 3. Find the code version of the candidate's rows for steps 7 to 10 in its verification record.
 4. Run `git diff --stat <code version> HEAD -- analysis/` to list the changes to the code since then.
-5. If a change can change a result of steps 7 to 10, run steps 7 to 10 again with `--restart --tic-id <TIC ID>`.
+5. If a change can change a result of a step, run that step again with `--restart --tic-id <TIC ID>`.
+6. Run a later step again only if it uses a value that the rerun changed. Step 10 uses the sectors, period, epoch, depth and duration of step 9.
 
 A CTOI is published under the name of the person who submits it.
 
