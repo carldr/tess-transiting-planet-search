@@ -16,3 +16,5 @@ leo-vetter==1.2.0
 transit-diffImage @ git+https://github.com/stevepur/transit-diffImage@2b13199132ce67f437b8cd9bb4eb128bd78e0d81
 tess-point==0.9.5.post1
 spiceypy==8.2.0
+# py-spy shows the stack of a running step, such as a long TRICERATOPS run: sudo .venv/bin/py-spy dump --pid <PID>
+py-spy==0.4.2
