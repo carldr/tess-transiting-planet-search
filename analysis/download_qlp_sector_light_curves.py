@@ -25,6 +25,7 @@ import numpy as np
 from astropy.io import fits
 
 from build_qlp_sector_star_list import sector_directory
+from pipeline_status import PipelineStatus
 
 DOWNLOAD_THREADS = 16
 DOWNLOAD_ATTEMPTS = 3
@@ -79,7 +80,8 @@ def main():
     failures = []
     downloaded_bytes = 0
     start = time.time()
-    with ThreadPoolExecutor(DOWNLOAD_THREADS) as executor:
+    pipeline_status = PipelineStatus(sector, 2, "download", "download_qlp_sector_light_curves.py", len(stars), "stars")
+    with ThreadPoolExecutor(DOWNLOAD_THREADS) as executor, pipeline_status:
         futures = [
             executor.submit(download_and_save, sector, int(row["tic_id"]), row["light_curve_url"], arguments.restart)
             for row in stars
@@ -87,6 +89,7 @@ def main():
         for count, future in enumerate(as_completed(futures), start=1):
             tic_id, status, size = future.result()
             downloaded_bytes += size
+            pipeline_status.set_items_done(count)
             if status.startswith("failed"):
                 failures.append({"tic_id": tic_id, "error": status})
             if count % 1000 == 0:

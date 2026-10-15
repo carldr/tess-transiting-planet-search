@@ -54,6 +54,45 @@ def searched_sectors():
     return sorted(sectors)
 
 
+# The output that each of steps 1 to 6 leaves when it has finished, for a sector run before the status files existed.
+SECTOR_STEPS = [
+    {"number": 1, "name": "star list", "output": "data/qlp_sector_{sector:04d}/star_list.csv"},
+    {"number": 2, "name": "download", "output": "data/qlp_sector_{sector:04d}/failed_downloads.csv"},
+    {"number": 3, "name": "BLS search", "output": "results/qlp_sector_{sector:04d}_bls_search"},
+    {"number": 4, "name": "LEO-Vetter", "output": "results/qlp_sector_{sector:04d}_leo_vetting/vetting.csv"},
+    {"number": 6, "name": "cross-match", "output": "results/qlp_sector_{sector:04d}_known_catalogue_cross_match/summary.json"},
+]
+
+
+def sector_progress(statuses):
+    """Return the state of steps 1 to 6 of each sector with a status file, a star list or a cross-match result."""
+    sectors = set(searched_sectors()) | {status["sector"] for status in statuses}
+    sectors |= {int(match.group(1)) for path in (REPOSITORY_ROOT / "data").glob("qlp_sector_*/star_list.csv")
+                if (match := re.fullmatch(r"qlp_sector_(\d{4})", path.parent.name))}
+    progress = []
+    for sector in sorted(sectors):
+        steps = []
+        for step in SECTOR_STEPS:
+            status = next((status for status in statuses
+                           if status["sector"] == sector and status["step_number"] == step["number"]), None)
+            if status:
+                steps.append({"number": step["number"], "name": step["name"], "state": status["state"],
+                              "items_done": status.get("items_done", 0), "item_count": status.get("item_count", 0),
+                              "item_name": status.get("item_name", "")})
+            else:
+                finished = (REPOSITORY_ROOT / step["output"].format(sector=sector)).exists()
+                steps.append({"number": step["number"], "name": step["name"],
+                              "state": "finished" if finished else "not started"})
+        summary_path = RESULTS_DIRECTORY / f"qlp_sector_{sector:04d}_known_catalogue_cross_match/summary.json"
+        summary = json.loads(summary_path.read_text()) if summary_path.exists() else {}
+        progress.append({"sector": sector, "steps": steps, "summary": {
+            name: summary.get(name) for name in (
+                "stars_searched", "stars_failed_to_process", "signals_vetted (SNR and transit cut)",
+                "signals_passing_all_tests", "signals_passing_all_tests_and_known", "signals_passing_all_tests_and_new",
+                "catalogue_download_date")}})
+    return progress
+
+
 def rows_by_candidate(path):
     return {(row["tic_id"], row["period_days"]): row for row in complete_csv_rows(path)}
 
@@ -166,7 +205,7 @@ def board():
     stopped = ([{"id": f"stopped_{step['number']}", "title": f"Stopped at step {step['number']}: {step['name']}"}
                 for step in STEPS] + [{"id": "dropped", "title": "Dropped"}])
     return {"columns": columns, "stopped_columns": stopped, "cards": cards, "steps": statuses,
-            "refresh_seconds": REFRESH_SECONDS}
+            "sectors": sector_progress(statuses), "refresh_seconds": REFRESH_SECONDS}
 
 
 class CandidateBoardRequestHandler(BaseHTTPRequestHandler):
@@ -232,6 +271,13 @@ h1 { font-size: 18px; margin: 0 0 4px; }
 .step.stopped { border-color: var(--stop); }
 .bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 4px; }
 .bar div { height: 4px; background: var(--running); border-radius: 2px; }
+.sector { margin-top: 8px; font-size: 13px; }
+.sector-step { display: inline-block; font-size: 12px; margin: 2px 4px 2px 0; padding: 1px 8px; border-radius: 9px;
+               border: 1px solid var(--border); }
+.sector-step.finished { border-color: var(--pass); color: var(--pass); }
+.sector-step.running { border-color: var(--running); color: var(--running); background: var(--running-background); }
+.sector-step.stopped { border-color: var(--stop); color: var(--stop); }
+.sector-step.not-started { color: var(--muted); }
 main { padding: 12px 16px; }
 .board { display: flex; gap: 12px; overflow-x: auto; align-items: flex-start; padding-bottom: 8px; }
 .column { flex: 0 0 260px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
@@ -269,6 +315,7 @@ details.stopped summary { cursor: pointer; font-weight: 600; }
 <header>
   <h1>Candidate Board</h1>
   <div class="updated" id="updated">Loading</div>
+  <div class="sectors" id="sectors"></div>
   <div class="steps" id="steps"></div>
 </header>
 <main>
@@ -314,11 +361,25 @@ function columnsHtml(columns, cards) {
 
 function stepsHtml(steps) {
   return steps.filter(step => step.state !== "finished").map(step => {
-    const done = step.candidate_count ? Math.round(100 * step.candidates_done / step.candidate_count) : 0;
+    const count = step.item_count ?? step.candidate_count, itemsDone = step.items_done ?? step.candidates_done;
+    const done = count ? Math.round(100 * itemsDone / count) : 0;
     const current = step.current_candidate ? `, TIC ${text(step.current_candidate.tic_id)}${step.current_candidate.progress ? ": " + text(step.current_candidate.progress) : ""}` : "";
-    return `<div class="step ${step.state}">Sector ${step.sector}, step ${step.step_number} ${text(step.step_name.replaceAll("_", " "))}: ${step.state}, ${step.candidates_done} of ${step.candidate_count} done${current}
+    return `<div class="step ${step.state}">Sector ${step.sector}, step ${step.step_number} ${text(step.step_name.replaceAll("_", " "))}: ${step.state}, ${itemsDone.toLocaleString()} of ${count.toLocaleString()} ${text(step.item_name || "candidates")} done${current}
       <div class="bar"><div style="width: ${done}%"></div></div></div>`;
   }).join("") || `<div class="step">No step is running.</div>`;
+}
+
+function sectorsHtml(sectors) {
+  return sectors.map(sector => {
+    const steps = sector.steps.map(step => {
+      const count = step.item_count ? `: ${step.items_done.toLocaleString()} of ${step.item_count.toLocaleString()} ${text(step.item_name)}` : "";
+      const mark = {finished: "done", running: "running", stopped: "stopped", "not started": "not started"}[step.state];
+      return `<span class="sector-step ${step.state.replace(" ", "-")}">${step.number} ${text(step.name)}: ${mark}${step.state === "finished" ? "" : count}</span>`;
+    }).join("");
+    const s = sector.summary;
+    const summary = s.stars_searched ? `${s.stars_searched.toLocaleString()} stars searched (${s.stars_failed_to_process} failed), ${s["signals_vetted (SNR and transit cut)"].toLocaleString()} signals vetted, ${s.signals_passing_all_tests} passed vetting: ${s.signals_passing_all_tests_and_known} known, ${s.signals_passing_all_tests_and_new} new candidates. Catalogues of ${text(s.catalogue_download_date)}.` : "";
+    return `<div class="sector"><b>Sector ${sector.sector}</b> ${steps}<div class="line">${summary}</div></div>`;
+  }).join("");
 }
 
 async function refresh() {
@@ -328,6 +389,7 @@ async function refresh() {
     document.getElementById("board").innerHTML = columnsHtml(latest.columns, latest.cards);
     document.getElementById("stopped").innerHTML = columnsHtml(latest.stopped_columns, latest.cards);
     document.getElementById("steps").innerHTML = stepsHtml(latest.steps);
+    document.getElementById("sectors").innerHTML = sectorsHtml(latest.sectors);
     document.getElementById("updated").textContent = `Updated ${new Date().toLocaleTimeString()}, every ${latest.refresh_seconds} s`;
   } catch (error) {
     document.getElementById("updated").textContent = `Update failed at ${new Date().toLocaleTimeString()}: ${error}`;

@@ -35,6 +35,7 @@ from leo_vetter.stellar import quadratic_ldc
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
 from download_qlp_sector_light_curves import light_curve_path
 from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
+from pipeline_status import PipelineStatus
 from search_qlp_sector import (
     detrend, load_light_curve, output_directory as search_output_directory, robust_standard_deviation,
 )
@@ -164,9 +165,13 @@ def main():
     print(f"Sector {sector}: {len(signals)} signals with SNR >= {arguments.min_snr} "
           f"and >= {arguments.min_transits} transits, {len(previous_rows)} vetted in an earlier run", flush=True)
 
-    with Pool(arguments.workers) as pool, IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, previous_rows) as writer:
+    status = PipelineStatus(sector, 4, "leo_vetting", "vet_qlp_sector_signals.py", len(signals), "signals")
+    with Pool(arguments.workers) as pool, IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, previous_rows) as writer, \
+            status:
+        status.set_items_done(len(previous_rows))
         for count, row in enumerate(pool.imap_unordered(vet_signal, tasks, chunksize=2), start=len(previous_rows) + 1):
             writer.write_row(row)
+            status.set_items_done(count)
             if count % 500 == 0:
                 print(f"  {count} of {len(signals)} signals vetted", flush=True)
     print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}")

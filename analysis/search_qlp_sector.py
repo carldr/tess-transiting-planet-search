@@ -30,6 +30,7 @@ from astropy.timeseries import BoxLeastSquares
 from wotan import flatten
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
+from pipeline_status import PipelineStatus
 
 # QUALITY bits that do not remove a cadence. Every other non-zero QUALITY bit removes it.
 # QLP does not document bit 30 (2^29). In Sector 98 it flags 31% of the cadences, and their noise is 1.1 times that
@@ -163,8 +164,10 @@ def main():
     output_directory(sector).mkdir(parents=True, exist_ok=True)
     print(f"Sector {sector}: {len(light_curve_paths)} light curves in {len(chunks)} chunks", flush=True)
 
-    with Pool(arguments.workers) as pool:
+    status = PipelineStatus(sector, 3, "bls_search", "search_qlp_sector.py", len(light_curve_paths), "stars")
+    with Pool(arguments.workers) as pool, status:
         for chunk_number, chunk in enumerate(chunks):
+            status.set_items_done(chunk_number * CHUNK_SIZE)
             chunk_path = output_directory(sector) / f"chunk_{chunk_number:04d}.csv"
             if chunk_path.exists():
                 continue

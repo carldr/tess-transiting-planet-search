@@ -20,6 +20,8 @@ from pathlib import Path
 
 from astroquery.mast import Catalogs
 
+from pipeline_status import PipelineStatus
+
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 BULK_DOWNLOAD_SCRIPT_DIRECTORY = REPOSITORY_ROOT / "data/qlp_bulk_download_scripts"
 BULK_DOWNLOAD_SCRIPT_URL = "https://archive.stsci.edu/hlsps/qlp/download_scripts/{name}"
@@ -87,9 +89,11 @@ def main():
     batches = [tic_ids[i : i + TIC_QUERY_BATCH_SIZE] for i in range(0, len(tic_ids), TIC_QUERY_BATCH_SIZE)]
 
     rows = []
-    with ThreadPoolExecutor(TIC_QUERY_THREADS) as executor:
+    status = PipelineStatus(sector, 1, "star_list", "build_qlp_sector_star_list.py", len(tic_ids), "stars")
+    with ThreadPoolExecutor(TIC_QUERY_THREADS) as executor, status:
         for batch_number, batch_rows in enumerate(executor.map(query_tic_batch, batches), start=1):
             rows.extend(batch_rows)
+            status.set_items_done(min(batch_number * TIC_QUERY_BATCH_SIZE, len(tic_ids)))
             if batch_number % 50 == 0:
                 print(f"  {batch_number} of {len(batches)} TIC batches", flush=True)
 
