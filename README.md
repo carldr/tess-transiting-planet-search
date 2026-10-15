@@ -241,6 +241,8 @@ Otherwise the later steps keep their results from the old input.
     The script runs TRICERATOPS in its own environment, on the light curves of all sectors, with the period, epoch and depth from step 9.
     TRICERATOPS compares the folded transit with each false positive scenario, such as an eclipsing binary on the target, on a companion or on a nearby star.
     It gives the false positive probability (FPP) and the nearby false positive probability (NFPP).
+    TRICERATOPS runs 5 times for each candidate, and one candidate can take many hours.
+    The script prints a line with the time at the start of the first run and at the end of each run.
     For an "on target" candidate, the script removes the scenarios on the stars that step 8 rules out.
 
     | `triceratops_verdict` | condition |

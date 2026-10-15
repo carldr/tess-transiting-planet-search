@@ -36,6 +36,7 @@ The script also appends the result of each candidate to its verification record.
 import argparse
 import csv
 import warnings
+from datetime import datetime, timezone
 
 import numpy as np
 
@@ -116,7 +117,9 @@ def validate(sector, candidate):
         target.stars.loc[ruled_out, "tdepth"] = 0
     time, flux, flux_error, exposure_days = folded_light_curve(sector, candidate)
     fpps, nfpps, scenarios = [], [], []
-    for _ in range(RUNS_PER_CANDIDATE):
+    print(f"    TIC {candidate['tic_id']}: {len(time)} folded points, {len(target.stars)} stars, "
+          f"start of run 1 of {RUNS_PER_CANDIDATE} at {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC", flush=True)
+    for run in range(1, RUNS_PER_CANDIDATE + 1):
         target.calc_probs(time=time, flux_0=flux, flux_err_0=flux_error, P_orb=float(candidate["fit_period_days"]),
                           N=SIMULATIONS_PER_SCENARIO, exptime=exposure_days, dilution_corrected=False,
                           verbose=0)
@@ -125,6 +128,9 @@ def validate(sector, candidate):
         probabilities = target.probs
         best = probabilities.loc[probabilities["prob"].idxmax()]
         scenarios.append(f"{best['scenario']} on TIC {best['ID']}")
+        print(f"    TIC {candidate['tic_id']}: end of run {run} of {RUNS_PER_CANDIDATE} at "
+              f"{datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC, FPP {target.FPP:.4g}, NFPP {target.NFPP:.4g}",
+              flush=True)
     fpp, nfpp = float(np.mean(fpps)), float(np.mean(nfpps))
     if fpp < VALIDATED_FPP and nfpp < NEARBY_FPP_LIMIT:
         verdict = "validated without imaging"
