@@ -109,6 +109,9 @@ def cutout_path(tic_id, ra, dec, sector):
     manifest = Tesscut.download_cutouts(
         coordinates=SkyCoord(ra, dec, unit="deg"), size=CUTOUT_SIZE_PIXELS, sector=sector, path=str(directory)
     )
+    # TESScut can list a new sector before it serves its full-frame images, and then returns an empty ZIP file.
+    if len(manifest) == 0:
+        raise ValueError(f"TESScut returned no cutout for Sector {sector}")
     return directory / manifest["Local Path"][0].split("/")[-1]
 
 
