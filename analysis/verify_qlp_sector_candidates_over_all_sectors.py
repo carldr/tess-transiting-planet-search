@@ -79,6 +79,7 @@ from ellipsoidal_variation import (
     combined_ellipsoidal_amplitude, companion_mass_from_ellipsoidal_amplitude, ellipsoidal_amplitude,
 )
 from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
+from pipeline_status import PipelineStatus, report_candidate_progress
 from search_qlp_sector import (
     BIWEIGHT_WINDOW_LENGTH_DAYS, load_light_curve, robust_standard_deviation,
 )
@@ -302,6 +303,8 @@ def run_mcmc_until_converged(sampler, walkers):
         if sampler.iteration % MCMC_CONVERGENCE_CHECK_STEPS:
             continue
         autocorrelation_time = float(np.max(sampler.get_autocorr_time(tol=0)))
+        report_candidate_progress(f"MCMC step {sampler.iteration}, autocorrelation time {autocorrelation_time:.0f} "
+                                  f"steps, converged at {MCMC_CONVERGED_AUTOCORRELATION_TIMES * autocorrelation_time:.0f}")
         if (sampler.iteration > MCMC_CONVERGED_AUTOCORRELATION_TIMES * autocorrelation_time
                 and abs(previous - autocorrelation_time) < MCMC_AUTOCORRELATION_TOLERANCE * autocorrelation_time):
             return autocorrelation_time
@@ -447,6 +450,7 @@ def lamost_spectra(ra, dec, gaia_source_id):
 def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     period_guess = float(candidate["joint_search_period_days"] or candidate["period_days"])
     duration = float(candidate["duration_hours"]) / 24
+    report_candidate_progress("loading the light curves of all sectors")
     sectors_without_detrending = load_all_sectors_without_detrending(sector, candidate)
     all_sectors = detrend_all_sectors(sectors_without_detrending, period_guess, float(candidate["epoch_btjd"]),
                                       duration)
@@ -520,6 +524,7 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     secondary, secondary_error = secondary_eclipse_depth(all_sectors, all_sector_errors, median[1], median[0],
                                                          duration_median)
     secondary_maximum = maximum_planet_secondary_depth(median[2], 10 ** median[4], star["Teff"])
+    report_candidate_progress("measuring the depths in the TESScut cutouts")
     cutout_depths = cutout_aperture_depths(
         candidate, star_row, sectors_with_full_frame_images(candidate["tic_id"], float(star_row["ra"]),
                                                             float(star_row["dec"])),
@@ -536,6 +541,7 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     density_ratio = float(np.median(fit_density) / density) if np.isfinite(density.value) else np.nan
     radius_median, radius_error = median_and_error(planet_radius)
     # The detrending removes a variation at half the period, so the ellipsoidal fit takes the flux before it.
+    report_candidate_progress("fitting the ellipsoidal variation")
     ellipsoidal_by_sector = {}
     for number, _, _, time, flux in sectors_without_detrending:
         result = ellipsoidal_amplitude(time, flux, median[1], median[0], duration_median, rng)
@@ -585,6 +591,7 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         row[f"{name}_error{error_unit}"] = f"{error:.{max(digits, 2) + 1}f}" if digits else f"{error:.0f}"
 
     row.update(gaia_radial_velocity_statistics(gaia_source_id))
+    report_candidate_progress("reading Gaia DR3 and LAMOST DR7")
     row["lamost_spectra"] = lamost_spectra(float(star_row["ra"]), float(star_row["dec"]), gaia_source_id)
     semi_amplitude_limit = row.get("gaia_rv_semi_amplitude_upper_limit_km_s", "")
     row["gaia_rv_companion_mass_upper_limit_solar_masses"] = (
@@ -716,8 +723,11 @@ def main():
     for row in earlier_rows:
         append_verification_record(sector, row)
 
-    with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer:
+    status = PipelineStatus(sector, 9, "all_sector_verification", "verify_qlp_sector_candidates_over_all_sectors.py",
+                            len(candidates))
+    with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer, status:
         for count, pixel_check in enumerate(candidates, start=1):
+            status.start_candidate(pixel_check["tic_id"], pixel_check["period_days"])
             candidate = {**checks[(pixel_check["tic_id"], pixel_check["period_days"])], **pixel_check}
             row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
             try:
@@ -730,6 +740,7 @@ def main():
             row.update(verification_stamp())
             row = writer.write_row(row)
             append_verification_record(sector, row)
+            status.finish_candidate()
             print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['verdict'] or 'error'}: "
                   f"{row['error'] or verification_record_result(row)}", flush=True)
     print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}")

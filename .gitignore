@@ -9,5 +9,8 @@ data/
 # stop before the move leaves it here.
 *_gaia_background.csv
 
+# The live progress of the running steps, for the candidate board.
+results/pipeline_status/
+
 __pycache__/
 .DS_Store

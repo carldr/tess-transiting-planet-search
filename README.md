@@ -18,6 +18,8 @@ His star is the known-positive test: the search must find his 3.18 d and 11.13 d
 | `data/candidate_tesscut_cutouts/` | TESScut cutouts of the full-frame images around the new candidates, one folder per TIC ID. |
 | `results/` | Outputs of the search code, one folder per script. The folders that end in `_quality_zero_mask` hold the first Sector 98 run, which also removed the cadences with QUALITY bit 30. |
 | `results/candidate_verification_records/` | One file per candidate, with a row for each verification step that ran on it. |
+| `results/candidate_decisions.csv` | The decisions that no step makes, such as a candidate held for a later sector. |
+| `results/pipeline_status/` | The live progress of the running steps, for the candidate board. Not in the repository. |
 | `results/ctoi_drafts/` | One file per CTOI draft, with the values to submit and the checks made before submission. |
 | `reference/rabtsevich_preprint_zenodo_22967456/` | Rabtsevich's research note, `manuscript.pdf` (doi:10.5281/zenodo.22967456). |
 | `reference/rabtsevich_data_zenodo_22999133/` | His supporting data and code, version 1.0.1 (doi:10.5281/zenodo.22999133). `unpacked/` holds the contents of the three ZIP files. |
@@ -323,6 +325,25 @@ The script only reads ExoFOP.
 The script writes `results/candidate_exofop_and_future_tess_sector_checks/candidate_exofop_and_future_tess_sector_checks.csv`, one row per TIC ID.
 It keeps the last ExoFOP page of each star in `exofop_target_pages/` in the same folder, to compare with the next run.
 Commit the folder after each run.
+
+### Watch the candidates on the board
+
+```
+.venv/bin/python analysis/serve_candidate_board.py
+```
+
+Open http://localhost:8000, or http://<the address of this computer>:8000 from another device on the same network.
+The server listens on every network of the computer. Give `--host 127.0.0.1` to limit it to this computer.
+
+The board has one card per new candidate of step 6, in all searched sectors.
+A card is in the column of the step that checks it next, or of the step that stopped it.
+The page reads the results again every 10 seconds, so a card moves as soon as a step writes its result.
+Steps 7 to 10 write their progress to `results/pipeline_status/`, and the card of the candidate that a step works on shows that progress.
+Click a card to see its verification record and its figures.
+
+`results/candidate_decisions.csv` holds the decisions that no step makes, one row per candidate.
+The `decision` column is `held`, `submitted` or `dropped`, and the card goes to the column of that decision.
+Write the reason in the `note` column, and commit the file after each change.
 
 ### Test star
 

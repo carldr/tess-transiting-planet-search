@@ -58,6 +58,7 @@ from cross_match_qlp_sector_signals_with_known_catalogues import (
 )
 from download_qlp_sector_light_curves import light_curve_path
 from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
+from pipeline_status import PipelineStatus
 from search_qlp_sector import (
     DURATIONS_DAYS, FREQUENCY_FACTOR, MAXIMUM_PERIOD_DAYS, MINIMUM_PERIOD_DAYS, detrend, load_light_curve,
     output_directory as search_output_directory, robust_standard_deviation, select_usable_cadences,
@@ -552,13 +553,16 @@ def main():
 
     # The candidates run one at a time: lightkurve redirects stdout during a download, which breaks other threads.
     rows = list(earlier_rows)
-    with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer:
+    status = PipelineStatus(sector, 7, "independent_checks", "check_qlp_sector_new_candidates.py", len(candidates))
+    with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer, status:
         for count, candidate in enumerate(candidates, start=1):
+            status.start_candidate(candidate["tic_id"], candidate["period_days"])
             row = check_candidate(candidate, sector, ephemeris_sources, stars,
                                   gaia_dr2_source_ids.get(int(candidate["tic_id"])))
             row.update(verification_stamp())
             row = writer.write_row(row)
             append_verification_record(sector, row)
+            status.finish_candidate()
             rows.append(row)
             print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['verdict']}"
                   f"{' (' + row['refuted_by'] + ')' if row['refuted_by'] else ''}", flush=True)

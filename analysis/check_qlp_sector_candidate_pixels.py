@@ -62,6 +62,7 @@ from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
 from candidate_verification_records import append_verification_record_entry, verification_stamp
 from check_qlp_sector_new_candidates import output_directory as candidate_checks_output_directory
 from incremental_csv_output import IncrementalCsvWriter, complete_csv_rows, earlier_rows_to_keep
+from pipeline_status import PipelineStatus, report_candidate_progress
 
 CUTOUT_DIRECTORY = REPOSITORY_ROOT / "data/candidate_tesscut_cutouts"
 CUTOUT_SIZE_PIXELS = 21
@@ -422,8 +423,10 @@ def main():
 
     sector_writer = IncrementalCsvWriter(sector_output_path, OUTPUT_COLUMNS, earlier_sector_rows)
     candidate_writer = IncrementalCsvWriter(candidate_output_path, CANDIDATE_OUTPUT_COLUMNS, earlier_candidate_rows)
-    with sector_writer, candidate_writer:
+    status = PipelineStatus(sector, 8, "pixel_check", "check_qlp_sector_candidate_pixels.py", len(candidates))
+    with sector_writer, candidate_writer, status:
         for count, candidate in enumerate(candidates, start=1):
+            status.start_candidate(candidate["tic_id"], candidate["period_days"])
             star_row = star_rows[candidate["tic_id"]]
             try:
                 sectors = sectors_with_full_frame_images(candidate["tic_id"], float(star_row["ra"]),
@@ -432,7 +435,8 @@ def main():
                 sectors = [sector]
                 print(f"  TIC {candidate['tic_id']}: sector list failed ({error}); Sector {sector} only", flush=True)
             rows = []
-            for pixel_sector in sectors:
+            for sector_number, pixel_sector in enumerate(sectors, start=1):
+                report_candidate_progress(f"Sector {pixel_sector}, {sector_number} of {len(sectors)}")
                 row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
                 row["check_verdict"] = candidate["verdict"]
                 row["sector"] = pixel_sector
@@ -468,6 +472,7 @@ def main():
                 sector_writer.write_row(row)
             candidate_row = candidate_writer.write_row(candidate_row)
             append_verification_record(sector, candidate_row)
+            status.finish_candidate()
             print(f"  {count} of {len(candidates)}: TIC {candidate['tic_id']} {candidate_row['pixel_verdict']}: "
                   f"{summary}", flush=True)
     print(f"Wrote {sector_output_path.relative_to(REPOSITORY_ROOT)} and "

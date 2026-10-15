@@ -46,6 +46,7 @@ from build_qlp_sector_star_list import REPOSITORY_ROOT
 from candidate_verification_records import append_verification_record_entry, verification_stamp
 from check_qlp_sector_candidate_pixels import PIXEL_SIZE_ARCSEC, UNRESOLVABLE_SEPARATION_PIXELS
 from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
+from pipeline_status import PipelineStatus, report_candidate_progress
 from search_qlp_sector import robust_standard_deviation
 from verify_qlp_sector_candidates_over_all_sectors import (
     load_all_sectors, output_directory as all_sector_verification_output_directory, phase_time,
@@ -141,6 +142,8 @@ def validate(sector, candidate):
     print(f"    TIC {candidate['tic_id']}: {len(time)} folded points, {len(target.stars)} stars, "
           f"start of run 1 of {RUNS_PER_CANDIDATE} at {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC", flush=True)
     for run in range(1, RUNS_PER_CANDIDATE + 1):
+        report_candidate_progress(f"run {run} of {RUNS_PER_CANDIDATE}"
+                                  + (f", mean FPP so far {np.mean(fpps):.4g}" if fpps else ""))
         target.calc_probs(time=time, flux_0=flux, flux_err_0=flux_error, P_orb=float(candidate["fit_period_days"]),
                           N=SIMULATIONS_PER_SCENARIO, exptime=exposure_days, dilution_corrected=False,
                           verbose=0)
@@ -217,8 +220,11 @@ def main():
     for row in earlier_rows:
         append_verification_record(sector, row)
 
-    with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer:
+    status = PipelineStatus(sector, 10, "triceratops", "validate_qlp_sector_candidates_with_triceratops.py",
+                            len(candidates))
+    with IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, earlier_rows) as writer, status:
         for count, candidate in enumerate(candidates, start=1):
+            status.start_candidate(candidate["tic_id"], candidate["period_days"])
             row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
             try:
                 with warnings.catch_warnings():
@@ -229,6 +235,7 @@ def main():
             row.update(verification_stamp())
             row = writer.write_row(row)
             append_verification_record(sector, row)
+            status.finish_candidate()
             print(f"  {count} of {len(candidates)}: TIC {row['tic_id']} {row['triceratops_verdict'] or 'error'}: "
                   f"{row['error'] or verification_record_result(row)}", flush=True)
     print(f"Wrote {output_path.relative_to(REPOSITORY_ROOT)}")
