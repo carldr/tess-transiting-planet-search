@@ -151,11 +151,12 @@ def main():
 
     output_directory(sector).mkdir(parents=True, exist_ok=True)
     output_path = output_directory(sector) / "vetting.csv"
-    previous_rows = earlier_rows_to_keep(output_path, arguments.restart)
-    vetted = {(row["tic_id"], row["signal_number"]) for row in previous_rows}
-
     star_rows = {int(row["tic_id"]): row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}
     signals = list(selected_signals(sector, arguments.min_snr, arguments.min_transits))
+    previous_rows = earlier_rows_to_keep(output_path, arguments.restart,
+                                         {(signal["tic_id"], signal["signal_number"]) for signal in signals},
+                                         key_columns=("tic_id", "signal_number"))
+    vetted = {(row["tic_id"], row["signal_number"]) for row in previous_rows}
     tasks = [
         (sector, signal, star_rows[int(signal["tic_id"])], light_curve_path(sector, int(signal["tic_id"])))
         for signal in signals if (signal["tic_id"], signal["signal_number"]) not in vetted

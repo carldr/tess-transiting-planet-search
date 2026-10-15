@@ -533,9 +533,11 @@ def main():
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     output_path = directory / "candidate_checks.csv"
-    earlier_rows = earlier_rows_to_keep(output_path, arguments.restart, arguments.tic_ids)
-    checked = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     all_candidates = list(csv.DictReader(open(cross_match_output_directory(sector) / "new_candidates.csv")))
+    earlier_rows = earlier_rows_to_keep(
+        output_path, arguments.restart, {(row["tic_id"], row["period_days"]) for row in all_candidates},
+        tic_ids=arguments.tic_ids)
+    checked = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     candidates = [candidate for candidate in all_candidates
                   if (candidate["tic_id"], candidate["period_days"]) not in checked
                   and (not arguments.tic_ids or candidate["tic_id"] in arguments.tic_ids)]

@@ -66,6 +66,7 @@ Steps 2–4 and 7–10 continue a stopped run by default. A stop, such as a rebo
 
 - Steps 2 and 3 skip the stars and chunks that are already done.
 - Steps 4 and 7–10 write each result to disk as soon as they have it. They keep the earlier results without an error, and do the other items.
+  They drop the earlier results of items that are no longer in their input, such as a candidate that now matches a TOI.
   They do the items with an error again, so they retry a temporary failure, such as an archive outage.
 
 Run the same command again to continue.

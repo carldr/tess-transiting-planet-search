@@ -19,13 +19,16 @@ def complete_csv_rows(path):
     return list(csv.DictReader(text.splitlines()))
 
 
-def earlier_rows_to_keep(path, restart, tic_ids=()):
-    """Return the complete rows of the earlier run that have no error.
+def earlier_rows_to_keep(path, restart, input_keys, key_columns=("tic_id", "period_days"), tic_ids=()):
+    """Return the complete rows of the earlier run that have no error and whose item is still in the input.
 
+    input_keys holds the key_columns values of each item in the current input of the step. An earlier row of an item
+    that is no longer in the input, such as a candidate that now matches a TOI, has no place in the output.
     The step does the items of the other rows again, so it retries a temporary failure, such as an archive outage.
     With --restart, the function also drops the rows of tic_ids, or every row when tic_ids is empty.
     """
-    rows = [row for row in complete_csv_rows(path) if not row.get("error")]
+    rows = [row for row in complete_csv_rows(path)
+            if not row.get("error") and tuple(row[column] for column in key_columns) in input_keys]
     if restart:
         return [row for row in rows if tic_ids and row["tic_id"] not in tic_ids]
     return rows

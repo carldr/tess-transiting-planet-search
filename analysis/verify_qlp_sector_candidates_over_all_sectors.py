@@ -583,13 +583,15 @@ def main():
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     output_path = directory / "all_sector_verification.csv"
-    earlier_rows = earlier_rows_to_keep(output_path, arguments.restart, arguments.tic_ids)
-    verified = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     pixel_checks = list(csv.DictReader(open(pixel_checks_output_directory(sector) / "pixel_checks.csv")))
     checks = {(row["tic_id"], row["period_days"]): row
               for row in csv.DictReader(open(candidate_checks_output_directory(sector) / "candidate_checks.csv"))}
     star_rows = {row["tic_id"]: row for row in csv.DictReader(open(sector_directory(sector) / "star_list.csv"))}
     to_verify = [row for row in pixel_checks if row["pixel_verdict"] in PIXEL_VERDICTS_TO_VERIFY]
+    earlier_rows = earlier_rows_to_keep(
+        output_path, arguments.restart, {(row["tic_id"], row["period_days"]) for row in to_verify},
+        tic_ids=arguments.tic_ids)
+    verified = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     candidates = [row for row in to_verify if (row["tic_id"], row["period_days"]) not in verified
                   and (not arguments.tic_ids or row["tic_id"] in arguments.tic_ids)]
     print(f"Sector {sector}: {len(to_verify)} candidates on the target or unresolved, "

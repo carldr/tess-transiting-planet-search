@@ -180,11 +180,13 @@ def main():
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     output_path = directory / "triceratops_validation.csv"
-    earlier_rows = earlier_rows_to_keep(output_path, arguments.restart, arguments.tic_ids)
-    validated = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     verifications = list(csv.DictReader(
         open(all_sector_verification_output_directory(sector) / "all_sector_verification.csv")))
     passed = [row for row in verifications if row["verdict"] == "passed"]
+    earlier_rows = earlier_rows_to_keep(
+        output_path, arguments.restart, {(row["tic_id"], row["period_days"]) for row in passed},
+        tic_ids=arguments.tic_ids)
+    validated = {(row["tic_id"], row["period_days"]) for row in earlier_rows}
     candidates = [row for row in passed if (row["tic_id"], row["period_days"]) not in validated
                   and (not arguments.tic_ids or row["tic_id"] in arguments.tic_ids)]
     print(f"Sector {sector}: {len(passed)} candidates passed the all-sector verification, "
