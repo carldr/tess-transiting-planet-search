@@ -303,8 +303,14 @@ def run_mcmc_until_converged(sampler, walkers):
         if sampler.iteration % MCMC_CONVERGENCE_CHECK_STEPS:
             continue
         autocorrelation_time = float(np.max(sampler.get_autocorr_time(tol=0)))
-        report_candidate_progress(f"MCMC step {sampler.iteration}, autocorrelation time {autocorrelation_time:.0f} "
-                                  f"steps, converged at {MCMC_CONVERGED_AUTOCORRELATION_TIMES * autocorrelation_time:.0f}")
+        change = abs(previous - autocorrelation_time) / autocorrelation_time
+        report_candidate_progress(
+            f"MCMC step {sampler.iteration} of at most {MCMC_MAXIMUM_STEPS}; converged when longer than "
+            f"{MCMC_CONVERGED_AUTOCORRELATION_TIMES * autocorrelation_time:.0f} steps and the autocorrelation time "
+            f"({autocorrelation_time:.0f} steps) changes by less than {MCMC_AUTOCORRELATION_TOLERANCE:.0%} "
+            f"(now {change:.1%})" if np.isfinite(change) else
+            f"MCMC step {sampler.iteration} of at most {MCMC_MAXIMUM_STEPS}; autocorrelation time "
+            f"{autocorrelation_time:.0f} steps")
         if (sampler.iteration > MCMC_CONVERGED_AUTOCORRELATION_TIMES * autocorrelation_time
                 and abs(previous - autocorrelation_time) < MCMC_AUTOCORRELATION_TOLERANCE * autocorrelation_time):
             return autocorrelation_time
