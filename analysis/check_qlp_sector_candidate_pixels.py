@@ -23,6 +23,8 @@ those stars. The pixel verdict is:
 
 The verdict of the candidate combines the verdicts of the sectors. It is "on neighbour" when any sector puts the dip
 on a neighbour. Otherwise it is the first of "on target", "unresolved" and "too faint" that a sector gives.
+The script also fits all sectors together (joint_pixel_verdict). When each sector is too faint, the candidate takes
+the verdict of the joint fit.
 
 Run from the repository root, after check_qlp_sector_new_candidates.py:
     .venv/bin/python analysis/check_qlp_sector_candidate_pixels.py 98
@@ -89,7 +91,8 @@ OUTPUT_COLUMNS = [
 ]
 CANDIDATE_OUTPUT_COLUMNS = [
     "tic_id", "period_days", "epoch_btjd", "duration_hours", "depth_ppm", "tmag", "check_verdict", "sectors_checked",
-    "pixel_verdicts_by_sector", "pixel_verdict", "verification_date_utc", "code_version",
+    "pixel_verdicts_by_sector", "joint_sectors", "joint_difference_image_snr", "joint_best_source",
+    "joint_pixel_verdict", "pixel_verdict", "verification_date_utc", "code_version",
 ]
 
 
@@ -258,15 +261,7 @@ def check_pixels(candidate, star_row, sector, figure_directory):
     others = [fits_by_star[index][0] for index in inside if index not in target_group]
     best_other_above_target = (min(others) - target_group_chi_square) / scale if others else np.inf
 
-    # When no star fits a dip, the amplitude and the SNR are negative, and the verdict is too faint.
-    if snr < MINIMUM_DIFFERENCE_IMAGE_SNR:
-        pixel_verdict = "too faint"
-    elif best_index not in target_group and target_above_best >= DELTA_CHI_SQUARE_DECISION:
-        pixel_verdict = "on neighbour"
-    elif best_index in target_group and best_other_above_target >= DELTA_CHI_SQUARE_DECISION:
-        pixel_verdict = "on target"
-    else:
-        pixel_verdict = "unresolved"
+    pixel_verdict = pixel_verdict_from_fit(snr, best_index in target_group, target_above_best, best_other_above_target)
 
     draw_figure(figure_directory / f"tic{candidate['tic_id']}_{period:.5f}_s{sector:04d}.png", out_of_transit_image,
                 difference, stars, positions, inside, best_index, free_fit.x, candidate, sector, pixel_verdict)
@@ -285,6 +280,53 @@ def check_pixels(candidate, star_row, sector, figure_directory):
             float(np.hypot(*(free_fit.x - [target_column, target_row]))) * PIXEL_SIZE_ARCSEC, 1
         ),
         "pixel_verdict": pixel_verdict,
+        # For joint_pixel_verdict: the scaled chi-square and the SNR of the fit of each star, by star name.
+        "fits_by_star_name": {stars[index][0]: (fits_by_star[index][0] / scale,
+                                                fits_by_star[index][1] / fits_by_star[index][2] / np.sqrt(scale))
+                              for index in inside},
+        "target_group_names": [stars[index][0] for index in target_group],
+    }
+
+
+def pixel_verdict_from_fit(snr, best_is_in_target_group, target_above_best, best_other_above_target):
+    # When no star fits a dip, the amplitude and the SNR are negative, and the verdict is too faint.
+    if snr < MINIMUM_DIFFERENCE_IMAGE_SNR:
+        return "too faint"
+    if not best_is_in_target_group and target_above_best >= DELTA_CHI_SQUARE_DECISION:
+        return "on neighbour"
+    if best_is_in_target_group and best_other_above_target >= DELTA_CHI_SQUARE_DECISION:
+        return "on target"
+    return "unresolved"
+
+
+def joint_pixel_verdict(sector_results):
+    """Return the pixel verdict of the fits of all sectors together, or None with fewer than two sectors.
+
+    The sectors have different pixel grids, so the script cannot add their difference images. It adds the scaled
+    chi-squares of each star over the sectors in place, which is the chi-square of a joint fit with one amplitude
+    per sector. The joint SNR of a star is the root of the sum of the squares of its positive sector SNRs.
+    """
+    results = [result for result in sector_results if "fits_by_star_name" in result]
+    if len(results) < 2:
+        return None
+    names = set.intersection(*(set(result["fits_by_star_name"]) for result in results))
+    target_group = set(results[0]["target_group_names"]) & names
+    if not target_group:
+        return None
+    chi_square = {name: sum(result["fits_by_star_name"][name][0] for result in results) for name in names}
+    snrs = {name: [result["fits_by_star_name"][name][1] for result in results] for name in names}
+    snr = {name: float(np.sqrt(sum(max(value, 0) ** 2 for value in snrs[name]))) for name in names}
+    dimming = [name for name in names if sum(snrs[name]) > 0] or list(names)
+    best = min(dimming, key=lambda name: chi_square[name])
+    target_chi_square = min(chi_square[name] for name in target_group)
+    others = [chi_square[name] for name in names if name not in target_group]
+    best_other_above_target = min(others) - target_chi_square if others else np.inf
+    return {
+        "joint_sectors": " ".join(str(result["sector"]) for result in results),
+        "joint_difference_image_snr": round(snr[best], 1),
+        "joint_best_source": best,
+        "joint_pixel_verdict": pixel_verdict_from_fit(snr[best], best in target_group,
+                                                      target_chi_square - chi_square[best], best_other_above_target),
     }
 
 
@@ -409,6 +451,15 @@ def main():
             candidate_row["sectors_checked"] = " ".join(str(row["sector"]) for row in rows)
             candidate_row["pixel_verdicts_by_sector"] = summary
             candidate_row["pixel_verdict"] = combined_pixel_verdict([row.get("pixel_verdict", "") for row in rows])
+            # A dip too faint in each sector can be strong enough in all sectors together.
+            joint = joint_pixel_verdict(rows)
+            if joint:
+                candidate_row.update(joint)
+                if candidate_row["pixel_verdict"] == "too faint":
+                    candidate_row["pixel_verdict"] = joint["joint_pixel_verdict"]
+                    summary += (f"; all sectors together {joint['joint_pixel_verdict']} (SNR "
+                                f"{joint['joint_difference_image_snr']}, best star {joint['joint_best_source']})")
+                    candidate_row["pixel_verdicts_by_sector"] = summary
             candidate_row.update(verification_stamp())
             for row in rows:
                 sector_writer.write_row(row)
