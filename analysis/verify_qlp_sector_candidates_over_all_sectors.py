@@ -29,7 +29,8 @@ The script takes each candidate with pixel verdict "on target" or "unresolved", 
    ELLIPSOIDAL_SIGMA_LIMIT sigma or more is a caution: it can mean a stellar companion, but some known planets
    also show it (calibrate_ellipsoidal_variation_test_on_known_planets.py).
 
-The verdict is "refuted" when the odd and even depths differ by ODD_EVEN_SIGMA_LIMIT sigma or more, when the
+The verdict is "refuted" when the transit fit does not converge in MCMC_MAXIMUM_STEPS steps, when the odd and even
+depths differ by ODD_EVEN_SIGMA_LIMIT sigma or more, when the
 secondary eclipse is deeper than a planet can give by SECONDARY_SIGMA_LIMIT sigma, or when the companion radius is
 above COMPANION_MAXIMUM_RADIUS_EARTH_RADII. Otherwise it is "passed". The cautions column lists weaker warnings.
 
@@ -315,8 +316,12 @@ def run_mcmc_until_converged(sampler, walkers):
                 and abs(previous - autocorrelation_time) < MCMC_AUTOCORRELATION_TOLERANCE * autocorrelation_time):
             return autocorrelation_time
         previous = autocorrelation_time
-    raise RuntimeError(f"MCMC not converged after {MCMC_MAXIMUM_STEPS} steps, autocorrelation time "
-                       f"{autocorrelation_time:.0f} steps")
+    raise TransitFitNotConverged(f"MCMC not converged after {MCMC_MAXIMUM_STEPS} steps, autocorrelation time "
+                                 f"{autocorrelation_time:.0f} steps")
+
+
+class TransitFitNotConverged(Exception):
+    """The transit fit has no converged chain, so the step cannot give the values or the tests of the candidate."""
 
 
 def observed_depths(samples):
@@ -744,6 +749,11 @@ def main():
                     warnings.simplefilter("ignore")
                     row.update(verify(sector, candidate, star_rows[candidate["tic_id"]], candidate["gaia_source_id"],
                                       directory))
+            # A fit that does not converge in MCMC_MAXIMUM_STEPS does not converge in a rerun either, so it is a
+            # verdict and not an error.
+            except TransitFitNotConverged as error:
+                row["refuted_by"] = f"transit fit does not converge ({error})"
+                row["verdict"] = "refuted"
             except Exception as error:
                 row["error"] = f"{type(error).__name__}: {error}"
             row.update(verification_stamp())
