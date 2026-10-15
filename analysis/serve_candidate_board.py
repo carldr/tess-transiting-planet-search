@@ -154,7 +154,8 @@ def board():
         new_candidates = complete_csv_rows(
             RESULTS_DIRECTORY / f"qlp_sector_{sector:04d}_known_catalogue_cross_match/new_candidates.csv")
         cards += [candidate_card(sector, candidate, step_rows, decisions, running) for candidate in new_candidates]
-    columns = ([{"id": f"step_{step['number']}", "title": f"Step {step['number']}: {step['name']}"} for step in STEPS]
+    columns = ([{"id": f"step_{step['number']}", "title": f"Waiting for or in step {step['number']}: {step['name']}"}
+                for step in STEPS]
                + [{"id": "passed", "title": "Passed all steps"}, {"id": "held", "title": "Held"},
                   {"id": "submitted", "title": "Submitted"}])
     stopped = ([{"id": f"stopped_{step['number']}", "title": f"Stopped at step {step['number']}: {step['name']}"}
