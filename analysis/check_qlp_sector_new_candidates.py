@@ -334,7 +334,10 @@ def check_ephemeris_match(candidate, ephemeris_sources, stars):
 
 def gaia_dr2_source_ids_by_tic_id(tic_ids):
     """Return {TIC ID: Gaia DR2 source ID}. The TIC gives Gaia DR2 IDs, and some differ from the DR3 IDs."""
-    table = Catalogs.query_criteria(catalog="Tic", ID=[int(tic_id) for tic_id in tic_ids])
+    # MAST refuses a query with no IDs. A run with every candidate done has no IDs.
+    if not tic_ids:
+        return {}
+    table =Catalogs.query_criteria(catalog="Tic", ID=[int(tic_id) for tic_id in tic_ids])
     return {int(row["ID"]): int(row["GAIA"]) for row in table if str(row["GAIA"]).isdigit()}
 
 
