@@ -5,7 +5,8 @@ of the sector search. Each step script appends one table row per candidate each 
 the step, the script, the version of the code, the verdict and the result. A re-run appends a new row, so the file
 keeps the full history of the candidate.
 
-The code version is the git commit of the repository. It ends in "-modified" when analysis/ has uncommitted changes.
+The code version is the git commit of the repository when the step starts. It ends in "-modified" when analysis/ has
+uncommitted changes at that time.
 
 A step stores the date and the code version in its result row with verification_stamp, writes the row to its CSV,
 and then appends the record row. A stop between the two writes leaves a CSV row with no record row. The step then
@@ -39,11 +40,16 @@ def code_version():
     return f"{commit}-modified" if git("status", "--porcelain", "analysis") else commit
 
 
+# A commit made while a step runs must not change the code version of its results. So the module reads the code
+# version once, when the step script imports it at its start.
+CODE_VERSION_AT_START = code_version()
+
+
 def verification_stamp():
     """Return the date and the code version of a result, as columns for the result row of a step."""
     return {
         "verification_date_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"),
-        "code_version": code_version(),
+        "code_version": CODE_VERSION_AT_START,
     }
 
 
