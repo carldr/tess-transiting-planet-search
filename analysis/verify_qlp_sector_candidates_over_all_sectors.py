@@ -18,8 +18,10 @@ The script takes each candidate with pixel verdict "on target" or "unresolved", 
    reflection plus the day side thermal emission without heat redistribution, at 800 nm;
 7. reads the Gaia DR3 radial velocity statistics. The star is RV-variable when rv_chisq_pvalue <= 0.01,
    rv_renormalised_gof > 4 and rv_nb_transits >= 10 (Katz et al. 2023). A planet cannot cause a variation that
-   Gaia can detect, so this means a stellar companion or a pulsating star;
-8. lists the LAMOST DR7 low-resolution spectra within LAMOST_RADIUS_ARCSEC, with their class and radial velocity;
+   Gaia can detect, so this means a stellar companion or a pulsating star. For a bright star, the script also
+   gives the largest companion mass that the scatter of the Gaia epochs allows;
+8. lists the LAMOST DR7 low-resolution spectra within LAMOST_RADIUS_ARCSEC, with their class, radial velocity and
+   the star in the fibre: the target, another Gaia star, or none, when the fibre recorded the light of a near star;
 9. fits the ellipsoidal variation of each sector, before the detrending, with ellipsoidal_variation.py, and
    combines the sectors. It gives the companion mass that this amplitude needs. A variation of
    ELLIPSOIDAL_SIGMA_LIMIT sigma or more is a caution: it can mean a stellar companion, but some known planets
@@ -58,7 +60,7 @@ from astroquery.gaia import Gaia
 from astroquery.mast import Catalogs
 from astroquery.vizier import Vizier
 from scipy import stats
-from scipy.optimize import minimize
+from scipy.optimize import brentq, minimize
 from wotan import flatten
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
@@ -111,7 +113,9 @@ SECONDARY_ECLIPSE_WAVELENGTH_METRES = 800e-9
 GAIA_RV_VARIABLE_P_VALUE = 0.01
 GAIA_RV_VARIABLE_RENORMALISED_GOF = 4.0
 GAIA_RV_MINIMUM_TRANSITS = 10
-LAMOST_RADIUS_ARCSEC = 3.0
+GAIA_RV_ERROR_FLOOR_KM_S = 0.11
+# A LAMOST fibre has a diameter of 3.3 arcsec, and an offset fibre can record a star from further away.
+LAMOST_RADIUS_ARCSEC = 15.0
 
 OUTPUT_COLUMNS = [
     "tic_id", "period_days", "depth_ppm", "tmag", "pixel_verdict", "sectors_used", "exposure_seconds_by_sector",
@@ -126,6 +130,8 @@ OUTPUT_COLUMNS = [
     "secondary_maximum_planet_depth_ppm", "ellipsoidal_amplitude_ppm_by_sector", "ellipsoidal_amplitude_ppm",
     "ellipsoidal_amplitude_error_ppm", "ellipsoidal_companion_mass_solar_masses", "gaia_source_id", "gaia_rv_nb_transits", "gaia_rv_chisq_pvalue",
     "gaia_rv_renormalised_gof", "gaia_rv_amplitude_robust_km_s", "gaia_vbroad_km_s", "gaia_rv_variable",
+    "gaia_rv_epoch_scatter_km_s", "gaia_rv_semi_amplitude_upper_limit_km_s",
+    "gaia_rv_companion_mass_upper_limit_solar_masses",
     "lamost_spectra", "refuted_by", "cautions", "verdict", "error", "verification_date_utc", "code_version",
 ]
 
@@ -347,8 +353,8 @@ def gaia_radial_velocity_statistics(gaia_source_id):
     if not gaia_source_id:
         return {}
     row = Gaia.launch_job(
-        "SELECT rv_nb_transits, rv_chisq_pvalue, rv_renormalised_gof, rv_amplitude_robust, vbroad "
-        f"FROM gaiadr3.gaia_source WHERE source_id = {int(gaia_source_id)}"
+        "SELECT rv_nb_transits, rv_chisq_pvalue, rv_renormalised_gof, rv_amplitude_robust, vbroad, "
+        f"radial_velocity_error, rv_method_used FROM gaiadr3.gaia_source WHERE source_id = {int(gaia_source_id)}"
     ).get_results()[0]
 
     def value(name):
@@ -358,7 +364,16 @@ def gaia_radial_velocity_statistics(gaia_source_id):
         "gaia_rv_nb_transits": value("rv_nb_transits"), "gaia_rv_chisq_pvalue": value("rv_chisq_pvalue"),
         "gaia_rv_renormalised_gof": value("rv_renormalised_gof"),
         "gaia_rv_amplitude_robust_km_s": value("rv_amplitude_robust"), "gaia_vbroad_km_s": value("vbroad"),
+        "gaia_rv_epoch_scatter_km_s": "", "gaia_rv_semi_amplitude_upper_limit_km_s": "",
     }
+    # For the bright stars of rv_method_used 1, radial_velocity_error^2 = pi / (2 N) scatter^2 + floor^2
+    # (Katz et al. 2023). The epoch scatter holds any orbit: a sinusoid of semi-amplitude K adds K / sqrt(2) to it.
+    # So K <= sqrt(2) scatter, whatever the noise of each epoch.
+    if value("rv_method_used") == 1 and value("rv_nb_transits") != "" and value("radial_velocity_error") != "":
+        error_squared = max(value("radial_velocity_error") ** 2 - GAIA_RV_ERROR_FLOOR_KM_S ** 2, 0)
+        scatter = np.sqrt(error_squared * 2 * value("rv_nb_transits") / np.pi)
+        statistics["gaia_rv_epoch_scatter_km_s"] = f"{scatter:.3g}"
+        statistics["gaia_rv_semi_amplitude_upper_limit_km_s"] = f"{np.sqrt(2) * scatter:.3g}"
     statistics["gaia_rv_variable"] = (
         all(statistics[name] != "" for name in ("gaia_rv_nb_transits", "gaia_rv_chisq_pvalue", "gaia_rv_renormalised_gof"))
         and statistics["gaia_rv_chisq_pvalue"] <= GAIA_RV_VARIABLE_P_VALUE
@@ -368,13 +383,36 @@ def gaia_radial_velocity_statistics(gaia_source_id):
     return statistics
 
 
-def lamost_spectra(ra, dec):
+def companion_mass_from_semi_amplitude(semi_amplitude_km_s, period_days, stellar_mass):
+    """Return the companion mass, in solar masses, of a transiting orbit with this radial velocity semi-amplitude.
+
+    The orbit is circular and edge-on: M2^3 / (M1 + M2)^2 = P K^3 / (2 pi G).
+    """
+    mass_function = ((period_days * units.day) * (float(semi_amplitude_km_s) * units.km / units.s) ** 3
+                     / (2 * np.pi * G)).to_value(units.M_sun)
+    return brentq(lambda mass: mass ** 3 / (stellar_mass + mass) ** 2 - mass_function, 0, 100 * stellar_mass)
+
+
+def lamost_fibre_source(row, gaia_source_id):
+    """Return the star in the fibre of a LAMOST spectrum, from the Gaia DR2 cross-match of LAMOST DR7.
+
+    A fibre with no Gaia source recorded the light of a nearby star, such as the target.
+    """
+    if row["GaiaDR2"] is np.ma.masked:
+        return "no Gaia source in the fibre"
+    if str(row["GaiaDR2"]) == str(gaia_source_id):
+        return "fibre on the target"
+    return f"fibre on Gaia DR2 {row['GaiaDR2']}"
+
+
+def lamost_spectra(ra, dec, gaia_source_id):
     tables = Vizier(columns=["**", "_r"], row_limit=-1).query_region(
         SkyCoord(ra, dec, unit="deg"), radius=LAMOST_RADIUS_ARCSEC * units.arcsec, catalog="V/156/dr7lrs")
     if not tables:
         return ""
     return "; ".join(
-        f"{row['Obs.Date']} {row['Class']} {row['subClass']}, RV {row['z'] * c.to_value('km/s'):.0f} "
+        f"{row['Obs.Date']} {row['Class']} {row['subClass']} at {row['_r']:.1f} arcsec, "
+        f"{lamost_fibre_source(row, gaia_source_id)}, RV {row['z'] * c.to_value('km/s'):.0f} "
         f"+/- {row['e_z'] * c.to_value('km/s'):.1f} km/s, SNR g {row['snrg']:.0f}"
         for row in tables[0]
     )
@@ -519,7 +557,11 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         row[f"{name}_error{error_unit}"] = f"{error:.{max(digits, 2) + 1}f}" if digits else f"{error:.0f}"
 
     row.update(gaia_radial_velocity_statistics(gaia_source_id))
-    row["lamost_spectra"] = lamost_spectra(float(star_row["ra"]), float(star_row["dec"]))
+    row["lamost_spectra"] = lamost_spectra(float(star_row["ra"]), float(star_row["dec"]), gaia_source_id)
+    semi_amplitude_limit = row.get("gaia_rv_semi_amplitude_upper_limit_km_s", "")
+    row["gaia_rv_companion_mass_upper_limit_solar_masses"] = (
+        f"{companion_mass_from_semi_amplitude(semi_amplitude_limit, median[1], star['mass']):.3g}"
+        if semi_amplitude_limit != "" and np.isfinite(star["mass"]) else "")
 
     refuted_by, cautions = [], []
     if odd_even_sigma >= ODD_EVEN_SIGMA_LIMIT:
@@ -597,7 +639,8 @@ def verification_record_result(row):
         f"(planet maximum {row['secondary_maximum_planet_depth_ppm']}); "
         f"ellipsoidal {row['ellipsoidal_amplitude_ppm']} +/- {row['ellipsoidal_amplitude_error_ppm']} ppm "
         f"(companion mass {row['ellipsoidal_companion_mass_solar_masses']} solar masses); "
-        f"Gaia RV variable {row['gaia_rv_variable']}; "
+        f"Gaia RV variable {row['gaia_rv_variable']}, companion mass below "
+        f"{row['gaia_rv_companion_mass_upper_limit_solar_masses'] or 'unknown'} solar masses; "
         f"LAMOST: {row['lamost_spectra'] or 'none'}; refuted by: {row['refuted_by'] or 'nothing'}; "
         f"cautions: {row['cautions'] or 'none'}"
     )
