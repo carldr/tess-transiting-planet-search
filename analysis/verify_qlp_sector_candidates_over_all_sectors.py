@@ -31,7 +31,7 @@ The script takes each candidate with pixel verdict "on target" or "unresolved", 
 
 The verdict is "refuted" when the odd and even depths differ by ODD_EVEN_SIGMA_LIMIT sigma or more, when the
 secondary eclipse is deeper than a planet can give by SECONDARY_SIGMA_LIMIT sigma, or when the companion radius is
-above COMPANION_MAXIMUM_RADIUS_EARTH_RADII. Otherwise it is "passed". The cautions column lists weaker warnings,
+above COMPANION_MAXIMUM_RADIUS_EARTH_RADII by RADIUS_SIGMA_LIMIT sigma. Otherwise it is "passed". The cautions column lists weaker warnings,
 such as a transit fit that is not converged in MCMC_MAXIMUM_STEPS steps.
 
 Run from the repository root, after check_qlp_sector_candidate_pixels.py:
@@ -116,6 +116,7 @@ DEPTH_SAMPLES = 2000
 ODD_EVEN_SIGMA_LIMIT = 3.0
 SECONDARY_SIGMA_LIMIT = 3.0
 ELLIPSOIDAL_SIGMA_LIMIT = 3.0
+RADIUS_SIGMA_LIMIT = 3.0
 SECTOR_DEPTH_CONSISTENCY_P_VALUE = 0.001
 SECONDARY_ECLIPSE_WAVELENGTH_METRES = 800e-9
 GAIA_RV_VARIABLE_P_VALUE = 0.01
@@ -618,7 +619,9 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         refuted_by.append("secondary eclipse too deep for a planet")
     elif secondary >= SECONDARY_SIGMA_LIMIT * secondary_error:
         cautions.append("secondary eclipse detected")
-    if radius_median > COMPANION_MAXIMUM_RADIUS_EARTH_RADII:
+    # A grazing transit leaves the radius almost unconstrained, so the test needs the radius to be above the limit
+    # by RADIUS_SIGMA_LIMIT sigma, as the secondary eclipse test does.
+    if radius_median - RADIUS_SIGMA_LIMIT * radius_error > COMPANION_MAXIMUM_RADIUS_EARTH_RADII:
         refuted_by.append("companion too large for a planet")
     if np.median(impact_parameter + radius_ratio) > 1:
         cautions.append("grazing transit")
