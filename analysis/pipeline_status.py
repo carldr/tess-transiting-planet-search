@@ -4,7 +4,8 @@ A step opens a PipelineStatus for its run, with the number of items it has to do
 A step of stars or signals calls set_items_done as it goes. A step of candidates calls start_candidate before each
 candidate and finish_candidate after it. Code deep in a step calls report_candidate_progress with a short text, such
 as "MCMC step 23000", without a reference to the PipelineStatus. The status file is
-results/pipeline_status/qlp_sector_<nnnn>_step_<nn>_<step name>.json. The script writes it atomically, so the board
+results/pipeline_status/qlp_sector_<nnnn>_step_<nn>_<step name>.json, or all_sectors_step_<nn>_<step name>.json for a
+step that serves all sectors. The script writes it atomically, so the board
 never reads a partial file. The file keeps the process ID, so the board can tell a stopped step from a running one.
 """
 
@@ -29,7 +30,9 @@ def utc_now():
 
 class PipelineStatus:
     def __init__(self, sector, step_number, step_name, script, item_count, item_name="candidates"):
-        self.path = PIPELINE_STATUS_DIRECTORY / f"qlp_sector_{sector:04d}_step_{step_number:02d}_{step_name}.json"
+        """sector is None for a step that serves all sectors, such as the download of the known catalogues."""
+        prefix = "all_sectors" if sector is None else f"qlp_sector_{sector:04d}"
+        self.path = PIPELINE_STATUS_DIRECTORY / f"{prefix}_step_{step_number:02d}_{step_name}.json"
         self.status = {
             "sector": sector, "step_number": step_number, "step_name": step_name, "script": script,
             "process_id": os.getpid(), "started_utc": utc_now(), "updated_utc": utc_now(), "finished_utc": None,

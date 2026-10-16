@@ -22,6 +22,8 @@ from pathlib import Path
 
 from astroquery.vizier import Vizier
 
+from pipeline_status import PipelineStatus
+
 TESS_EB_VIZIER_CATALOGUE = "J/ApJS/258/16/tess-ebs"
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 CATALOGUE_DIRECTORY = REPOSITORY_ROOT / "data/known_transit_catalogues"
@@ -51,13 +53,17 @@ def download_tess_eb_catalogue(path):
 
 
 def main():
-    download(TOI_URL, CATALOGUE_DIRECTORY / "toi.csv")
-    download(CTOI_URL, CATALOGUE_DIRECTORY / "ctoi.csv")
-    download_tess_eb_catalogue(CATALOGUE_DIRECTORY / "tess_eb.csv")
     index = urllib.request.urlopen(TCE_INDEX_URL).read().decode()
     tce_paths = sorted(set(re.findall(r'href="(/missions/tess/catalogs/tce/[^"]*tcestats[^"]*\.csv)"', index)))
-    for tce_path in tce_paths:
-        download(MAST_ROOT_URL + tce_path, CATALOGUE_DIRECTORY / "spoc_tce" / tce_path.split("/")[-1])
+    with PipelineStatus(None, 5, "known_transit_catalogue_download", "download_known_transit_catalogues.py",
+                        3 + len(tce_paths), item_name="catalogue files") as status:
+        download(TOI_URL, CATALOGUE_DIRECTORY / "toi.csv")
+        download(CTOI_URL, CATALOGUE_DIRECTORY / "ctoi.csv")
+        download_tess_eb_catalogue(CATALOGUE_DIRECTORY / "tess_eb.csv")
+        status.set_items_done(3)
+        for count, tce_path in enumerate(tce_paths, start=4):
+            download(MAST_ROOT_URL + tce_path, CATALOGUE_DIRECTORY / "spoc_tce" / tce_path.split("/")[-1])
+            status.set_items_done(count)
     today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
     (CATALOGUE_DIRECTORY / "download_date.txt").write_text(today + "\n")
     print(f"Downloaded the TOI and CTOI lists and {len(tce_paths)} SPOC TCE tables on {today}")

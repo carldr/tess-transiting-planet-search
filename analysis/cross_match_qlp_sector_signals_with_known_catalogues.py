@@ -25,6 +25,7 @@ import numpy as np
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
 from candidate_verification_records import append_verification_record_entry, verification_stamp
+from pipeline_status import PipelineStatus
 from search_qlp_sector import MAXIMUM_PERIOD_DAYS, MINIMUM_PERIOD_DAYS, output_directory as search_output_directory
 from vet_qlp_sector_signals import output_directory as vetting_output_directory
 
@@ -98,7 +99,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("sector", type=int)
     sector = parser.parse_args().sector
+    with PipelineStatus(sector, 6, "cross_match", "cross_match_qlp_sector_signals_with_known_catalogues.py", 0,
+                        item_name="signals"):
+        cross_match(sector)
 
+
+def cross_match(sector):
     known = known_entries_by_tic_id()
     searched = search_signals_by_tic_id(sector)
     vetted = list(csv.DictReader(open(vetting_output_directory(sector) / "vetting.csv")))

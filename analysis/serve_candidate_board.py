@@ -72,7 +72,7 @@ SECTOR_STEPS = [
 
 def sector_progress(statuses):
     """Return the state of steps 1 to 6 of each sector with a status file, a star list or a cross-match result."""
-    sectors = set(searched_sectors()) | {status["sector"] for status in statuses}
+    sectors = set(searched_sectors()) | {status["sector"] for status in statuses if status["sector"] is not None}
     sectors |= {int(match.group(1)) for path in (REPOSITORY_ROOT / "data").glob("qlp_sector_*/star_list.csv")
                 if (match := re.fullmatch(r"qlp_sector_(\d{4})", path.parent.name))}
     progress = []
@@ -387,7 +387,7 @@ function stepsHtml(steps) {
     const count = step.item_count ?? step.candidate_count, itemsDone = step.items_done ?? step.candidates_done;
     const done = count ? Math.round(100 * itemsDone / count) : 0;
     const current = step.current_candidate ? `, TIC ${text(step.current_candidate.tic_id)}${step.current_candidate.progress ? ": " + text(step.current_candidate.progress) : ""}` : "";
-    return `<div class="step ${step.state}">Sector ${step.sector}, step ${step.step_number} ${text(step.step_name.replaceAll("_", " "))}: ${step.state}, ${itemsDone.toLocaleString()} of ${count.toLocaleString()} ${text(step.item_name || "candidates")} done${current}
+    return `<div class="step ${step.state}">${step.sector === null ? "All sectors" : "Sector " + step.sector}, step ${step.step_number} ${text(step.step_name.replaceAll("_", " "))}: ${step.state}, ${itemsDone.toLocaleString()} of ${count.toLocaleString()} ${text(step.item_name || "candidates")} done${current}
       <div class="bar"><div style="width: ${done}%"></div></div></div>`;
   }).join("") || `<div class="step">No step is running.</div>`;
 }
