@@ -384,7 +384,7 @@ The server listens on every network of the computer. Give `--host 127.0.0.1` to 
 The board has one card per new candidate of step 6, in all searched sectors.
 A card is in the column of the step that checks it next, or of the step that stopped it.
 The page reads the results again every 10 seconds, so a card moves as soon as a step writes its result.
-Steps 1 to 4 and 7 to 11 write their progress to `results/pipeline_status/`.
+Steps 1 to 11 write their progress to `results/pipeline_status/`.
 A row at the top gives the state of steps 1 to 6 for each sector. The card of the candidate that a step works on shows that step's progress.
 A card gives the date of its last step result. Click a card to see the verdict and date of each step, its verification record and its figures.
 

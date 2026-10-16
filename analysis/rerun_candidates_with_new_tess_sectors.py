@@ -9,10 +9,6 @@ A launchd job runs this script every night (README, "Check the candidates for fo
    whose released sectors are the same as at its last rerun. Step 9 can drop a sector without a transit, so the
    same sector can stay in the list after a rerun;
 5. commits the results of the check and of each rerun candidate, and pushes them.
-
-Steps 5 and 6 write no status file, so the script cannot see them run. A rerun that reads the catalogues while step 5
-downloads them can fail. The next night then tries again.
-
 A step that fails stops the reruns. The script does not record the rerun, so the next night tries again.
 
 Run from the repository root:
