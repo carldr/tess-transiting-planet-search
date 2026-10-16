@@ -303,6 +303,7 @@ main { padding: 12px 16px; }
 .card.running { border-color: var(--running); background: var(--running-background); }
 .card .title { font-weight: 600; }
 .card .line { color: var(--muted); font-size: 12px; }
+.card .date { color: var(--text); font-size: 12px; }
 .card .progress { color: var(--running); font-size: 12px; margin-top: 4px; }
 .card .stop { color: var(--stop); font-size: 12px; }
 .card .error { color: var(--stop); font-size: 12px; }
@@ -356,10 +357,11 @@ function cardHtml(card, index) {
   if (card.fpp) lines.push(`FPP ${text(card.fpp)}`);
   const trail = card.trail.map(item => `<span class="${item === card.trail[card.trail.length - 1] && card.stop_reason ? "failed" : ""}">${item.step}: ${text(item.verdict)}</span>`).join("");
   const last = card.trail[card.trail.length - 1];
-  if (last && last.date_utc) lines.push(`step ${last.step}: ${text(last.date_utc)} UTC`);
+  const date = last && last.date_utc ? `<div class="date">step ${last.step}: ${text(last.date_utc)} UTC</div>` : "";
   const running = card.running ? `<div class="progress">Step ${card.running.step} running since ${text(card.running.started_utc)} UTC${card.running.progress ? ": " + text(card.running.progress) : ""}</div>` : "";
   return `<div class="card ${card.running ? "running" : ""}" data-index="${index}">
     <div class="title">TIC ${text(card.tic_id)} <span class="line">S${card.sector}</span></div>
+    ${date}
     ${lines.map(line => `<div class="line">${line}</div>`).join("")}
     <div class="trail">${trail}</div>
     ${card.stop_reason ? `<div class="stop">${text(card.stop_reason)}</div>` : ""}
