@@ -1,9 +1,10 @@
 """Serve a live board of the candidates of all searched sectors, with the progress of the running steps.
 
 The board has one card per new candidate of step 6. A card is in the column of the first step that has not passed it:
-a step that has not checked it yet, or the step that stopped it. A candidate that passed step 10 is in the column
-"Passed all steps", or in the column of its decision in results/candidate_decisions.csv. Before it has passed all
-steps, a card with a decision stays in the column of its step and shows the decision. The page reads the results
+a step that has not checked it yet, or the step that stopped it. Step 11 proposes a candidate for submission or
+for drop, or holds it, and the card goes to the column of that decision. A decision of a person in
+results/candidate_decisions.csv moves the card on to "Held", "Submitted" or "Dropped". Before step 11 has decided,
+a card with a decision of a person stays in the column of its step and shows the decision. The page reads the results
 again every REFRESH_SECONDS, so it shows each result as soon as a step writes it. The steps write their progress to
 results/pipeline_status/ (pipeline_status.py), and a card shows the progress while a step works on it.
 
@@ -42,7 +43,12 @@ STEPS = [
      "verdict_column": "verdict", "passing_verdicts": {"passed"}},
     {"number": 10, "name": "TRICERATOPS", "path": "triceratops_validation/triceratops_validation.csv",
      "verdict_column": "triceratops_verdict", "passing_verdicts": {"likely planet", "validated without imaging"}},
+    {"number": 11, "name": "Submission decision", "path": "submission_decisions/submission_decisions.csv",
+     "verdict_column": "decision", "passing_verdicts": {"proposed for submission", "proposed for drop", "held"}},
 ]
+# The column of each decision of step 11.
+SUBMISSION_DECISION_COLUMNS = {"proposed for submission": "proposed_submission", "proposed for drop": "proposed_drop",
+                               "held": "held"}
 
 
 def searched_sectors():
@@ -145,7 +151,7 @@ def candidate_card(sector, new_candidate, step_rows, decisions, running):
     key = (new_candidate["tic_id"], new_candidate["period_days"])
     card = {
         "sector": sector, "tic_id": key[0], "period_days": key[1], "depth_ppm": new_candidate["depth_ppm"],
-        "tmag": new_candidate["tmag"], "trail": [], "cautions": [], "column": "passed", "stop_reason": "",
+        "tmag": new_candidate["tmag"], "trail": [], "cautions": [], "column": "", "stop_reason": "",
         "error": "", "running": running.get(key), "figures": figure_paths(sector, key[0]),
     }
     record = verification_record_path(*key)
@@ -170,15 +176,20 @@ def candidate_card(sector, new_candidate, step_rows, decisions, running):
                                    if row.get("ellipsoidal_amplitude_ppm") else "")
         if step["number"] == 10:
             card["fpp"] = f"{row['fpp_mean']} +/- {row['fpp_standard_deviation']}"
+        if step["number"] == 11:
+            card["column"] = SUBMISSION_DECISION_COLUMNS[verdict]
+            card["agent_reasons"] = json.loads(row["agent_reasons"] or "[]")
+            if row["decisions_agree"] != "True":
+                card["mechanical_decision"] = f"{row['mechanical_decision']}: {row['mechanical_reasons']}"
         if verdict not in step["passing_verdicts"]:
             card["column"], card["stop_reason"] = f"stopped_{step['number']}", stop_reason(step, row)
             break
-    # A decision is about a candidate that passed all steps. While a step checks the candidate again, or after a step
-    # stops it, the card stays in the column of that step and shows the decision.
+    # A decision of a person is about a candidate that step 11 has decided. While a step checks the candidate again,
+    # or after a step stops it, the card stays in the column of that step and shows the decision.
     decision = decisions.get(key)
     if decision and decision["decision"] in CANDIDATE_DECISIONS:
         card["decision"], card["decision_note"] = decision["decision"], decision.get("note", "")
-        if card["column"] == "passed":
+        if card["column"] in SUBMISSION_DECISION_COLUMNS.values():
             card["column"] = decision["decision"]
     return card
 
@@ -200,7 +211,8 @@ def board():
         cards += [candidate_card(sector, candidate, step_rows, decisions, running) for candidate in new_candidates]
     columns = ([{"id": f"step_{step['number']}", "title": f"Waiting for or in step {step['number']}: {step['name']}"}
                 for step in STEPS]
-               + [{"id": "passed", "title": "Passed all steps"}, {"id": "held", "title": "Held"},
+               + [{"id": "proposed_submission", "title": "Proposed for submission"},
+                  {"id": "proposed_drop", "title": "Proposed for drop"}, {"id": "held", "title": "Held"},
                   {"id": "submitted", "title": "Submitted"}])
     stopped = ([{"id": f"stopped_{step['number']}", "title": f"Stopped at step {step['number']}: {step['name']}"}
                 for step in STEPS] + [{"id": "dropped", "title": "Dropped"}])
@@ -345,6 +357,7 @@ function cardHtml(card, index) {
     <div class="trail">${trail}</div>
     ${card.stop_reason ? `<div class="stop">${text(card.stop_reason)}</div>` : ""}
     ${card.error ? `<div class="error">error: ${text(card.error)}</div>` : ""}
+    ${card.mechanical_decision ? `<div class="stop">rules disagree: ${text(card.mechanical_decision)}</div>` : ""}
     ${card.decision ? `<div class="line"><b>${text(card.decision)}</b>${card.decision_note ? ": " + text(card.decision_note) : ""}</div>` : ""}
     <div>${card.cautions.map(caution => `<span class="tag">${text(caution)}</span>`).join("")}</div>
     ${running}</div>`;
@@ -403,6 +416,8 @@ async function openCard(index) {
   const record = card.record ? await (await fetch("/results/" + card.record, {cache: "no-store"})).text() : "No verification record yet.";
   panel.innerHTML = `<button id="close">Close</button><h2>TIC ${text(card.tic_id)}, P ${text(card.period_days)} d, Sector ${card.sector}</h2>
     ${card.ellipsoidal ? `<p>Ellipsoidal variation: ${text(card.ellipsoidal)}</p>` : ""}
+    ${card.agent_reasons ? `<h3>Step 11 reasons</h3><ul>${card.agent_reasons.map(reason => `<li>${text(reason)}</li>`).join("")}</ul>` : ""}
+    ${card.mechanical_decision ? `<p>The rules decide otherwise: ${text(card.mechanical_decision)}</p>` : ""}
     <p><a href="https://exofop.ipac.caltech.edu/tess/target.php?id=${text(card.tic_id)}" target="_blank" rel="noopener">ExoFOP target page</a></p>
     <h3>Verification record</h3><pre>${text(record)}</pre>
     <h3>Figures</h3>${card.figures.map(path => `<div class="line">${text(path)}</div><img src="/results/${encodeURI(path)}" loading="lazy">`).join("") || "None yet."}`;

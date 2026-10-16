@@ -18,8 +18,9 @@ His star is the known-positive test: the search must find his 3.18 d and 11.13 d
 | `data/candidate_tesscut_cutouts/` | TESScut cutouts of the full-frame images around the new candidates, one folder per TIC ID. |
 | `results/` | Outputs of the search code, one folder per script. The folders that end in `_quality_zero_mask` hold the first Sector 98 run, which also removed the cadences with QUALITY bit 30. |
 | `results/candidate_verification_records/` | One file per candidate, with a row for each verification step that ran on it. |
-| `results/candidate_decisions.csv` | The decisions that no step makes, such as a candidate held for a later sector. |
+| `results/candidate_decisions.csv` | The decisions of a person on the proposals of step 11: held, submitted or dropped. |
 | `results/pipeline_status/` | The live progress of the running steps, for the candidate board. Not in the repository. |
+| `reference/published_transit_candidates_not_in_catalogues.csv` | The published signals that the TOI and CTOI lists do not have, such as Rabtsevich's. Step 11 proposes them for drop. Add a row for each new publication. |
 | `reference/rabtsevich_preprint_zenodo_22967456/` | Rabtsevich's research note, `manuscript.pdf` (doi:10.5281/zenodo.22967456). |
 | `reference/rabtsevich_data_zenodo_22999133/` | His supporting data and code, version 1.0.1 (doi:10.5281/zenodo.22999133). `unpacked/` holds the contents of the three ZIP files. |
 | `reference/rabtsevich_s110_preregistration_zenodo_23175179/` | His pre-registered test of TESS Sector 110 (doi:10.5281/zenodo.23175179). `tic4206066_S110_prereg_final/` holds the contents of the ZIP file. |
@@ -65,10 +66,10 @@ Run each script from the repository root.
 
 Run these steps in order. The examples use Sector 98, the sector that Rabtsevich searched.
 
-Steps 2–4 and 7–10 continue a stopped run by default. A stop, such as a reboot or a power cut, loses at most the item in progress:
+Steps 2–4 and 7–11 continue a stopped run by default. A stop, such as a reboot or a power cut, loses at most the item in progress:
 
 - Steps 2 and 3 skip the stars and chunks that are already done.
-- Steps 4 and 7–10 write each result to disk as soon as they have it. They keep the earlier results without an error, and do the other items.
+- Steps 4 and 7–11 write each result to disk as soon as they have it. They keep the earlier results without an error, and do the other items.
   They drop the earlier results of items that are no longer in their input, such as a candidate that now matches a TOI.
   They do the items with an error again, so they retry a temporary failure, such as an archive outage.
 
@@ -77,7 +78,7 @@ Steps 1, 5 and 6 write their output only at the end, and always start from the b
 
 Add `--restart` to each later step after you change the code or the output of an earlier step.
 Otherwise the later steps keep their results from the old input.
-Add `--tic-id <TIC ID>` to steps 7 to 10 to do only the candidates of that star. Give it more than once for more stars.
+Add `--tic-id <TIC ID>` to steps 7 to 11 to do only the candidates of that star. Give it more than once for more stars.
 With `--restart`, the step then does only those candidates again, and keeps the results of the other candidates.
 
 Commit the output of each step when the step is done. The repository does not hold `data/`, so a disk failure loses all uncommitted results.
@@ -274,6 +275,29 @@ Commit the output of each step when the step is done. The repository does not ho
     A full validation also needs high-resolution imaging of the star. This project does not have it.
     The script writes `results/qlp_sector_0098_triceratops_validation/triceratops_validation.csv`.
 
+11. Propose each candidate that passed step 10 for submission or for drop, or hold it:
+
+    ```
+    .venv/bin/python analysis/decide_qlp_sector_candidate_submissions.py 98
+    ```
+
+    Steps 7 to 10 stop a candidate only on a refutation. Their cautions never stop it, so this step weighs them.
+    First, mechanical rules give a decision with its reasons:
+
+    | decision | rule |
+    |---|---|
+    | proposed for drop | ExoFOP has a TOI or CTOI for the star, or `reference/published_transit_candidates_not_in_catalogues.csv` lists the signal. |
+    | proposed for drop | The radius is above 2 Jupiter radii, and a caution points to a stellar companion: Gaia RV variable, RUWE above 1.4, ellipsoidal variation or secondary eclipse. |
+    | held | The pixel verdict is "unresolved", the ellipsoidal variation is detected, the transit fit has not converged, or MAST has a sector that step 9 did not use. |
+    | proposed for submission | Any other result. |
+
+    Then the script runs a Claude agent with `claude -p --model fable`, which gives the final decision as a list of reasons.
+    The prompt holds the results of steps 7 to 10, the mechanical decision, and the paths of the verification record and the figures.
+    The agent has the Read tool only, and loads no settings, memory or MCP servers of this computer.
+    Each call bills the Claude account of the `claude` command, about 0.2 to 1 USD per candidate.
+    The script submits nothing. Accept or reject each proposal in `results/candidate_decisions.csv`.
+    The script writes `results/qlp_sector_0098_submission_decisions/submission_decisions.csv`, and the prompt and full reply of the agent for each candidate.
+
 ### Verification sequence and record
 
 A candidate goes to the next step only when it meets the condition of that step:
@@ -285,19 +309,20 @@ A candidate goes to the next step only when it meets the condition of that step:
 | 8 | `check_qlp_sector_candidate_pixels.py` | The pixel verdict is "on target" or "unresolved". |
 | 9 | `verify_qlp_sector_candidates_over_all_sectors.py` | The verdict is "passed". |
 | 10 | `validate_qlp_sector_candidates_with_triceratops.py` | The verdict is "likely planet" or "validated without imaging". |
+| 11 | `decide_qlp_sector_candidate_submissions.py` | A person accepts the proposal in `results/candidate_decisions.csv`. |
 
 Before a CTOI submission:
 
 1. Download the catalogues again (step 5), and run step 6 again.
 2. Make sure that the candidate is still in `new_candidates.csv`. If it is not, a TOI, CTOI, TCE or TESS EB now matches it.
-3. Find the code version of the candidate's rows for steps 7 to 10 in its verification record.
+3. Find the code version of the candidate's rows for steps 7 to 11 in its verification record.
 4. Run `git diff --stat <code version> HEAD -- analysis/` to list the changes to the code since then.
 5. If a change can change a result of a step, run that step again with `--restart --tic-id <TIC ID>`.
-6. Run a later step again only if it uses a value that the rerun changed. Step 10 uses the sectors, period, epoch, depth and duration of step 9.
+6. Run a later step again only if it uses a value that the rerun changed. Step 10 uses the sectors, period, epoch, depth and duration of step 9. Step 11 uses all results of steps 7 to 10.
 
 A CTOI is published under the name of the person who submits it.
 
-Each of steps 6 to 10 appends one row per candidate to the verification record of the candidate, `results/candidate_verification_records/tic<TIC ID>_period_<period>_days.md`.
+Each of steps 6 to 11 appends one row per candidate to the verification record of the candidate, `results/candidate_verification_records/tic<TIC ID>_period_<period>_days.md`.
 The row gives the date, the sector, the step, the script, the git commit of the code, the verdict and the result.
 The commit is the one checked out when the step starts, so a commit made during a long run does not change it.
 The commit ends in `-modified` when `analysis/` has uncommitted changes at the start.
@@ -340,13 +365,15 @@ The server listens on every network of the computer. Give `--host 127.0.0.1` to 
 The board has one card per new candidate of step 6, in all searched sectors.
 A card is in the column of the step that checks it next, or of the step that stopped it.
 The page reads the results again every 10 seconds, so a card moves as soon as a step writes its result.
-Steps 1 to 4 and 7 to 10 write their progress to `results/pipeline_status/`.
+Steps 1 to 4 and 7 to 11 write their progress to `results/pipeline_status/`.
 A row at the top gives the state of steps 1 to 6 for each sector. The card of the candidate that a step works on shows that step's progress.
 Click a card to see its verification record and its figures.
 
-`results/candidate_decisions.csv` holds the decisions that no step makes, one row per candidate.
+After step 11, a card is in "Proposed for submission", "Proposed for drop" or "Held".
+A card whose step 11 agent and mechanical rules disagree shows the decision of the rules.
+`results/candidate_decisions.csv` holds the decisions of a person on these cards, one row per candidate.
 The `decision` column is `held`, `submitted` or `dropped`.
-A card goes to the column of its decision only after it has passed all steps. Until then it stays in the column of its step.
+A card goes to the column of its decision only after step 11 has decided it. Until then it stays in the column of its step.
 Write the reason in the `note` column, and commit the file after each change.
 
 ### Test star
