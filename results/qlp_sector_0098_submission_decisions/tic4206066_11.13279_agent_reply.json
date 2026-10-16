@@ -1,0 +1,109 @@
+{
+ "duration_api_ms": 23453,
+ "stop_reason": "tool_use",
+ "session_id": "5182c241-9573-407c-83ca-4c15a24964d4",
+ "total_cost_usd": 0.3225595,
+ "usage": {
+  "input_tokens": 34,
+  "cache_creation_input_tokens": 10991,
+  "cache_read_input_tokens": 5998,
+  "output_tokens": 2018,
+  "output_tokens_details": {
+   "thinking_tokens": 588
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 10991,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 32,
+    "output_tokens": 1601,
+    "cache_read_input_tokens": 5998,
+    "cache_creation_input_tokens": 4993,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 4993
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "modelUsage": {
+  "claude-fable-5-1": {
+   "inputTokens": 34,
+   "outputTokens": 2018,
+   "cacheReadInputTokens": 5998,
+   "cacheCreationInputTokens": 10991,
+   "webSearchRequests": 0,
+   "costUSD": 0.3225595,
+   "contextWindow": 1000000,
+   "maxOutputTokens": 64000,
+   "thinkingTokens": 588,
+   "canonicalModel": "claude-fable-5-1",
+   "provider": "firstParty",
+   "costBasis": "list"
+  }
+ },
+ "permission_denials": [],
+ "terminal_reason": "completed",
+ "fast_mode_state": "off",
+ "fast_mode_disabled_reason": "sdk_opt_in_required",
+ "subagent_stats": {
+  "spawned": 0,
+  "requested": {
+   "background": 0,
+   "foreground": 0,
+   "unset": 0
+  },
+  "started_in_background": 0,
+  "max_depth": 0,
+  "spawned_by_subagents": 0,
+  "completed": 0,
+  "failed": 0,
+  "killed": {
+   "parent": 0,
+   "user": 0,
+   "system": 0
+  },
+  "refused": {
+   "depth_limit": 0,
+   "concurrency_limit": 0,
+   "budget": 0
+  },
+  "by_type": {}
+ },
+ "safety_stops": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "subtype": "success",
+ "api_error_status": null,
+ "result": "{\"decision\":\"proposed for drop\",\"reasons\":[\"The signal is already published: published_signal gives \\\"P 11.13274 d, Rabtsevich, research note, doi:10.5281/zenodo.22967456\\\". The published period agrees with fit_period_days 11.1327327 (fit_period_error_days 0.00001153) and with period_days 11.132794 to within 0.00005 d, so it is the same signal on the same star. A CTOI must be new, so I agree with the mechanical decision to drop.\",\"The absence of a catalogue entry does not make it new: exofop_tois and exofop_ctois are empty and the verification record (2026-10-15 cross-match) finds no TOI, CTOI, TCE or TESS EB match, but the research note reports the signal before this search, which is the condition for a drop.\",\"For the record, the astrophysical evidence does not refute a planet, so the drop rests only on prior publication: pixel_verdict is \\\"on target\\\" in S32 (SNR 7.9) and S98 (SNR 19.9), both difference images centre the dip on the target star; triceratops_verdict is \\\"likely planet\\\" with fpp_mean 0.1715, nfpp_mean 0, most_likely_scenario \\\"TP on TIC 4206066\\\"; planet_radius_earth_radii 2.10 +/- 0.28; secondary_depth_ppm 26 +/- 61; odd_even_difference_sigma 1.13; gaia_rv_companion_mass_upper_limit_solar_masses 0.00965; transit_grazing False.\",\"Cautions that a future reviewer of the published signal might weigh, but which do not change this decision: the caution \\\"neighbour able to cause dip\\\" lists five Gaia neighbours at 45-55\\\" needing 34-83% dips, which the on-target difference images and nearby_scenarios_excluded True argue against; sector_depth_consistency_p_value 0.00342 (depth_ppm_by_sector S98 1185 +/- 88, S6 862 +/- 118, S32 691 +/- 130), though cutout_sector_depth_consistency_p_value 0.0739 is milder; stellar_density_fit_to_tic_ratio 5.25 and fitted_to_expected_scaled_semi_major_axis 1.88 indicate a fit that is denser than the TIC star, which is consistent with the poorly constrained fit_impact_parameter 0.507 +/- 0.3070; joint_search_detected False (joint_search_snr 14.8 against joint_search_highest_null_snr 10.9) with the S6 and S32 single-sector SNRs 7.1 and 7.6 below expected 10.0 and 10.4.\",\"No hold is warranted: released_tess_sectors_not_in_all_sector_verification is empty, so no unused TESS data could change the fact that the signal is already reported.\"]}",
+ "structured_output": {
+  "decision": "proposed for drop",
+  "reasons": [
+   "The signal is already published: published_signal gives \"P 11.13274 d, Rabtsevich, research note, doi:10.5281/zenodo.22967456\". The published period agrees with fit_period_days 11.1327327 (fit_period_error_days 0.00001153) and with period_days 11.132794 to within 0.00005 d, so it is the same signal on the same star. A CTOI must be new, so I agree with the mechanical decision to drop.",
+   "The absence of a catalogue entry does not make it new: exofop_tois and exofop_ctois are empty and the verification record (2026-10-15 cross-match) finds no TOI, CTOI, TCE or TESS EB match, but the research note reports the signal before this search, which is the condition for a drop.",
+   "For the record, the astrophysical evidence does not refute a planet, so the drop rests only on prior publication: pixel_verdict is \"on target\" in S32 (SNR 7.9) and S98 (SNR 19.9), both difference images centre the dip on the target star; triceratops_verdict is \"likely planet\" with fpp_mean 0.1715, nfpp_mean 0, most_likely_scenario \"TP on TIC 4206066\"; planet_radius_earth_radii 2.10 +/- 0.28; secondary_depth_ppm 26 +/- 61; odd_even_difference_sigma 1.13; gaia_rv_companion_mass_upper_limit_solar_masses 0.00965; transit_grazing False.",
+   "Cautions that a future reviewer of the published signal might weigh, but which do not change this decision: the caution \"neighbour able to cause dip\" lists five Gaia neighbours at 45-55\" needing 34-83% dips, which the on-target difference images and nearby_scenarios_excluded True argue against; sector_depth_consistency_p_value 0.00342 (depth_ppm_by_sector S98 1185 +/- 88, S6 862 +/- 118, S32 691 +/- 130), though cutout_sector_depth_consistency_p_value 0.0739 is milder; stellar_density_fit_to_tic_ratio 5.25 and fitted_to_expected_scaled_semi_major_axis 1.88 indicate a fit that is denser than the TIC star, which is consistent with the poorly constrained fit_impact_parameter 0.507 +/- 0.3070; joint_search_detected False (joint_search_snr 14.8 against joint_search_highest_null_snr 10.9) with the S6 and S32 single-sector SNRs 7.1 and 7.6 below expected 10.0 and 10.4.",
+   "No hold is warranted: released_tess_sectors_not_in_all_sector_verification is empty, so no unused TESS data could change the fact that the signal is already reported."
+  ]
+ },
+ "ttft_ms": 665,
+ "type": "result",
+ "duration_ms": 23496,
+ "uuid": "68512a2e-ea0a-4eb1-bfbf-4a6c04e1a4cc",
+ "ttft_stream_ms": 602,
+ "time_to_request_ms": 27,
+ "first_content_frame_ms": 602,
+ "queued_turn_count": 0,
+ "result_index": 0
+}
