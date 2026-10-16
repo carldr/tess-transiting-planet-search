@@ -209,6 +209,8 @@ Commit the output of each step when the step is done. The repository does not ho
 
    The verdict of the candidate is "on neighbour" when any sector gives "on neighbour".
    Otherwise it is the first of "on target", "unresolved" and "too faint" that a sector gives.
+   The script also fits the difference images of all sectors together. The columns `joint_sectors`, `joint_difference_image_snr`, `joint_best_source` and `joint_pixel_verdict` give that fit.
+   When each sector gives "too faint", the candidate takes the verdict of the joint fit.
 
    The script saves the cutouts in `data/candidate_tesscut_cutouts/`, about 200 MB per star and sector.
    It writes two files and one image per candidate and sector to `results/qlp_sector_0098_candidate_pixel_checks/`:
@@ -338,11 +340,13 @@ The server listens on every network of the computer. Give `--host 127.0.0.1` to 
 The board has one card per new candidate of step 6, in all searched sectors.
 A card is in the column of the step that checks it next, or of the step that stopped it.
 The page reads the results again every 10 seconds, so a card moves as soon as a step writes its result.
-Steps 7 to 10 write their progress to `results/pipeline_status/`, and the card of the candidate that a step works on shows that progress.
+Steps 1 to 4 and 7 to 10 write their progress to `results/pipeline_status/`.
+A row at the top gives the state of steps 1 to 6 for each sector. The card of the candidate that a step works on shows that step's progress.
 Click a card to see its verification record and its figures.
 
 `results/candidate_decisions.csv` holds the decisions that no step makes, one row per candidate.
-The `decision` column is `held`, `submitted` or `dropped`, and the card goes to the column of that decision.
+The `decision` column is `held`, `submitted` or `dropped`.
+A card goes to the column of its decision only after it has passed all steps. Until then it stays in the column of its step.
 Write the reason in the `note` column, and commit the file after each change.
 
 ### Test star
