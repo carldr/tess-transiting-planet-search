@@ -172,7 +172,7 @@ Commit the output of each step when the step is done. The repository does not ho
    | Gaia DR3 target | RUWE, non-single-star solution, eclipsing binary classification | Gaia classifies the star as an eclipsing binary. |
    | Gaia DR3 neighbours | The sources within 60 arcsec | A neighbour that could cause the dip is a Gaia eclipsing binary. |
    | VSX | The known variable stars within 60 arcsec | One of them is an eclipsing or ellipsoidal binary. |
-   | Companion | The LEO-Vetter transit fit and the TIC stellar radius | The companion is larger than 2 Jupiter radii, so it is a star. |
+   | Companion | The LEO-Vetter transit fit and the TIC stellar radius | The companion is larger than 2 Jupiter radii, so it is a star. A grazing transit leaves the radius almost unconstrained, so for a grazing transit this is a caution. |
 
    The script gives each candidate a verdict.
    "refuted" means that a check refutes it.

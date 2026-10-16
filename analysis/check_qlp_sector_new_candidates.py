@@ -22,8 +22,8 @@ The script reads new_candidates.csv from the cross-match, and runs these checks 
 6. VSX: it lists the known variable stars within NEIGHBOUR_RADIUS_ARCSEC. An eclipsing or ellipsoidal binary
    refutes the candidate.
 7. Companion: it reads the LEO-Vetter transit fit. A companion radius above COMPANION_MAXIMUM_RADIUS_EARTH_RADII,
-   with complete TIC stellar parameters, refutes the candidate. A grazing transit, or an a/R* that does not fit the TIC star,
-   is a caution.
+   with complete TIC stellar parameters, refutes the candidate, unless the transit is grazing: a grazing fit leaves
+   the radius almost unconstrained. A grazing transit, or an a/R* that does not fit the TIC star, is a caution.
 
 The verdict is "refuted" when any check refutes the candidate, "supported" when the joint search detects the transit
 and no check refutes it, and "unconfirmed" otherwise.
@@ -454,10 +454,15 @@ def verdict(row):
         refuted_by.append("Gaia eclipsing binary neighbour")
     if row.get("vsx_binaries"):
         refuted_by.append("VSX binary")
+    # The LEO-Vetter fit gives no radius error, and a grazing transit leaves the radius almost unconstrained, so a
+    # large radius of a grazing transit is a caution.
     if row.get("tic_stellar_parameters_complete") is True and (
         to_float(row.get("companion_radius_earth_radii")) > COMPANION_MAXIMUM_RADIUS_EARTH_RADII
     ):
-        refuted_by.append("companion too large for a planet")
+        if row.get("transit_grazing") is True:
+            cautions.append("companion radius above 2 Jupiter radii, from a grazing fit")
+        else:
+            refuted_by.append("companion too large for a planet")
     if row.get("tic_stellar_parameters_complete") is False:
         cautions.append("TIC stellar parameters missing")
     if row.get("transit_grazing") is True:
