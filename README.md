@@ -291,7 +291,7 @@ Commit the output of each step when the step is done. The repository does not ho
     | held | The pixel verdict is "unresolved", the ellipsoidal variation is detected, the transit fit has not converged, or MAST has a sector that step 9 did not use. |
     | proposed for submission | Any other result. |
 
-    Then the script runs a Claude agent with `claude -p --model fable`, which gives the final decision as a list of reasons.
+    Then the script runs a Claude agent with `claude -p --model fable`, which gives the final decision with a one-sentence summary and a list of reasons.
     The prompt holds the results of steps 7 to 10, the mechanical decision, and the paths of the verification record and the figures.
     The agent has the Read tool only, and loads no settings, memory or MCP servers of this computer.
     Each call bills the Claude account of the `claude` command, about 0.2 to 1 USD per candidate.
@@ -369,7 +369,7 @@ Steps 1 to 4 and 7 to 11 write their progress to `results/pipeline_status/`.
 A row at the top gives the state of steps 1 to 6 for each sector. The card of the candidate that a step works on shows that step's progress.
 Click a card to see its verification record and its figures.
 
-After step 11, a card is in "Proposed for submission", "Proposed for drop" or "Held".
+After step 11, a card is in "Proposed for submission", "Proposed for drop" or "Held", and shows the summary of the agent in red.
 A card whose step 11 agent and mechanical rules disagree shows the decision of the rules.
 `results/candidate_decisions.csv` holds the decisions of a person on these cards, one row per candidate.
 The `decision` column is `held`, `submitted` or `dropped`.

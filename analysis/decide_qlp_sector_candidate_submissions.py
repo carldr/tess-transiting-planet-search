@@ -75,9 +75,10 @@ AGENT_DECISION_SCHEMA = {
     "type": "object",
     "properties": {
         "decision": {"type": "string", "enum": DECISIONS},
+        "summary": {"type": "string"},
         "reasons": {"type": "array", "items": {"type": "string"}, "minItems": 1},
     },
-    "required": ["decision", "reasons"],
+    "required": ["decision", "summary", "reasons"],
     "additionalProperties": False,
 }
 AGENT_SYSTEM_PROMPT = f"""You review one TESS transiting-planet candidate and decide what to do with it.
@@ -99,6 +100,9 @@ Give one decision:
 
 A person reads your decision and accepts or rejects it. You submit nothing.
 
+Give a summary: the main reason for the decision in one sentence of at most 15 words, with its key value.
+For example: "Secondary eclipse is 49% of the transit depth; Sector 110 can test it."
+
 Rules for the reasons:
 - Give one reason per item. Cite each value that you use, with its name as the input gives it.
 - Use only the values in the input and in the files it names. Do not assume a value that is not there.
@@ -112,7 +116,7 @@ You have the Read tool only. Use it to read the verification record and to look 
 OUTPUT_COLUMNS = [
     "tic_id", "period_days", "tmag", "pixel_verdict", "triceratops_verdict", "fpp_mean", "planet_radius_earth_radii",
     "cautions", "exofop_tois", "exofop_ctois", "published_signal", "released_tess_sectors_not_in_all_sector_verification",
-    "unreleased_tess_sectors_observing_the_star", "mechanical_decision", "mechanical_reasons", "agent_decision", "agent_reasons", "agent_model", "agent_cost_usd",
+    "unreleased_tess_sectors_observing_the_star", "mechanical_decision", "mechanical_reasons", "agent_decision", "agent_summary", "agent_reasons", "agent_model", "agent_cost_usd",
     "decision", "decisions_agree", "error", "verification_date_utc", "code_version",
 ]
 
@@ -249,7 +253,7 @@ def decide(sector, candidate, rows_of_steps_7_to_9, directory):
     return {
         **facts, "cautions": "; ".join(facts["cautions"]),
         "mechanical_decision": mechanical[0], "mechanical_reasons": "; ".join(mechanical[1]),
-        "agent_decision": decision["decision"], "agent_reasons": json.dumps(decision["reasons"]),
+        "agent_decision": decision["decision"], "agent_summary": decision["summary"], "agent_reasons": json.dumps(decision["reasons"]),
         "agent_model": " ".join(reply.get("modelUsage", {})) or AGENT_MODEL,
         "agent_cost_usd": f"{reply.get('total_cost_usd', 0):.3f}",
         "decision": decision["decision"], "decisions_agree": decision["decision"] == mechanical[0],
@@ -258,7 +262,7 @@ def decide(sector, candidate, rows_of_steps_7_to_9, directory):
 
 def verification_record_result(row):
     reasons = "; ".join(json.loads(row["agent_reasons"]))
-    return (f"agent {row['agent_model']}: {row['agent_decision']}: {reasons}. "
+    return (f"agent {row['agent_model']}: {row['agent_decision']}: {row['agent_summary']} Reasons: {reasons}. "
             f"Mechanical: {row['mechanical_decision']}: {row['mechanical_reasons']}")
 
 

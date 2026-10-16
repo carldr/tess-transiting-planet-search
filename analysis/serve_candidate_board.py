@@ -178,6 +178,7 @@ def candidate_card(sector, new_candidate, step_rows, decisions, running):
             card["fpp"] = f"{row['fpp_mean']} +/- {row['fpp_standard_deviation']}"
         if step["number"] == 11:
             card["column"] = SUBMISSION_DECISION_COLUMNS[verdict]
+            card["agent_summary"] = row.get("agent_summary", "")
             card["agent_reasons"] = json.loads(row["agent_reasons"] or "[]")
             if row["decisions_agree"] != "True":
                 card["mechanical_decision"] = f"{row['mechanical_decision']}: {row['mechanical_reasons']}"
@@ -357,6 +358,7 @@ function cardHtml(card, index) {
     <div class="trail">${trail}</div>
     ${card.stop_reason ? `<div class="stop">${text(card.stop_reason)}</div>` : ""}
     ${card.error ? `<div class="error">error: ${text(card.error)}</div>` : ""}
+    ${card.agent_summary ? `<div class="stop">${text(card.agent_summary)}</div>` : ""}
     ${card.mechanical_decision ? `<div class="stop">rules disagree: ${text(card.mechanical_decision)}</div>` : ""}
     ${card.decision ? `<div class="line"><b>${text(card.decision)}</b>${card.decision_note ? ": " + text(card.decision_note) : ""}</div>` : ""}
     <div>${card.cautions.map(caution => `<span class="tag">${text(caution)}</span>`).join("")}</div>
