@@ -29,10 +29,10 @@ The script takes each candidate with pixel verdict "on target" or "unresolved", 
    ELLIPSOIDAL_SIGMA_LIMIT sigma or more is a caution: it can mean a stellar companion, but some known planets
    also show it (calibrate_ellipsoidal_variation_test_on_known_planets.py).
 
-The verdict is "refuted" when the transit fit does not converge in MCMC_MAXIMUM_STEPS steps, when the odd and even
-depths differ by ODD_EVEN_SIGMA_LIMIT sigma or more, when the
+The verdict is "refuted" when the odd and even depths differ by ODD_EVEN_SIGMA_LIMIT sigma or more, when the
 secondary eclipse is deeper than a planet can give by SECONDARY_SIGMA_LIMIT sigma, or when the companion radius is
-above COMPANION_MAXIMUM_RADIUS_EARTH_RADII. Otherwise it is "passed". The cautions column lists weaker warnings.
+above COMPANION_MAXIMUM_RADIUS_EARTH_RADII. Otherwise it is "passed". The cautions column lists weaker warnings,
+such as a transit fit that is not converged in MCMC_MAXIMUM_STEPS steps.
 
 Run from the repository root, after check_qlp_sector_candidate_pixels.py:
     .venv/bin/python analysis/verify_qlp_sector_candidates_over_all_sectors.py 98
@@ -293,11 +293,13 @@ def log_probability(theta, model, errors, period_guess, epoch_guess):
 
 
 def run_mcmc_until_converged(sampler, walkers):
-    """Run the chain until it is converged, and return its longest autocorrelation time, in steps.
+    """Run the chain until it is converged. Return its longest autocorrelation time, in steps, and if it converged.
 
     The test of the emcee documentation: the chain is longer than MCMC_CONVERGED_AUTOCORRELATION_TIMES
     autocorrelation times, and the estimate changed by less than MCMC_AUTOCORRELATION_TOLERANCE since the last
-    check. A chain that is not converged after MCMC_MAXIMUM_STEPS gives an error, so the candidate gets no verdict.
+    check. The chain stops after MCMC_MAXIMUM_STEPS. Then the period and the epoch are usually converged, but
+    Rp/R*, the impact parameter and a/R* are not: a grazing transit of a large body and a central transit of a
+    small one fit the data about equally well.
     """
     previous = np.inf
     for _ in sampler.sample(walkers, iterations=MCMC_MAXIMUM_STEPS):
@@ -314,14 +316,9 @@ def run_mcmc_until_converged(sampler, walkers):
             f"{autocorrelation_time:.0f} steps")
         if (sampler.iteration > MCMC_CONVERGED_AUTOCORRELATION_TIMES * autocorrelation_time
                 and abs(previous - autocorrelation_time) < MCMC_AUTOCORRELATION_TOLERANCE * autocorrelation_time):
-            return autocorrelation_time
+            return autocorrelation_time, True
         previous = autocorrelation_time
-    raise TransitFitNotConverged(f"MCMC not converged after {MCMC_MAXIMUM_STEPS} steps, autocorrelation time "
-                                 f"{autocorrelation_time:.0f} steps")
-
-
-class TransitFitNotConverged(Exception):
-    """The transit fit has no converged chain, so the step cannot give the values or the tests of the candidate."""
+    return autocorrelation_time, False
 
 
 def observed_depths(samples):
@@ -502,8 +499,10 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
                                     moves=[(emcee.moves.DEMove(), 0.8), (emcee.moves.DESnookerMove(), 0.2)])
     # A seed from the TIC ID makes a rerun give the same chain, so a rerun does not change the input of step 10.
     sampler.random_state = np.random.RandomState(int(candidate["tic_id"]) % 2 ** 32).get_state()
-    autocorrelation_time = run_mcmc_until_converged(sampler, walkers)
-    chain = sampler.get_chain(discard=int(MCMC_BURN_IN_AUTOCORRELATION_TIMES * autocorrelation_time), flat=True)
+    autocorrelation_time, converged = run_mcmc_until_converged(sampler, walkers)
+    # An unconverged chain can have an autocorrelation time near its length, so the burn-in is at most half of it.
+    burn_in = int(min(MCMC_BURN_IN_AUTOCORRELATION_TIMES * autocorrelation_time, sampler.iteration / 2))
+    chain = sampler.get_chain(discard=burn_in, flat=True)
     epoch, period, radius_ratio, impact_parameter = chain[:, 0], chain[:, 1], chain[:, 2], chain[:, 3]
     scaled_semi_major_axis = 10 ** chain[:, 4]
     durations = transit_duration_days(period, radius_ratio, impact_parameter, scaled_semi_major_axis)
@@ -631,6 +630,8 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         cautions.append("depths differ between sectors")
     if row.get("gaia_rv_variable") is True:
         cautions.append("Gaia radial velocity variable")
+    if not converged:
+        cautions.append(f"transit fit not converged in {MCMC_MAXIMUM_STEPS} steps")
     # Known planets also give this signal sometimes, so it is a caution and not a refutation.
     if ellipsoidal_detected:
         cautions.append("ellipsoidal variation detected")
@@ -749,11 +750,6 @@ def main():
                     warnings.simplefilter("ignore")
                     row.update(verify(sector, candidate, star_rows[candidate["tic_id"]], candidate["gaia_source_id"],
                                       directory))
-            # A fit that does not converge in MCMC_MAXIMUM_STEPS does not converge in a rerun either, so it is a
-            # verdict and not an error.
-            except TransitFitNotConverged as error:
-                row["refuted_by"] = f"transit fit does not converge ({error})"
-                row["verdict"] = "refuted"
             except Exception as error:
                 row["error"] = f"{type(error).__name__}: {error}"
             row.update(verification_stamp())
