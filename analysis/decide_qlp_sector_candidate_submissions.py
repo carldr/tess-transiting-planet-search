@@ -5,7 +5,8 @@ imaging". Steps 7 to 10 stop a candidate only on a refutation. Their cautions ne
 It has two parts:
 1. mechanical rules give a decision with its reasons, in the order of MECHANICAL_RULES below;
 2. a Claude agent, `claude -p --model fable`, gives the final decision with its reasons. Its prompt holds the results
-   of steps 7 to 10, the verification record, the ExoFOP entries, the unused released sectors, the paths of the
+   of steps 7 to 10, the verification record, the ExoFOP entries, the unused released sectors, the sectors that observe the
+   star and are not released yet, the paths of the
    figures and the mechanical decision. The agent has the Read tool only, so it can read the files and look at the
    figures, and change nothing.
 
@@ -40,6 +41,8 @@ import argparse
 import csv
 import json
 import subprocess
+
+from tess_stars2px import tess_stars2px_function_entry
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT
 from candidate_verification_records import (
@@ -90,7 +93,8 @@ Give one decision:
   A CTOI does not need to be a confirmed planet, but it must be a candidate that the data support and that is new.
 - "proposed for drop": the star already has a TOI or CTOI at this period, a publication already reports the signal,
   or the evidence shows that the signal is most likely not a planet, such as a stellar companion or a blend.
-- "held": the data cannot decide yet, and more data can decide it, such as a TESS sector that is not yet used.
+- "held": the data cannot decide yet, and more data can decide it, such as a released TESS sector that is not yet
+  used, or a sector that TESS observes and has not released yet (unreleased_tess_sectors_observing_the_star).
   Give in a reason what would decide it.
 
 A person reads your decision and accepts or rejects it. You submit nothing.
@@ -108,7 +112,7 @@ You have the Read tool only. Use it to read the verification record and to look 
 OUTPUT_COLUMNS = [
     "tic_id", "period_days", "tmag", "pixel_verdict", "triceratops_verdict", "fpp_mean", "planet_radius_earth_radii",
     "cautions", "exofop_tois", "exofop_ctois", "published_signal", "released_tess_sectors_not_in_all_sector_verification",
-    "mechanical_decision", "mechanical_reasons", "agent_decision", "agent_reasons", "agent_model", "agent_cost_usd",
+    "unreleased_tess_sectors_observing_the_star", "mechanical_decision", "mechanical_reasons", "agent_decision", "agent_reasons", "agent_model", "agent_cost_usd",
     "decision", "decisions_agree", "error", "verification_date_utc", "code_version",
 ]
 
@@ -165,8 +169,10 @@ def candidate_facts(candidate, rows_of_steps_7_to_9):
     candidate_checks, pixel_checks, verification = rows_of_steps_7_to_9
     page = download_exofop_target_page(candidate["tic_id"])
     sectors_used = {int(sector) for sector in candidate["sectors_used"].split()}
+    ra, dec = float(page["coordinates"]["ra"]), float(page["coordinates"]["dec"])
+    observing = {int(sector) for sector in tess_stars2px_function_entry(int(candidate["tic_id"]), ra, dec)[3]}
     # Sector 0 does not exist, so other_sector_products returns every sector with a light curve.
-    released = sorted({sector for sector, _, _ in other_sector_products(int(candidate["tic_id"]), 0)} - sectors_used)
+    released = {sector for sector, _, _ in other_sector_products(int(candidate["tic_id"]), 0)}
     return {
         "tic_id": candidate["tic_id"], "period_days": candidate["period_days"], "tmag": candidate["tmag"],
         "pixel_verdict": candidate["pixel_verdict"], "triceratops_verdict": candidate["triceratops_verdict"],
@@ -175,7 +181,10 @@ def candidate_facts(candidate, rows_of_steps_7_to_9):
         "exofop_tois": " ".join(entry["toi"] for entry in page.get("tois", [])),
         "exofop_ctois": " ".join(entry["ctoi"] for entry in page.get("ctois", [])),
         "published_signal": published_signal(candidate["tic_id"], candidate["fit_period_days"]),
-        "released_tess_sectors_not_in_all_sector_verification": " ".join(str(sector) for sector in released),
+        "released_tess_sectors_not_in_all_sector_verification": " ".join(
+            str(sector) for sector in sorted(released - sectors_used)),
+        "unreleased_tess_sectors_observing_the_star": " ".join(
+            str(sector) for sector in sorted(observing - released - sectors_used)),
     }
 
 
