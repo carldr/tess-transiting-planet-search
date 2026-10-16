@@ -353,6 +353,25 @@ The script writes `results/candidate_exofop_and_future_tess_sector_checks/candid
 It keeps the last ExoFOP page of each star in `exofop_target_pages/` in the same folder, to compare with the next run.
 Commit the folder after each run.
 
+#### Run the check every night
+
+`analysis/rerun_candidates_with_new_tess_sectors.py` runs the check, and then runs steps 7 to 11 again with `--restart --tic-id` for each candidate with a new released sector.
+It skips a candidate that has a "dropped" decision, or the same released sectors as at its last rerun.
+It does nothing while another step runs.
+It commits the results and pushes them, and writes each rerun to `new_tess_sector_reruns.csv` in the folder of the check.
+A rerun takes about 30 minutes to 1.5 hours per candidate.
+
+Install the launchd job that runs it at 03:00 every night:
+
+```
+cp launchd/uk.co.29degrees.tess-candidate-new-tess-sector-check.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/uk.co.29degrees.tess-candidate-new-tess-sector-check.plist
+```
+
+The job writes its output to `data/new_tess_sector_check.log`.
+To run it now, use `launchctl kickstart gui/$(id -u)/uk.co.29degrees.tess-candidate-new-tess-sector-check`.
+To remove it, use `launchctl bootout gui/$(id -u)/uk.co.29degrees.tess-candidate-new-tess-sector-check`.
+
 ### Watch the candidates on the board
 
 ```

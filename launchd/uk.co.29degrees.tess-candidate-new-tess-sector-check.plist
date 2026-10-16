@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Runs analysis/rerun_candidates_with_new_tess_sectors.py every night at 03:00 local time.
+     launchd runs a job that the Mac slept through when the Mac wakes. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>uk.co.29degrees.tess-candidate-new-tess-sector-check</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/carl/Development/tmp/TESS/.venv/bin/python</string>
+    <string>analysis/rerun_candidates_with_new_tess_sectors.py</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/carl/Development/tmp/TESS</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <!-- Step 11 runs claude, and the commit runs git. -->
+    <key>PATH</key>
+    <string>/Users/carl/.local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>3</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/Users/carl/Development/tmp/TESS/data/new_tess_sector_check.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/carl/Development/tmp/TESS/data/new_tess_sector_check.log</string>
+</dict>
+</plist>
