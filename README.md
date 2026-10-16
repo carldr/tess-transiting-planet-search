@@ -294,7 +294,7 @@ Commit the output of each step when the step is done. The repository does not ho
     Then the script runs a Claude agent with `claude -p --model fable`, which gives the final decision with a one-sentence summary and a list of reasons.
     The prompt holds the results of steps 7 to 10, the mechanical decision, and the paths of the verification record and the figures.
     The agent has the Read tool only, and loads no settings, memory or MCP servers of this computer.
-    Each call bills the Claude account of the `claude` command, about 0.2 to 1 USD per candidate.
+    Each call bills the Claude account of the `claude` command.
     The script submits nothing. Accept or reject each proposal in `results/candidate_decisions.csv`.
     The script writes `results/qlp_sector_0098_submission_decisions/submission_decisions.csv`, and the prompt and full reply of the agent for each candidate.
 
