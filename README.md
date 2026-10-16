@@ -367,7 +367,7 @@ A card is in the column of the step that checks it next, or of the step that sto
 The page reads the results again every 10 seconds, so a card moves as soon as a step writes its result.
 Steps 1 to 4 and 7 to 11 write their progress to `results/pipeline_status/`.
 A row at the top gives the state of steps 1 to 6 for each sector. The card of the candidate that a step works on shows that step's progress.
-Click a card to see its verification record and its figures.
+A card gives the date of its last step result. Click a card to see the verdict and date of each step, its verification record and its figures.
 
 After step 11, a card is in "Proposed for submission", "Proposed for drop" or "Held", and shows the summary of the agent in red.
 A card whose step 11 agent and mechanical rules disagree shows the decision of the rules.

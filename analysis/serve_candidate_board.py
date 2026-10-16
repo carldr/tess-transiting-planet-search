@@ -165,7 +165,8 @@ def candidate_card(sector, new_candidate, step_rows, decisions, running):
             card["column"], card["error"] = f"step_{step['number']}", row["error"]
             break
         verdict = row[step["verdict_column"]]
-        card["trail"].append({"step": step["number"], "verdict": verdict})
+        card["trail"].append({"step": step["number"], "verdict": verdict,
+                              "date_utc": row.get("verification_date_utc", "")})
         card["cautions"] += [caution for caution in row.get("cautions", "").split("; ") if caution]
         if step["number"] == 7:
             card["radius_earth_radii"] = row.get("companion_radius_earth_radii", "")
@@ -190,6 +191,7 @@ def candidate_card(sector, new_candidate, step_rows, decisions, running):
     decision = decisions.get(key)
     if decision and decision["decision"] in CANDIDATE_DECISIONS:
         card["decision"], card["decision_note"] = decision["decision"], decision.get("note", "")
+        card["decision_date"] = decision.get("decision_date", "")
         if card["column"] in SUBMISSION_DECISION_COLUMNS.values():
             card["column"] = decision["decision"]
     return card
@@ -316,6 +318,8 @@ details.stopped summary { cursor: pointer; font-weight: 600; }
 .detail .panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(720px, 100%); background: var(--surface);
                  overflow-y: auto; padding: 16px; }
 .detail pre { white-space: pre-wrap; font-size: 12px; background: var(--background); padding: 8px; border-radius: 6px; }
+.dates { border-collapse: collapse; font-size: 12px; }
+.dates th, .dates td { text-align: left; padding: 2px 12px 2px 0; border-bottom: 1px solid var(--border); }
 .detail img { max-width: 100%; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 8px; }
 .detail button { float: right; font-size: 14px; }
 @media (max-width: 640px) {
@@ -351,6 +355,8 @@ function cardHtml(card, index) {
   if (card.radius_earth_radii) lines.push(`radius ${text(card.radius_earth_radii)} Earth radii`);
   if (card.fpp) lines.push(`FPP ${text(card.fpp)}`);
   const trail = card.trail.map(item => `<span class="${item === card.trail[card.trail.length - 1] && card.stop_reason ? "failed" : ""}">${item.step}: ${text(item.verdict)}</span>`).join("");
+  const last = card.trail[card.trail.length - 1];
+  if (last && last.date_utc) lines.push(`step ${last.step}: ${text(last.date_utc)} UTC`);
   const running = card.running ? `<div class="progress">Step ${card.running.step} running since ${text(card.running.started_utc)} UTC${card.running.progress ? ": " + text(card.running.progress) : ""}</div>` : "";
   return `<div class="card ${card.running ? "running" : ""}" data-index="${index}">
     <div class="title">TIC ${text(card.tic_id)} <span class="line">S${card.sector}</span></div>
@@ -360,7 +366,7 @@ function cardHtml(card, index) {
     ${card.error ? `<div class="error">error: ${text(card.error)}</div>` : ""}
     ${card.agent_summary ? `<div class="stop">${text(card.agent_summary)}</div>` : ""}
     ${card.mechanical_decision ? `<div class="stop">rules disagree: ${text(card.mechanical_decision)}</div>` : ""}
-    ${card.decision ? `<div class="line"><b>${text(card.decision)}</b>${card.decision_note ? ": " + text(card.decision_note) : ""}</div>` : ""}
+    ${card.decision ? `<div class="line"><b>${text(card.decision)}</b>${card.decision_date ? " " + text(card.decision_date) : ""}${card.decision_note ? ": " + text(card.decision_note) : ""}</div>` : ""}
     <div>${card.cautions.map(caution => `<span class="tag">${text(caution)}</span>`).join("")}</div>
     ${running}</div>`;
 }
@@ -417,6 +423,9 @@ async function openCard(index) {
   const panel = document.getElementById("panel");
   const record = card.record ? await (await fetch("/results/" + card.record, {cache: "no-store"})).text() : "No verification record yet.";
   panel.innerHTML = `<button id="close">Close</button><h2>TIC ${text(card.tic_id)}, P ${text(card.period_days)} d, Sector ${card.sector}</h2>
+    <h3>Steps</h3><table class="dates"><tr><th>step</th><th>verdict</th><th>date (UTC)</th></tr>
+      ${card.trail.map(item => `<tr><td>${item.step}</td><td>${text(item.verdict)}</td><td>${text(item.date_utc)}</td></tr>`).join("")}
+      ${card.decision ? `<tr><td>decision</td><td>${text(card.decision)}</td><td>${text(card.decision_date)}</td></tr>` : ""}</table>
     ${card.ellipsoidal ? `<p>Ellipsoidal variation: ${text(card.ellipsoidal)}</p>` : ""}
     ${card.agent_reasons ? `<h3>Step 11 reasons</h3><ul>${card.agent_reasons.map(reason => `<li>${text(reason)}</li>`).join("")}</ul>` : ""}
     ${card.mechanical_decision ? `<p>The rules decide otherwise: ${text(card.mechanical_decision)}</p>` : ""}
