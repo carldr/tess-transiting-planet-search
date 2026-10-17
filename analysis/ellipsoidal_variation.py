@@ -45,18 +45,32 @@ def fitted_ellipsoidal_amplitude(time, flux, period, epoch):
 def ellipsoidal_amplitude(time, flux, period, epoch, duration, rng):
     """Return the ellipsoidal amplitude and its error, as fractions of the flux, of one sector of normalised flux.
 
-    Return None when fewer than ELLIPSOIDAL_MINIMUM_POINTS cadences are out of the transits and the phase-0.5 window.
+    Return None when fewer than ELLIPSOIDAL_MINIMUM_POINTS cadences are out of the transits and the phase-0.5 window,
+    or when fewer than half of the null fits have that many.
     """
+    keep = out_of_eclipse_windows(time, period, epoch, duration)
+    if np.sum(keep) < ELLIPSOIDAL_MINIMUM_POINTS:
+        return None
+    amplitude = fitted_ellipsoidal_amplitude(time[keep], flux[keep], period, epoch)
+    # Each wrong period removes its own transit and phase-0.5 windows, so the null fits cover the same phases as
+    # the real fit. A long transit on a short period leaves only the phases near quadrature, where -cos(4 pi phase)
+    # is almost constant; the null fits then give the large error that this coverage gives.
+    null = []
+    for factor in rng.uniform(*ELLIPSOIDAL_NULL_PERIOD_FACTORS, ELLIPSOIDAL_NULL_TRIALS):
+        null_period, null_epoch = period * factor, epoch + rng.uniform(0, period)
+        null_keep = out_of_eclipse_windows(time, null_period, null_epoch, duration * factor)
+        if np.sum(null_keep) >= ELLIPSOIDAL_MINIMUM_POINTS:
+            null.append(fitted_ellipsoidal_amplitude(time[null_keep], flux[null_keep], null_period, null_epoch))
+    if len(null) < ELLIPSOIDAL_NULL_TRIALS // 2:
+        return None
+    return float(amplitude), float(np.std(null))
+
+
+def out_of_eclipse_windows(time, period, epoch, duration):
+    """Return True for the cadences more than one duration from the transits and from phase 0.5."""
     transit_time = (time - epoch + 0.5 * period) % period - 0.5 * period
     secondary_time = (time - epoch) % period - 0.5 * period
-    keep = (np.abs(transit_time) > duration) & (np.abs(secondary_time) > duration)
-    time, flux = time[keep], flux[keep]
-    if len(time) < ELLIPSOIDAL_MINIMUM_POINTS:
-        return None
-    amplitude = fitted_ellipsoidal_amplitude(time, flux, period, epoch)
-    null = [fitted_ellipsoidal_amplitude(time, flux, period * factor, epoch + rng.uniform(0, period))
-            for factor in rng.uniform(*ELLIPSOIDAL_NULL_PERIOD_FACTORS, ELLIPSOIDAL_NULL_TRIALS)]
-    return float(amplitude), float(np.std(null))
+    return (np.abs(transit_time) > duration) & (np.abs(secondary_time) > duration)
 
 
 def combined_ellipsoidal_amplitude(amplitudes_and_errors):

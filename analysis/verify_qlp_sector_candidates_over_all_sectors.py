@@ -352,12 +352,19 @@ def scaled_depths(groups, sectors, curves, errors):
 
 
 def secondary_eclipse_depth(sectors, errors, period, epoch, duration):
-    """Return the depth and its error of a box of the transit duration at phase 0.5."""
+    """Return the depth and its error of a box of the transit duration at phase 0.5.
+
+    The baseline is the flux from one to 2.5 durations from phase 0.5. It stops one duration before the transit,
+    so that a long transit on a short period does not lower it.
+    """
+    baseline_end = min(2.5 * duration, 0.5 * period - duration)
+    if baseline_end <= duration:
+        return np.nan, np.nan
     inside, outside = [], []
     for (_, _, _, time, flux), error in zip(sectors, errors):
         offset = np.abs(phase_time(time, period, epoch + 0.5 * period))
         inside.append((flux[offset < 0.5 * duration], error))
-        outside.append((flux[(offset > duration) & (offset < 2.5 * duration)], error))
+        outside.append((flux[(offset > duration) & (offset < baseline_end)], error))
 
     def weighted_mean(parts):
         weights = np.concatenate([np.full(len(flux), error ** -2) for flux, error in parts])
