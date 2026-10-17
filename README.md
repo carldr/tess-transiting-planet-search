@@ -20,6 +20,7 @@ His star is the known-positive test: the search must find his 3.18 d and 11.13 d
 | `results/candidate_verification_records/` | One file per candidate, with a row for each verification step that ran on it. |
 | `results/candidate_decisions.csv` | The decisions of a person on the proposals of step 11: held, submitted or dropped. |
 | `results/pipeline_status/` | The live progress of the running steps, for the candidate board. Not in the repository. |
+| `results/ctoi_drafts/` | One file per CTOI draft, with the values to submit and the checks made before submission. |
 | `reference/published_transit_candidates_not_in_catalogues.csv` | The published signals that the TOI and CTOI lists do not have, such as Rabtsevich's. Step 11 proposes them for drop. Add a row for each new publication. |
 | `reference/rabtsevich_preprint_zenodo_22967456/` | Rabtsevich's research note, `manuscript.pdf` (doi:10.5281/zenodo.22967456). |
 | `reference/rabtsevich_data_zenodo_22999133/` | His supporting data and code, version 1.0.1 (doi:10.5281/zenodo.22999133). `unpacked/` holds the contents of the three ZIP files. |
