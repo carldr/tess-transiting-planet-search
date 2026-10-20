@@ -139,7 +139,7 @@ OUTPUT_COLUMNS = [
     "cutout_sector_depth_consistency_p_value", "secondary_depth_ppm", "secondary_depth_error_ppm",
     "secondary_maximum_planet_depth_ppm", "ellipsoidal_amplitude_ppm_by_sector", "ellipsoidal_amplitude_ppm",
     "ellipsoidal_amplitude_error_ppm", "ellipsoidal_companion_mass_solar_masses", "gaia_source_id",
-    "gaia_rv_nb_transits", "gaia_rv_chisq_pvalue", "gaia_rv_renormalised_gof", "gaia_rv_amplitude_robust_km_s", "gaia_vbroad_km_s", "gaia_rv_variable",
+    "gaia_rv_nb_transits", "gaia_rv_chisq_pvalue", "gaia_rv_renormalised_gof", "gaia_rv_epoch_range_km_s", "gaia_vbroad_km_s", "gaia_rv_variable",
     "gaia_rv_epoch_scatter_km_s", "gaia_rv_semi_amplitude_upper_limit_km_s",
     "gaia_rv_companion_mass_upper_limit_solar_masses",
     "lamost_spectra", "refuted_by", "cautions", "verdict", "error", "verification_date_utc", "code_version",
@@ -409,7 +409,9 @@ def gaia_radial_velocity_statistics(gaia_source_id):
     statistics = {
         "gaia_rv_nb_transits": value("rv_nb_transits"), "gaia_rv_chisq_pvalue": value("rv_chisq_pvalue"),
         "gaia_rv_renormalised_gof": value("rv_renormalised_gof"),
-        "gaia_rv_amplitude_robust_km_s": value("rv_amplitude_robust"), "gaia_vbroad_km_s": value("vbroad"),
+        # Gaia's rv_amplitude_robust is the largest minus the smallest epoch velocity, after outliers are removed.
+        # It holds the noise of each epoch, so it is not twice the semi-amplitude of an orbit.
+        "gaia_rv_epoch_range_km_s": value("rv_amplitude_robust"), "gaia_vbroad_km_s": value("vbroad"),
         "gaia_rv_epoch_scatter_km_s": "", "gaia_rv_semi_amplitude_upper_limit_km_s": "",
     }
     # For the bright stars of rv_method_used 1, radial_velocity_error^2 = pi / (2 N) scatter^2 + floor^2
@@ -627,12 +629,12 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         refuted_by.append("secondary eclipse too deep for a planet")
     elif secondary >= SECONDARY_SIGMA_LIMIT * secondary_error:
         cautions.append("secondary eclipse detected")
-    # A grazing transit leaves the radius almost unconstrained, so the test needs the radius to be above the limit
-    # by RADIUS_SIGMA_LIMIT sigma, as the secondary eclipse test does.
     # The light of a planet at phase 0.5 is at most secondary_maximum above the baseline. More light means that
     # the star varies at the period, so the dip can be the low part of a sinusoid and not a transit.
     if -secondary - SECONDARY_SIGMA_LIMIT * secondary_error > secondary_maximum:
         cautions.append("phase 0.5 brighter than a planet can make it")
+    # A grazing transit leaves the radius almost unconstrained, so the test needs the radius to be above the limit
+    # by RADIUS_SIGMA_LIMIT sigma, as the secondary eclipse test does.
     if radius_median - RADIUS_SIGMA_LIMIT * radius_error > COMPANION_MAXIMUM_RADIUS_EARTH_RADII:
         refuted_by.append("companion too large for a planet")
     if np.median(impact_parameter + radius_ratio) > 1:
