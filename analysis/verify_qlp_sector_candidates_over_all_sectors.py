@@ -9,7 +9,8 @@ The script takes each candidate with pixel verdict "on target" or "unresolved", 
    runs until the emcee autocorrelation test says it is converged, and a seed from the TIC ID makes a rerun give
    the same chain;
 3. compares the stellar density from a/R* with the TIC stellar density. An eclipsing binary on another star often
-   gives a transit shape that does not fit the target;
+   gives a transit shape that does not fit the target. A fit on the lower bound of a/R* is a caution: the dip is
+   longer than a transit at this period can be, and the light curve can be a sinusoid;
 4. measures the depth of the odd and the even transits with the fitted shape. Different depths mean an eclipsing
    binary at twice the period;
 5. measures the depth of each sector with the fitted shape. The light curve pipelines use different apertures and
@@ -93,6 +94,10 @@ DETRENDING_MASK_DURATIONS = 1.0
 DETRENDING_WINDOW_DURATIONS = 3.0
 # The fit uses the cadences within this many transit durations of mid-transit.
 FIT_WINDOW_DURATIONS = 2.5
+# The prior of the fit keeps log10(a/R*) above this. A median within LOG10_SCALED_SEMI_MAJOR_AXIS_BOUND_MARGIN of it
+# means that the dip is longer than a transit at this period can be.
+MINIMUM_LOG10_SCALED_SEMI_MAJOR_AXIS = 0.2
+LOG10_SCALED_SEMI_MAJOR_AXIS_BOUND_MARGIN = 0.01
 # The red noise factor compares the scatter of bin means with white noise, for bins of these fractions of the
 # transit duration.
 RED_NOISE_BIN_FRACTIONS = (0.25, 0.5, 0.75, 1.0)
@@ -287,7 +292,7 @@ class TransitModel:
 def log_probability(theta, model, errors, period_guess, epoch_guess):
     epoch, period, radius_ratio, impact_parameter, log10_a, q1, q2 = theta
     if not (abs(period - period_guess) < 0.01 * period_guess and abs(epoch - epoch_guess) < 0.2
-            and 0 < radius_ratio < 0.5 and 0 <= impact_parameter < 1 + radius_ratio and 0.2 < log10_a < 2.5
+            and 0 < radius_ratio < 0.5 and 0 <= impact_parameter < 1 + radius_ratio and MINIMUM_LOG10_SCALED_SEMI_MAJOR_AXIS < log10_a < 2.5
             and 0 < q1 < 1 and 0 < q2 < 1):
         return -np.inf
     return -0.5 * sum(np.sum(((flux - curve) / error) ** 2) for (_, _, _, _, flux), curve, error
@@ -649,6 +654,8 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         cautions.append("Gaia radial velocity variable")
     if not converged:
         cautions.append(f"transit fit not converged in {MCMC_MAXIMUM_STEPS} steps")
+    if median[4] < MINIMUM_LOG10_SCALED_SEMI_MAJOR_AXIS + LOG10_SCALED_SEMI_MAJOR_AXIS_BOUND_MARGIN:
+        cautions.append("dip longer than a transit at this period")
     # Known planets also give this signal sometimes, so it is a caution and not a refutation.
     if ellipsoidal_detected:
         cautions.append("ellipsoidal variation detected")

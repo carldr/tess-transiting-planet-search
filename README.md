@@ -237,7 +237,7 @@ Commit the output of each step when the step is done. The repository does not ho
    | Secondary eclipse at phase 0.5 | It is deeper than a planet can give by 3 sigma or more. Flux at phase 0.5 that is brighter than a planet can make it, by 3 sigma or more, is a caution: the star varies at the period, and the dip can be the low part of a sinusoid. |
    | Planet radius | It is larger than 2 Jupiter radii by 3 sigma or more. |
    | Transit fit | Never. A chain that does not converge in 100,000 steps is a caution. The transit shape is then not constrained, often because a grazing transit of a large body fits as well as a central transit of a small one. |
-   | Stellar density from the fit | Never. A density that does not fit the TIC star is a caution. |
+   | Stellar density from the fit | Never. A density that does not fit the TIC star is a caution. A fit on the lower bound of a/R*, 1.58, is a caution: the dip is longer than a transit at this period can be. |
    | Depth in each sector, with the same apertures in the TESScut cutout of each sector | Never. Different depths are a caution. |
    | Gaia DR3 radial velocity | Never. A variable radial velocity means a stellar companion, and is a caution. For a bright star, the script gives the largest companion mass that the Gaia epochs allow. |
    | LAMOST DR7 spectra within 15 arcsec | Never. The script lists the class and the radial velocity of each spectrum, and the star in its fibre. A fibre with no Gaia star in it recorded the light of a near star, often the target. |
