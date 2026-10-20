@@ -289,7 +289,7 @@ Commit the output of each step when the step is done. The repository does not ho
     |---|---|
     | proposed for drop | ExoFOP has a TOI or CTOI for the star, or `reference/published_transit_candidates_not_in_catalogues.csv` lists the signal. |
     | proposed for drop | The radius is above 2 Jupiter radii, and a caution points to a stellar companion: Gaia RV variable, RUWE above 1.4, ellipsoidal variation or secondary eclipse. |
-    | held | The pixel verdict is "unresolved", the ellipsoidal variation is detected, the transit fit has not converged, or MAST has a sector that step 9 did not use. |
+    | held | The pixel verdict is "unresolved", the ellipsoidal variation is detected, the transit fit has not converged, the dip is longer than a transit at this period, phase 0.5 is brighter than a planet can make it, or MAST has a sector that step 9 did not use. |
     | proposed for submission | Any other result. |
 
     Then the script runs a Claude agent with `claude -p --model fable`, which gives the final decision with a one-sentence summary and a list of reasons.

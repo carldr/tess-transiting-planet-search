@@ -67,7 +67,10 @@ PUBLISHED_PERIOD_TOLERANCE = 0.01
 TRICERATOPS_VERDICTS_TO_DECIDE = {"likely planet", "validated without imaging"}
 STELLAR_COMPANION_CAUTIONS = {"Gaia radial velocity variable", "RUWE above 1.4", "ellipsoidal variation detected",
                               "secondary eclipse detected"}
-HOLD_CAUTIONS = {"ellipsoidal variation detected", f"transit fit not converged in {MCMC_MAXIMUM_STEPS} steps"}
+# A dip longer than a transit, or a phase 0.5 brighter than a planet can make it, can mean a sinusoid and not a
+# transit. An eccentric orbit or stellar variability can also give them, so they hold the candidate.
+HOLD_CAUTIONS = {"ellipsoidal variation detected", f"transit fit not converged in {MCMC_MAXIMUM_STEPS} steps",
+                 "dip longer than a transit at this period", "phase 0.5 brighter than a planet can make it"}
 DECISIONS = ["proposed for submission", "proposed for drop", "held"]
 AGENT_MODEL = "fable"
 AGENT_TIMEOUT_SECONDS = 1800
