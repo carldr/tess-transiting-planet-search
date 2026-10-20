@@ -234,7 +234,7 @@ Commit the output of each step when the step is done. The repository does not ho
    | test | refutes the candidate when |
    |---|---|
    | Odd and even transits | Their depths differ by 3 sigma or more. The dip is an eclipsing binary at twice the period. |
-   | Secondary eclipse at phase 0.5 | It is deeper than a planet can give by 3 sigma or more. |
+   | Secondary eclipse at phase 0.5 | It is deeper than a planet can give by 3 sigma or more. Flux at phase 0.5 that is brighter than a planet can make it, by 3 sigma or more, is a caution: the star varies at the period, and the dip can be the low part of a sinusoid. |
    | Planet radius | It is larger than 2 Jupiter radii by 3 sigma or more. |
    | Transit fit | Never. A chain that does not converge in 100,000 steps is a caution. The transit shape is then not constrained, often because a grazing transit of a large body fits as well as a central transit of a small one. |
    | Stellar density from the fit | Never. A density that does not fit the TIC star is a caution. |

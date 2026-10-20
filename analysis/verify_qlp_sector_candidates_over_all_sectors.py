@@ -17,7 +17,8 @@ The script takes each candidate with pixel verdict "on target" or "unresolved", 
    each sector. Different cutout depths can mean a contaminating star. When fewer than two sectors have cutout
    depths, the test uses the light curve depths;
 6. measures the depth at phase 0.5. It compares it with the largest secondary eclipse a planet can give: full
-   reflection plus the day side thermal emission without heat redistribution, at 800 nm;
+   reflection plus the day side thermal emission without heat redistribution, at 800 nm. Flux at phase 0.5 that is
+   brighter than the baseline by more than this, by SECONDARY_SIGMA_LIMIT sigma, is a caution;
 7. reads the Gaia DR3 radial velocity statistics. The star is RV-variable when rv_chisq_pvalue <= 0.01,
    rv_renormalised_gof > 4 and rv_nb_transits >= 10 (Katz et al. 2023). A planet cannot cause a variation that
    Gaia can detect, so this means a stellar companion or a pulsating star. For a bright star, the script also
@@ -628,6 +629,10 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
         cautions.append("secondary eclipse detected")
     # A grazing transit leaves the radius almost unconstrained, so the test needs the radius to be above the limit
     # by RADIUS_SIGMA_LIMIT sigma, as the secondary eclipse test does.
+    # The light of a planet at phase 0.5 is at most secondary_maximum above the baseline. More light means that
+    # the star varies at the period, so the dip can be the low part of a sinusoid and not a transit.
+    if -secondary - SECONDARY_SIGMA_LIMIT * secondary_error > secondary_maximum:
+        cautions.append("phase 0.5 brighter than a planet can make it")
     if radius_median - RADIUS_SIGMA_LIMIT * radius_error > COMPANION_MAXIMUM_RADIUS_EARTH_RADII:
         refuted_by.append("companion too large for a planet")
     if np.median(impact_parameter + radius_ratio) > 1:
