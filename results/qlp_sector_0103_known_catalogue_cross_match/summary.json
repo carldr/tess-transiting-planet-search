@@ -1,0 +1,57 @@
+{
+ "stars_searched": 277524,
+ "stars_failed_to_process": 157,
+ "signals_vetted (SNR and transit cut)": 196537,
+ "signals_with_vetting_error": 0,
+ "signals_passing_false_alarm_tests": 551,
+ "signals_passing_all_tests": 146,
+ "signals_passing_all_tests_and_known": 45,
+ "signals_passing_all_tests_and_new": 101,
+ "stars_with_new_candidates": 101,
+ "toi_recovery_by_tfopwg_disposition": {
+  "all": {
+   "tois_testable": 113,
+   "found_by_search": 82,
+   "passed_vetting": 31
+  },
+  "APC": {
+   "tois_testable": 14,
+   "found_by_search": 11,
+   "passed_vetting": 3
+  },
+  "CP": {
+   "tois_testable": 21,
+   "found_by_search": 12,
+   "passed_vetting": 5
+  },
+  "FA": {
+   "tois_testable": 1,
+   "found_by_search": 0,
+   "passed_vetting": 0
+  },
+  "FP": {
+   "tois_testable": 18,
+   "found_by_search": 15,
+   "passed_vetting": 3
+  },
+  "KP": {
+   "tois_testable": 8,
+   "found_by_search": 8,
+   "passed_vetting": 5
+  },
+  "PC": {
+   "tois_testable": 51,
+   "found_by_search": 36,
+   "passed_vetting": 15
+  }
+ },
+ "test_stars": {
+  "TIC 4206066 (Rabtsevich)": {
+   "ranks_by_MES_among_passed_signals": [],
+   "periods_passed": []
+  }
+ },
+ "catalogue_download_date": "2026-10-16",
+ "verification_date_utc": "2026-10-22 05:07",
+ "code_version": "b598bb3"
+}
