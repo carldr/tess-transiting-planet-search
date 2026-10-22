@@ -226,6 +226,8 @@ def main():
         for count, candidate in enumerate(candidates, start=1):
             status.start_candidate(candidate["tic_id"], candidate["period_days"])
             row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
+            # The row of step 9 also has the column error. This step gives its own.
+            row["error"] = ""
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")

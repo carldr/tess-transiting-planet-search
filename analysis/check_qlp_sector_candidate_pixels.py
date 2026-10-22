@@ -440,6 +440,8 @@ def main():
                 row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
                 row["check_verdict"] = candidate["verdict"]
                 row["sector"] = pixel_sector
+                # The row of step 7 also has the column error. This step gives its own.
+                row["error"] = ""
                 try:
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore")

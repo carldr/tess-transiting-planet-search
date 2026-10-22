@@ -318,6 +318,8 @@ def main():
             status.start_candidate(candidate["tic_id"], candidate["period_days"])
             key = (candidate["tic_id"], candidate["period_days"])
             row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
+            # The row of step 10 also has the column error. This step gives its own.
+            row["error"] = ""
             try:
                 row.update(decide(sector, candidate, [rows[key] for rows in step_rows], directory))
             except Exception as error:

@@ -769,6 +769,8 @@ def main():
             status.start_candidate(pixel_check["tic_id"], pixel_check["period_days"])
             candidate = {**checks[(pixel_check["tic_id"], pixel_check["period_days"])], **pixel_check}
             row = {column: candidate.get(column, "") for column in OUTPUT_COLUMNS}
+            # The rows of steps 7 and 8 also have the columns verdict and error. This step gives its own.
+            row["verdict"], row["error"] = "", ""
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
