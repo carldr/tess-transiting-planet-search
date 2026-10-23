@@ -1,2 +1,3 @@
 tic_id,period_days,sector,decision,note,decision_date
 4206066,11.132794,98,dropped,"Already reported: Rabtsevich, research note, doi:10.5281/zenodo.22967456",2026-10-16
+77773145,0.884578,103,dropped,"Depths differ between sectors (S39 -423 +/- 121, S66 789 +/- 124 ppm); TRICERATOPS cannot run at the TIC Teff of 14878 K",2026-10-23
