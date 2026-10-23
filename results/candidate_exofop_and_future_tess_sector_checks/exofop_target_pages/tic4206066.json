@@ -19,7 +19,50 @@
   "ra": "80.859827110849096"
  },
  "ctois": [],
- "files": [],
+ "files": [
+  {
+   "fdate": "2026-10-19 04:10:31",
+   "fdesc": "Figure 1 of the preprint (vector PDF)",
+   "fext": "pdf",
+   "fgroup": "",
+   "fid": "1124864",
+   "fname": "TIC4206066L-pr20260925_figure1-transits-offsets-fpp.pdf",
+   "fobid": "22669",
+   "fplname": "",
+   "ftag": "481873",
+   "ftoi": "",
+   "ftype": "Light_Curve",
+   "fuser": "rabtsevich"
+  },
+  {
+   "fdate": "2026-10-19 04:09:56",
+   "fdesc": "Figure 1 of the preprint: 3.18 d transits in S6/S32/S98, difference-image offsets, TRICERATOPS FPP",
+   "fext": "png",
+   "fgroup": "",
+   "fid": "1124863",
+   "fname": "TIC4206066L-pr20260925_figure1-transits-offsets-fpp.png",
+   "fobid": "22669",
+   "fplname": "",
+   "ftag": "481873",
+   "ftoi": "",
+   "ftype": "Light_Curve",
+   "fuser": "rabtsevich"
+  },
+  {
+   "fdate": "2026-10-19 04:09:04",
+   "fdesc": "Preprint: Two transit-like signals in TESS photometry of TIC 4206066 (Zenodo, doi:10.5281/zenodo.22967456)",
+   "fext": "pdf",
+   "fgroup": "",
+   "fid": "1124862",
+   "fname": "TIC4206066O-pr20260925_preprint-zenodo-22967456.pdf",
+   "fobid": "22669",
+   "fplname": "",
+   "ftag": "481873",
+   "ftoi": "",
+   "ftype": "Other",
+   "fuser": "rabtsevich"
+  }
+ ],
  "imaging": [],
  "imaging_units": {
   "icont": "",
