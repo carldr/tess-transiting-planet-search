@@ -1,8 +1,8 @@
 tic_id,candidates,confirmed_planets,tois,ctois,exofop_imaging_count,exofop_spectroscopy_count,exofop_time_series_count,exofop_stellar_companions_count,exofop_files_count,new_exofop_entries,tess_sectors,tess_sectors_not_in_all_sector_verification,released_tess_sectors_not_in_all_sector_verification,check_date_utc
-4206066,S98 P 11.1327327 d likely planet,,,,0,0,0,0,3,,6 32 98 110,110,,2026-10-25 03:00
-264626874,S98 P 6.2599677 d likely planet,,,,0,0,0,0,0,,32 98 110,110,,2026-10-25 03:00
-450075592,S98 P 11.5322544 d likely planet,,,,0,0,0,0,0,,5 98 110,110,,2026-10-25 03:00
-220073982,S98 P 0.6340068 d likely planet,,,,0,0,0,0,0,,6 32 98 110,110,,2026-10-25 03:00
-121564843,S98 P 0.8179751 d validated without imaging,,,,0,0,0,0,0,,98 106 107 108 109,108 109,,2026-10-25 03:00
-28812587,S103 P 3.9634883 d likely planet,,,,0,0,0,0,0,,12 39 103,,,2026-10-25 03:00
-146282462,S104 P 1.2168048 d validated without imaging,,,,0,0,0,0,0,,3 30 97 104 105 106 107,105 106 107,,2026-10-25 03:00
+4206066,S98 P 11.1327327 d likely planet,,,,0,0,0,0,3,,6 32 98 110,110,,2026-10-26 03:00
+264626874,S98 P 6.2599677 d likely planet,,,,0,0,0,0,0,,32 98 110,110,,2026-10-26 03:00
+450075592,S98 P 11.5322544 d likely planet,,,,0,0,0,0,0,,5 98 110,110,,2026-10-26 03:00
+220073982,S98 P 0.6340068 d likely planet,,,,0,0,0,0,0,,6 32 98 110,110,,2026-10-26 03:00
+121564843,S98 P 0.8179751 d validated without imaging,,,,0,0,0,0,0,,98 106 107 108 109,108 109,,2026-10-26 03:00
+28812587,S103 P 3.9634883 d likely planet,,,,0,0,0,0,0,,12 39 103,,,2026-10-26 03:00
+146282462,S104 P 1.2168048 d validated without imaging,,,,0,0,0,0,0,,3 30 97 104 105 106 107,105 106 107,,2026-10-26 03:01
