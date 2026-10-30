@@ -117,13 +117,27 @@ def cutout_path(tic_id, ra, dec, sector):
 
 
 def load_cutout(path):
-    """Return time, flux cube, WCS, camera, CCD and detector corner column and row of a TESScut cutout."""
+    """Return time, flux cube, WCS, camera, CCD and detector corner column and row of a TESScut cutout.
+
+    Cutouts from astrocut 1.4 and later have no 1CRV4P and 2CRV4P keywords. For them the corner column and row are
+    None, and cutout_corner_from_tess_point gives them.
+    """
     with fits.open(path) as hdul:
         table = hdul[1].data
         time, flux, quality = np.array(table["TIME"]), np.array(table["FLUX"]), np.array(table["QUALITY"])
         keep = (quality == 0) & np.isfinite(time) & np.all(np.isfinite(flux), axis=(1, 2))
         return (time[keep], flux[keep], WCS(hdul[2].header), hdul[0].header["CAMERA"], hdul[0].header["CCD"],
-                hdul[1].header["1CRV4P"], hdul[1].header["2CRV4P"])
+                hdul[1].header.get("1CRV4P"), hdul[1].header.get("2CRV4P"))
+
+
+def cutout_corner_from_tess_point(ra, dec, sector):
+    """Return the detector column and row of the first pixel of a cutout centred on ra and dec.
+
+    On cutouts that have the 1CRV4P and 2CRV4P keywords, this agrees with them to within 2 pixels.
+    """
+    output = tess_stars2px_function_entry(0, ra, dec, trySector=sector)
+    column, row = output[6][0], output[7][0]
+    return round(column) - CUTOUT_SIZE_PIXELS // 2, round(row) - CUTOUT_SIZE_PIXELS // 2
 
 
 def difference_image(time, flux, period, epoch, duration):
@@ -223,6 +237,8 @@ def check_pixels(candidate, star_row, sector, figure_directory):
     time, flux, wcs, camera, ccd, corner_column, corner_row = load_cutout(
         cutout_path(candidate["tic_id"], ra, dec, sector)
     )
+    if corner_column is None:
+        corner_column, corner_row = cutout_corner_from_tess_point(ra, dec, sector)
     difference, error, out_of_transit_image, transits_used = difference_image(time, flux, period, epoch, duration)
     model = PixelResponseModel(sector, camera, ccd, corner_column, corner_row)
     stars = stars_able_to_cause_dip(candidate, ra, dec)
