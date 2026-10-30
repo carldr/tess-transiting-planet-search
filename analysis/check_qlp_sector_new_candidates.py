@@ -56,6 +56,7 @@ from candidate_verification_records import append_verification_record_entry, ver
 from cross_match_qlp_sector_signals_with_known_catalogues import (
     CATALOGUE_DIRECTORY, output_directory as cross_match_output_directory,
 )
+from download_known_transit_catalogues import VIZIER_SERVER
 from download_qlp_sector_light_curves import light_curve_path
 from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
 from pipeline_status import PipelineStatus
@@ -399,7 +400,7 @@ def check_gaia(candidate, gaia_dr2_source_id, stars):
 def check_vsx(candidate, stars):
     ra, dec, _ = stars[int(candidate["tic_id"])]
     position = SkyCoord(ra, dec, unit="deg")
-    tables = Vizier(columns=["Name", "Type", "Period", "RAJ2000", "DEJ2000"]).query_region(
+    tables = Vizier(columns=["Name", "Type", "Period", "RAJ2000", "DEJ2000"], vizier_server=VIZIER_SERVER).query_region(
         position, radius=NEIGHBOUR_RADIUS_ARCSEC * units.arcsec, catalog="B/vsx/vsx",
     )
     variables, binaries = [], []

@@ -24,6 +24,9 @@ from astroquery.vizier import Vizier
 
 from pipeline_status import PipelineStatus
 
+# Every VizieR query of the pipeline uses this server. The IDIA mirror holds the same catalogues as CDS Strasbourg.
+# From 2026-10-28 CDS was unreachable, and the CfA mirror answered every query with 504, but this mirror answered.
+VIZIER_SERVER = "vizier.idia.ac.za"
 TESS_EB_VIZIER_CATALOGUE = "J/ApJS/258/16/tess-ebs"
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 CATALOGUE_DIRECTORY = REPOSITORY_ROOT / "data/known_transit_catalogues"
@@ -41,7 +44,7 @@ def download(url, path):
 
 def download_tess_eb_catalogue(path):
     """Write the TIC ID, position, period (d) and epoch (BTJD) of each EB in the TESS EB catalogue."""
-    table = Vizier(row_limit=-1).get_catalogs(TESS_EB_VIZIER_CATALOGUE)[0]
+    table = Vizier(row_limit=-1, vizier_server=VIZIER_SERVER).get_catalogs(TESS_EB_VIZIER_CATALOGUE)[0]
     table = table["TIC", "RAJ2000", "DEJ2000", "Per", "BJD0", "Morph"]
     table.rename_columns(
         ["TIC", "RAJ2000", "DEJ2000", "Per", "BJD0", "Morph"],

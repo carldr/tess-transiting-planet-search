@@ -77,6 +77,7 @@ from check_qlp_sector_new_candidates import (
     COMPANION_MAXIMUM_RADIUS_EARTH_RADII, SCALED_SEMI_MAJOR_AXIS_RATIO_LIMIT, load_other_sector_light_curve,
     other_sector_products, output_directory as candidate_checks_output_directory,
 )
+from download_known_transit_catalogues import VIZIER_SERVER
 from download_qlp_sector_light_curves import light_curve_path
 from ellipsoidal_variation import (
     combined_ellipsoidal_amplitude, companion_mass_from_ellipsoidal_amplitude, ellipsoidal_amplitude,
@@ -459,7 +460,7 @@ def lamost_fibre_source(row, gaia_source_id):
 
 
 def lamost_spectra(ra, dec, gaia_source_id):
-    tables = Vizier(columns=["**", "_r"], row_limit=-1).query_region(
+    tables = Vizier(columns=["**", "_r"], row_limit=-1, vizier_server=VIZIER_SERVER).query_region(
         SkyCoord(ra, dec, unit="deg"), radius=LAMOST_RADIUS_ARCSEC * units.arcsec, catalog="V/156/dr7lrs")
     if not tables:
         return ""
