@@ -93,6 +93,9 @@ PIXEL_VERDICTS_TO_VERIFY = ("on target", "unresolved")
 # least this many transit durations.
 DETRENDING_MASK_DURATIONS = 1.0
 DETRENDING_WINDOW_DURATIONS = 3.0
+# A sector light curve needs at least this many cadences out of transit for the biweight trend. Some TESS-SPOC
+# light curves of other sectors have none that pass the quality flags.
+DETRENDING_MINIMUM_CADENCES = 100
 # The fit uses the cadences within this many transit durations of mid-transit.
 FIT_WINDOW_DURATIONS = 2.5
 # The prior of the fit keeps log10(a/R*) above this. A median within LOG10_SCALED_SEMI_MAJOR_AXIS_BOUND_MARGIN of it
@@ -248,8 +251,11 @@ def load_all_sectors_without_detrending(sector, candidate):
 
 
 def detrend_all_sectors(sectors, period, epoch, duration):
+    """Detrend each sector. Leave out a sector with fewer than DETRENDING_MINIMUM_CADENCES cadences out of transit."""
     return [(number, author, exposure, *detrend_with_transits_masked(time, flux, period, epoch, duration))
-            for number, author, exposure, time, flux in sectors]
+            for number, author, exposure, time, flux in sectors
+            if np.sum(np.abs(phase_time(time, period, epoch)) > DETRENDING_MASK_DURATIONS * duration)
+            >= DETRENDING_MINIMUM_CADENCES]
 
 
 def load_all_sectors(sector, candidate, period, epoch, duration):
