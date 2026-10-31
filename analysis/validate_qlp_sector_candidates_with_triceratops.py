@@ -35,7 +35,7 @@ The script also appends the result of each candidate to its verification record.
 
 import argparse
 import csv
-import os
+import shutil
 import warnings
 from datetime import datetime, timezone
 from pathlib import Path
@@ -126,7 +126,8 @@ def validate(sector, candidate):
     if target.trilegal_fname is not None:
         GAIA_BACKGROUND_DIRECTORY.mkdir(parents=True, exist_ok=True)
         background_path = GAIA_BACKGROUND_DIRECTORY / Path(target.trilegal_fname).name
-        os.replace(target.trilegal_fname, background_path)
+        # shutil.move copies and deletes when data/ is on another device, such as a network share.
+        shutil.move(target.trilegal_fname, background_path)
         target.trilegal_fname = str(background_path)
     target.calc_depths(float(candidate["fit_depth_ppm"]) * 1e-6,
                        all_ap_pixels=[circular_aperture(coordinates[0]) for coordinates in target.pix_coords],
