@@ -666,6 +666,10 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     # Known planets also give this signal sometimes, so it is a caution and not a refutation.
     if ellipsoidal_detected:
         cautions.append("ellipsoidal variation detected")
+    # Ellipsoidal variation dims the star at phase 0 and 0.5, so its amplitude is positive. A negative amplitude of
+    # the same significance means that the star itself varies at half the period, such as a pulsation.
+    if ellipsoidal <= -ELLIPSOIDAL_SIGMA_LIMIT * ellipsoidal_error:
+        cautions.append("star varies at half the period")
     row["refuted_by"] = "; ".join(refuted_by)
     row["cautions"] = "; ".join(cautions)
     row["verdict"] = "refuted" if refuted_by else "passed"

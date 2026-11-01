@@ -241,7 +241,7 @@ Commit the output of each step when the step is done. The repository does not ho
    | Depth in each sector, with the same apertures in the TESScut cutout of each sector | Never. Different depths are a caution. |
    | Gaia DR3 radial velocity | Never. A variable radial velocity means a stellar companion, and is a caution. For a bright star, the script gives the largest companion mass that the Gaia epochs allow. |
    | LAMOST DR7 spectra within 15 arcsec | Never. The script lists the class and the radial velocity of each spectrum, and the star in its fibre. A fibre with no Gaia star in it recorded the light of a near star, often the target. |
-   | Ellipsoidal variation at half the period | Never. A variation of 3 sigma or more is a caution, and the script gives the companion mass that it needs. A planet gives a few ppm at most, but a low-mass star gives hundreds of ppm. |
+   | Ellipsoidal variation at half the period | Never. A variation of 3 sigma or more is a caution, and the script gives the companion mass that it needs. A planet gives a few ppm at most, but a low-mass star gives hundreds of ppm. A negative amplitude of 3 sigma or more is a caution too: the star itself varies at half the period, such as a pulsation. |
 
    The verdict is "refuted" or "passed".
    Some known planets also show an ellipsoidal variation of 3 sigma, so this test does not refute a candidate.
@@ -289,7 +289,7 @@ Commit the output of each step when the step is done. The repository does not ho
     |---|---|
     | proposed for drop | ExoFOP has a TOI or CTOI for the star, or `reference/published_transit_candidates_not_in_catalogues.csv` lists the signal. |
     | proposed for drop | The radius is above 2 Jupiter radii, and a caution points to a stellar companion: Gaia RV variable, RUWE above 1.4, ellipsoidal variation or secondary eclipse. |
-    | held | The pixel verdict is "unresolved", the ellipsoidal variation is detected, the transit fit has not converged, the dip is longer than a transit at this period, phase 0.5 is brighter than a planet can make it, or MAST has a sector that step 9 did not use. |
+    | held | The pixel verdict is "unresolved", the ellipsoidal variation is detected, the transit fit has not converged, the dip is longer than a transit at this period, phase 0.5 is brighter than a planet can make it, the star varies at half the period, or MAST has a sector that step 9 did not use. |
     | proposed for submission | Any other result. |
 
     Then the script runs a Claude agent with `claude -p --model fable`, which gives the final decision with a one-sentence summary and a list of reasons.
