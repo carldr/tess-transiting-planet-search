@@ -1,0 +1,116 @@
+{
+ "duration_api_ms": 75369,
+ "stop_reason": "tool_use",
+ "session_id": "d5930319-67b3-4e4b-893c-788f8f2fbc05",
+ "total_cost_usd": 0.504996,
+ "usage": {
+  "input_tokens": 66,
+  "cache_creation_input_tokens": 10419,
+  "cache_read_input_tokens": 18824,
+  "output_tokens": 5825,
+  "output_tokens_details": {
+   "thinking_tokens": 3550
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 10419,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 32,
+    "output_tokens": 5062,
+    "cache_read_input_tokens": 10002,
+    "cache_creation_input_tokens": 2403,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 2403
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "modelUsage": {
+  "claude-fable-5-1": {
+   "inputTokens": 66,
+   "outputTokens": 5825,
+   "cacheReadInputTokens": 18824,
+   "cacheCreationInputTokens": 10419,
+   "webSearchRequests": 0,
+   "costUSD": 0.504996,
+   "contextWindow": 1000000,
+   "maxOutputTokens": 64000,
+   "thinkingTokens": 3550,
+   "cacheCreationEphemeral5mInputTokens": 0,
+   "cacheCreationEphemeral1hInputTokens": 10419,
+   "canonicalModel": "claude-fable-5-1",
+   "provider": "firstParty",
+   "costBasis": "list"
+  }
+ },
+ "permission_denials": [],
+ "terminal_reason": "completed",
+ "fast_mode_state": "off",
+ "fast_mode_disabled_reason": "sdk_opt_in_required",
+ "subagent_stats": {
+  "spawned": 0,
+  "requested": {
+   "background": 0,
+   "foreground": 0,
+   "unset": 0
+  },
+  "started_in_background": 0,
+  "max_depth": 0,
+  "spawned_by_subagents": 0,
+  "completed": 0,
+  "failed": 0,
+  "killed": {
+   "parent": 0,
+   "user": 0,
+   "system": 0
+  },
+  "refused": {
+   "depth_limit": 0,
+   "concurrency_limit": 0,
+   "budget": 0
+  },
+  "by_type": {}
+ },
+ "safety_stops": 0,
+ "is_error": false,
+ "num_turns": 9,
+ "subtype": "success",
+ "api_error_status": null,
+ "result": "{\"decision\":\"proposed for drop\",\"summary\":\"Gaia RV scatter 14.5 km/s and 5\u03c3 secondary eclipse indicate a stellar companion.\",\"reasons\":[\"Gaia radial velocities vary far beyond any planetary signal: gaia_rv_epoch_scatter_km_s 14.5, gaia_rv_epoch_range_km_s 47.9 over gaia_rv_nb_transits 15, gaia_rv_renormalised_gof 17.1, gaia_rv_chisq_pvalue 0.0, gaia_rv_variable True. A 4-day hot Jupiter would give a reflex amplitude of ~0.1-0.2 km/s; this scatter needs a companion of order a tenth of a solar mass, consistent with the pipeline's own gaia_rv_semi_amplitude_upper_limit_km_s 20.5 and gaia_rv_companion_mass_upper_limit_solar_masses 0.172 (an M dwarf, not a planet).\",\"Gaia independently flags the star as a binary: gaia_non_single_star 2, i.e. a spectroscopic non-single-star solution (gaia_ruwe 1.08 shows it is not astrometric). Gaia does not produce spectroscopic binary solutions for planet-mass companions.\",\"A secondary eclipse is detected at 5 sigma: secondary_depth_ppm 351 +/- secondary_depth_error_ppm 70, 4.5% of fit_depth_ppm 7737. Although below secondary_maximum_planet_depth_ppm 683 (so step 9 did not refute), a ~350 ppm eclipse is what a grazing late-M-dwarf companion on a stellar_radius_solar_radii 1.16 primary would give, and matches the RV-implied companion mass.\",\"The transit geometry fits a grazing stellar eclipse: transit_grazing True, fit_impact_parameter 1.132 +/- 0.1592, fit_radius_ratio 0.2545 +/- 0.13613, V-shaped dips in all five sector panels of the all-sector figure, fit_duration_hours 1.693 for depth_ppm 6009-7737. A grazing 0.1-0.17 solar-mass companion reproduces depth, shape, secondary and RV together.\",\"The signal is genuinely on the target, so the neighbour caution does not apply and this is not a blend: pixel_verdict on target in S38, S65, S101, S102 with joint_difference_image_snr 47.7 and joint_best_source TIC 331901355; the four pixel-check figures all centre the difference signal on the target pixel. That makes an on-target eclipsing binary, not a nearby one, the likely explanation.\",\"Disagreement with the mechanical reasoning, not its outcome: the mechanical decision leads with planet_radius_earth_radii 32.24 above 22.4, but with a grazing transit the radius is almost unconstrained (planet_radius_error_earth_radii 17.25, fit_radius_ratio_error 0.136) and should not itself be grounds to drop. The drop rests on the Gaia RV variability, the Gaia non-single-star flag and the secondary eclipse.\",\"TRICERATOPS does not rescue the candidate: triceratops_verdict likely planet with fpp_mean 0.2443 +/- fpp_standard_deviation 0.32 is far above validation thresholds and the model does not use the RV or secondary-eclipse evidence; nfpp_mean 0 only confirms the signal is on target.\",\"Not held: released_tess_sectors_not_in_all_sector_verification and unreleased_tess_sectors_observing_the_star are both empty, and more TESS photometry would not change a case driven by Gaia radial velocities. Only multi-epoch RV follow-up could confirm the companion mass, which is outside this pipeline; exofop_tois, exofop_ctois and published_signal are empty, so the drop is on physical grounds, not duplication.\",\"Minor supporting notes: odd_even_difference_sigma 2.35 and sector_depth_consistency_p_value 1.95e-12 (S38 8607 vs S101 6809 ppm) are mild inconsistencies, though cutout_sector_depth_consistency_p_value 0.235 suggests the sector scatter is largely aperture dilution; ellipsoidal_amplitude_ppm -267 +/- 388 is a non-detection consistent with a ~0.15 solar-mass companion at fit_scaled_semi_major_axis 9.92, so it neither supports nor contradicts the binary picture.\"]}",
+ "structured_output": {
+  "decision": "proposed for drop",
+  "summary": "Gaia RV scatter 14.5 km/s and 5\u03c3 secondary eclipse indicate a stellar companion.",
+  "reasons": [
+   "Gaia radial velocities vary far beyond any planetary signal: gaia_rv_epoch_scatter_km_s 14.5, gaia_rv_epoch_range_km_s 47.9 over gaia_rv_nb_transits 15, gaia_rv_renormalised_gof 17.1, gaia_rv_chisq_pvalue 0.0, gaia_rv_variable True. A 4-day hot Jupiter would give a reflex amplitude of ~0.1-0.2 km/s; this scatter needs a companion of order a tenth of a solar mass, consistent with the pipeline's own gaia_rv_semi_amplitude_upper_limit_km_s 20.5 and gaia_rv_companion_mass_upper_limit_solar_masses 0.172 (an M dwarf, not a planet).",
+   "Gaia independently flags the star as a binary: gaia_non_single_star 2, i.e. a spectroscopic non-single-star solution (gaia_ruwe 1.08 shows it is not astrometric). Gaia does not produce spectroscopic binary solutions for planet-mass companions.",
+   "A secondary eclipse is detected at 5 sigma: secondary_depth_ppm 351 +/- secondary_depth_error_ppm 70, 4.5% of fit_depth_ppm 7737. Although below secondary_maximum_planet_depth_ppm 683 (so step 9 did not refute), a ~350 ppm eclipse is what a grazing late-M-dwarf companion on a stellar_radius_solar_radii 1.16 primary would give, and matches the RV-implied companion mass.",
+   "The transit geometry fits a grazing stellar eclipse: transit_grazing True, fit_impact_parameter 1.132 +/- 0.1592, fit_radius_ratio 0.2545 +/- 0.13613, V-shaped dips in all five sector panels of the all-sector figure, fit_duration_hours 1.693 for depth_ppm 6009-7737. A grazing 0.1-0.17 solar-mass companion reproduces depth, shape, secondary and RV together.",
+   "The signal is genuinely on the target, so the neighbour caution does not apply and this is not a blend: pixel_verdict on target in S38, S65, S101, S102 with joint_difference_image_snr 47.7 and joint_best_source TIC 331901355; the four pixel-check figures all centre the difference signal on the target pixel. That makes an on-target eclipsing binary, not a nearby one, the likely explanation.",
+   "Disagreement with the mechanical reasoning, not its outcome: the mechanical decision leads with planet_radius_earth_radii 32.24 above 22.4, but with a grazing transit the radius is almost unconstrained (planet_radius_error_earth_radii 17.25, fit_radius_ratio_error 0.136) and should not itself be grounds to drop. The drop rests on the Gaia RV variability, the Gaia non-single-star flag and the secondary eclipse.",
+   "TRICERATOPS does not rescue the candidate: triceratops_verdict likely planet with fpp_mean 0.2443 +/- fpp_standard_deviation 0.32 is far above validation thresholds and the model does not use the RV or secondary-eclipse evidence; nfpp_mean 0 only confirms the signal is on target.",
+   "Not held: released_tess_sectors_not_in_all_sector_verification and unreleased_tess_sectors_observing_the_star are both empty, and more TESS photometry would not change a case driven by Gaia radial velocities. Only multi-epoch RV follow-up could confirm the companion mass, which is outside this pipeline; exofop_tois, exofop_ctois and published_signal are empty, so the drop is on physical grounds, not duplication.",
+   "Minor supporting notes: odd_even_difference_sigma 2.35 and sector_depth_consistency_p_value 1.95e-12 (S38 8607 vs S101 6809 ppm) are mild inconsistencies, though cutout_sector_depth_consistency_p_value 0.235 suggests the sector scatter is largely aperture dilution; ellipsoidal_amplitude_ppm -267 +/- 388 is a non-detection consistent with a ~0.15 solar-mass companion at fit_scaled_semi_major_axis 9.92, so it neither supports nor contradicts the binary picture."
+  ]
+ },
+ "ttft_ms": 1325,
+ "type": "result",
+ "duration_ms": 75558,
+ "uuid": "10842210-27fd-4649-9e70-047949cc26b7",
+ "ttft_stream_ms": 1260,
+ "time_to_request_ms": 173,
+ "first_content_frame_ms": 1260,
+ "queued_turn_count": 0,
+ "result_index": 0
+}
