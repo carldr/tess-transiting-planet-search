@@ -130,14 +130,14 @@ def load_cutout(path):
                 hdul[1].header.get("1CRV4P"), hdul[1].header.get("2CRV4P"))
 
 
-def cutout_corner_from_tess_point(ra, dec, sector):
+def cutout_corner_from_tess_point(ra, dec, sector, cutout_size_pixels=CUTOUT_SIZE_PIXELS):
     """Return the detector column and row of the first pixel of a cutout centred on ra and dec.
 
     On cutouts that have the 1CRV4P and 2CRV4P keywords, this agrees with them to within 2 pixels.
     """
     output = tess_stars2px_function_entry(0, ra, dec, trySector=sector)
     column, row = output[6][0], output[7][0]
-    return round(column) - CUTOUT_SIZE_PIXELS // 2, round(row) - CUTOUT_SIZE_PIXELS // 2
+    return round(column) - cutout_size_pixels // 2, round(row) - cutout_size_pixels // 2
 
 
 def difference_image(time, flux, period, epoch, duration):

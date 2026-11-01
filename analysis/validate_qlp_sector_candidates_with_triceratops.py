@@ -40,11 +40,14 @@ import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 
+import lightkurve
 import numpy as np
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT
 from candidate_verification_records import append_verification_record_entry, verification_stamp
-from check_qlp_sector_candidate_pixels import PIXEL_SIZE_ARCSEC, UNRESOLVABLE_SEPARATION_PIXELS
+from check_qlp_sector_candidate_pixels import (
+    PIXEL_SIZE_ARCSEC, UNRESOLVABLE_SEPARATION_PIXELS, cutout_corner_from_tess_point,
+)
 from incremental_csv_output import IncrementalCsvWriter, earlier_rows_to_keep
 from pipeline_status import PipelineStatus, report_candidate_progress
 from search_qlp_sector import robust_standard_deviation
@@ -52,6 +55,7 @@ from verify_qlp_sector_candidates_over_all_sectors import (
     load_all_sectors, output_directory as all_sector_verification_output_directory, phase_time,
 )
 
+ORIGINAL_SEARCH_TESSCUT = lightkurve.search_tesscut
 GAIA_BACKGROUND_DIRECTORY = REPOSITORY_ROOT / "data/triceratops_gaia_background"
 APERTURE_RADIUS_PIXELS = 2.5
 # The folded light curve keeps the cadences within this many transit durations of mid-transit.
@@ -116,11 +120,37 @@ def circular_aperture(target_pixel):
                      if np.hypot(column, row) <= APERTURE_RADIUS_PIXELS])
 
 
+def search_tesscut_with_corner_keywords(target, sector=None):
+    """Run lightkurve.search_tesscut, and add the 1CRV4P and 2CRV4P keywords to the cutouts it downloads.
+
+    TRICERATOPS reads these keywords. TESScut cutouts from astrocut 1.4 and later do not have them, and TRICERATOPS
+    then ignores the sector.
+    """
+    result = ORIGINAL_SEARCH_TESSCUT(target=target, sector=sector)
+    original_download_all = result.download_all
+
+    def download_all(*args, cutout_size=None, **kwargs):
+        cutouts = original_download_all(*args, cutout_size=cutout_size, **kwargs)
+        for cutout in cutouts or []:
+            header = cutout.hdu[1].header
+            if "1CRV4P" not in header:
+                header["1CRV4P"], header["2CRV4P"] = cutout_corner_from_tess_point(
+                    target.ra.deg, target.dec.deg, sector, cutout_size[0])
+        return cutouts
+
+    result.download_all = download_all
+    return result
+
+
 def validate(sector, candidate):
     import triceratops.triceratops as triceratops
 
+    lightkurve.search_tesscut = search_tesscut_with_corner_keywords
     sectors = np.array([int(value) for value in candidate["sectors_used"].split()])
     target = triceratops.target(ID=int(candidate["tic_id"]), sectors=sectors)
+    # TRICERATOPS ignores a sector whose cutout fails. With no sector left it gives an empty result.
+    if len(target.pix_coords) == 0:
+        raise ValueError("TRICERATOPS got no TESScut cutout of any sector")
     # TRICERATOPS writes its Gaia background star list to the working directory. This moves it to
     # GAIA_BACKGROUND_DIRECTORY, and gives TRICERATOPS the new path. It writes no list when Gaia has no field stars.
     if target.trilegal_fname is not None:
