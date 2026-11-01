@@ -66,6 +66,7 @@ RUNS_PER_CANDIDATE = 5
 LIKELY_PLANET_FPP = 0.5
 VALIDATED_FPP = 0.015
 NEARBY_FPP_LIMIT = 0.001
+TRICERATOPS_REQUIRED_STAR_PARAMETERS = ("mass", "rad", "Teff", "plx")
 
 OUTPUT_COLUMNS = [
     "tic_id", "period_days", "tmag", "pixel_verdict", "sectors_used", "fit_period_days", "fit_epoch_btjd",
@@ -168,6 +169,10 @@ def validate(sector, candidate):
     if nearby_scenarios_excluded:
         ruled_out = target.stars["sep (arcsec)"] > UNRESOLVABLE_SEPARATION_PIXELS * PIXEL_SIZE_ARCSEC
         target.stars.loc[ruled_out, "tdepth"] = 0
+    # Without these values of the target, calc_probs only prints a message and leaves a table of no meaning.
+    missing = [name for name in TRICERATOPS_REQUIRED_STAR_PARAMETERS if not np.isfinite(target.stars.iloc[0][name])]
+    if missing:
+        raise ValueError(f"TRICERATOPS needs the target {', '.join(missing)}, which the TIC does not give")
     time, flux, flux_error, exposure_days = folded_light_curve(sector, candidate)
     fpps, nfpps, scenarios = [], [], []
     print(f"    TIC {candidate['tic_id']}: {len(time)} folded points, {len(target.stars)} stars, "
