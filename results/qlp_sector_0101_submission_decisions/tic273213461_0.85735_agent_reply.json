@@ -1,0 +1,115 @@
+{
+ "duration_api_ms": 67834,
+ "stop_reason": "tool_use",
+ "session_id": "8b42890a-385a-4f56-b23c-b6ae5a4ce5a7",
+ "total_cost_usd": 0.5096105,
+ "usage": {
+  "input_tokens": 66,
+  "cache_creation_input_tokens": 12188,
+  "cache_read_input_tokens": 20962,
+  "output_tokens": 5199,
+  "output_tokens_details": {
+   "thinking_tokens": 2918
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 12188,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 32,
+    "output_tokens": 4397,
+    "cache_read_input_tokens": 11094,
+    "cache_creation_input_tokens": 3080,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 3080
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "modelUsage": {
+  "claude-fable-5-1": {
+   "inputTokens": 66,
+   "outputTokens": 5199,
+   "cacheReadInputTokens": 20962,
+   "cacheCreationInputTokens": 12188,
+   "webSearchRequests": 0,
+   "costUSD": 0.5096105,
+   "contextWindow": 1000000,
+   "maxOutputTokens": 64000,
+   "thinkingTokens": 2918,
+   "cacheCreationEphemeral5mInputTokens": 0,
+   "cacheCreationEphemeral1hInputTokens": 12188,
+   "canonicalModel": "claude-fable-5-1",
+   "provider": "firstParty",
+   "costBasis": "list"
+  }
+ },
+ "permission_denials": [],
+ "terminal_reason": "completed",
+ "fast_mode_state": "off",
+ "fast_mode_disabled_reason": "sdk_opt_in_required",
+ "subagent_stats": {
+  "spawned": 0,
+  "requested": {
+   "background": 0,
+   "foreground": 0,
+   "unset": 0
+  },
+  "started_in_background": 0,
+  "max_depth": 0,
+  "spawned_by_subagents": 0,
+  "completed": 0,
+  "failed": 0,
+  "killed": {
+   "parent": 0,
+   "user": 0,
+   "system": 0
+  },
+  "refused": {
+   "depth_limit": 0,
+   "concurrency_limit": 0,
+   "budget": 0
+  },
+  "by_type": {}
+ },
+ "safety_stops": 0,
+ "is_error": false,
+ "num_turns": 10,
+ "subtype": "success",
+ "api_error_status": null,
+ "result": "{\"decision\":\"proposed for submission\",\"summary\":\"Transit on target, Rp 4.53 Re, FPP 0.01, no secondary; RUWE 3.01 needs follow-up.\",\"reasons\":[\"The signal is new: exofop_tois, exofop_ctois and published_signal are all empty, and the step-1 cross-match found no TOI, CTOI, TCE or TESS EB match in the catalogues of 2026-10-29.\",\"The transit is real and repeats across five sectors: joint_search_snr 18.3 against joint_search_highest_null_snr 5.5, and each sector recovers it near expectation (S10 SNR 7.5 vs 9.8 expected, S64 7.7 vs 8.5, S99 11.4 vs 11.1, S100 11.2 vs 12.1). The all-sector figure shows a clear dip in every sector.\",\"The companion is planet-sized: planet_radius_earth_radii 4.53 +/- 0.34 (fit_radius_ratio 0.0214, stellar_radius_solar_radii 1.94), transit_grazing False, fit_impact_parameter 0.392, so the radius is constrained and far below the 22.4 Earth-radius stellar limit; stellar_density_fit_to_tic_ratio 1.22 is consistent with the transit being on a star like the target.\",\"No eclipsing-binary signatures: secondary_depth_ppm 16 +/- 23 (against secondary_maximum_planet_depth_ppm 152), ellipsoidal_amplitude_ppm -70 +/- 52 with no companion mass detected, odd_even_difference_sigma 0.85, and sector_depth_consistency_p_value 0.422 for the fitted depths (S101 570, S10 455, S64 541, S99 584, S100 555 ppm).\",\"The dip is localised on the target when all sectors are combined: joint_difference_image_snr 6.3, joint_best_source TIC 273213461, joint_pixel_verdict on target; the S101 and S100 difference images show the brightest pixel at the target. TRICERATOPS gives fpp_mean 0.01005 and nfpp_mean 1.066e-08 with nearby_scenarios_excluded True, most_likely_scenario TP on TIC 273213461.\",\"Caution weighed, not decisive: gaia_ruwe 3.01 (gaia_non_single_star 0) suggests an unresolved companion, and gaia_rv_variable True (gaia_rv_epoch_scatter_km_s 10.3, gaia_rv_epoch_range_km_s 48.8 over 38 transits). However gaia_vbroad_km_s 60.7 means the per-epoch RVs are poorly measured, and the derived gaia_rv_semi_amplitude_upper_limit_km_s 14.6 limits any companion at this period to gaia_rv_companion_mass_upper_limit_solar_masses 0.082, i.e. below a stellar mass. A bound companion would dilute the depth and make the true radius larger, so the submission should flag that high-resolution imaging and RVs are needed.\",\"Caution weighed, not decisive: gaia_neighbours 64 with 41 listed as able to cause the dip (nearest Gaia DR3 5369078040516638592 at 10\\\" G 19.1 needing 47%), and cutout_sector_depth_consistency_p_value 0.00617 shows aperture-dependent depths differ between sectors (S10 r1.5-r3.0 719-872 ppm vs S101 455-502 ppm). The per-sector pixel checks are individually too faint (SNR 1.8-4.5), so the on-target verdict rests on the joint SNR 6.3. This is adequate for a CTOI but is the weakest link; the four unreleased sectors (unreleased_tess_sectors_observing_the_star 111 112 113 114) will roughly double the pixel data and should be re-run when released.\",\"I agree with the mechanical decision. The remaining doubts (RUWE 3.01, crowding) are ones that more TESS sectors cannot settle on their own and that ground-based follow-up prompted by a CTOI can; a 4.5 Earth-radius body at P 0.857 d around a 1.94 solar-radius star sits in the hot-Neptune desert and is worth that follow-up.\"]}",
+ "structured_output": {
+  "decision": "proposed for submission",
+  "summary": "Transit on target, Rp 4.53 Re, FPP 0.01, no secondary; RUWE 3.01 needs follow-up.",
+  "reasons": [
+   "The signal is new: exofop_tois, exofop_ctois and published_signal are all empty, and the step-1 cross-match found no TOI, CTOI, TCE or TESS EB match in the catalogues of 2026-10-29.",
+   "The transit is real and repeats across five sectors: joint_search_snr 18.3 against joint_search_highest_null_snr 5.5, and each sector recovers it near expectation (S10 SNR 7.5 vs 9.8 expected, S64 7.7 vs 8.5, S99 11.4 vs 11.1, S100 11.2 vs 12.1). The all-sector figure shows a clear dip in every sector.",
+   "The companion is planet-sized: planet_radius_earth_radii 4.53 +/- 0.34 (fit_radius_ratio 0.0214, stellar_radius_solar_radii 1.94), transit_grazing False, fit_impact_parameter 0.392, so the radius is constrained and far below the 22.4 Earth-radius stellar limit; stellar_density_fit_to_tic_ratio 1.22 is consistent with the transit being on a star like the target.",
+   "No eclipsing-binary signatures: secondary_depth_ppm 16 +/- 23 (against secondary_maximum_planet_depth_ppm 152), ellipsoidal_amplitude_ppm -70 +/- 52 with no companion mass detected, odd_even_difference_sigma 0.85, and sector_depth_consistency_p_value 0.422 for the fitted depths (S101 570, S10 455, S64 541, S99 584, S100 555 ppm).",
+   "The dip is localised on the target when all sectors are combined: joint_difference_image_snr 6.3, joint_best_source TIC 273213461, joint_pixel_verdict on target; the S101 and S100 difference images show the brightest pixel at the target. TRICERATOPS gives fpp_mean 0.01005 and nfpp_mean 1.066e-08 with nearby_scenarios_excluded True, most_likely_scenario TP on TIC 273213461.",
+   "Caution weighed, not decisive: gaia_ruwe 3.01 (gaia_non_single_star 0) suggests an unresolved companion, and gaia_rv_variable True (gaia_rv_epoch_scatter_km_s 10.3, gaia_rv_epoch_range_km_s 48.8 over 38 transits). However gaia_vbroad_km_s 60.7 means the per-epoch RVs are poorly measured, and the derived gaia_rv_semi_amplitude_upper_limit_km_s 14.6 limits any companion at this period to gaia_rv_companion_mass_upper_limit_solar_masses 0.082, i.e. below a stellar mass. A bound companion would dilute the depth and make the true radius larger, so the submission should flag that high-resolution imaging and RVs are needed.",
+   "Caution weighed, not decisive: gaia_neighbours 64 with 41 listed as able to cause the dip (nearest Gaia DR3 5369078040516638592 at 10\" G 19.1 needing 47%), and cutout_sector_depth_consistency_p_value 0.00617 shows aperture-dependent depths differ between sectors (S10 r1.5-r3.0 719-872 ppm vs S101 455-502 ppm). The per-sector pixel checks are individually too faint (SNR 1.8-4.5), so the on-target verdict rests on the joint SNR 6.3. This is adequate for a CTOI but is the weakest link; the four unreleased sectors (unreleased_tess_sectors_observing_the_star 111 112 113 114) will roughly double the pixel data and should be re-run when released.",
+   "I agree with the mechanical decision. The remaining doubts (RUWE 3.01, crowding) are ones that more TESS sectors cannot settle on their own and that ground-based follow-up prompted by a CTOI can; a 4.5 Earth-radius body at P 0.857 d around a 1.94 solar-radius star sits in the hot-Neptune desert and is worth that follow-up."
+  ]
+ },
+ "ttft_ms": 4215,
+ "type": "result",
+ "duration_ms": 68252,
+ "uuid": "8b416e77-1e60-49b1-afa5-09cb5ea1e935",
+ "ttft_stream_ms": 3184,
+ "time_to_request_ms": 398,
+ "first_content_frame_ms": 3184,
+ "queued_turn_count": 0,
+ "result_index": 0
+}
