@@ -169,8 +169,14 @@ def phase_time(time, period, epoch):
 
 
 def detrend_with_transits_masked(time, flux, period, epoch, duration):
-    """Divide the flux by a biweight trend fitted to the cadences out of transit."""
-    out_of_transit = np.abs(phase_time(time, period, epoch)) > DETRENDING_MASK_DURATIONS * duration
+    """Divide the flux by a biweight trend fitted to the cadences out of transit.
+
+    Return empty arrays when fewer than DETRENDING_MINIMUM_CADENCES finite cadences are out of transit.
+    """
+    out_of_transit = ((np.abs(phase_time(time, period, epoch)) > DETRENDING_MASK_DURATIONS * duration)
+                      & np.isfinite(time) & np.isfinite(flux))
+    if np.sum(out_of_transit) < DETRENDING_MINIMUM_CADENCES:
+        return time[:0], flux[:0]
     window = max(BIWEIGHT_WINDOW_LENGTH_DAYS, DETRENDING_WINDOW_DURATIONS * duration)
     _, trend = flatten(time[out_of_transit], flux[out_of_transit], method="biweight", window_length=window,
                        edge_cutoff=0.0, return_trend=True)
@@ -251,11 +257,10 @@ def load_all_sectors_without_detrending(sector, candidate):
 
 
 def detrend_all_sectors(sectors, period, epoch, duration):
-    """Detrend each sector. Leave out a sector with fewer than DETRENDING_MINIMUM_CADENCES cadences out of transit."""
-    return [(number, author, exposure, *detrend_with_transits_masked(time, flux, period, epoch, duration))
-            for number, author, exposure, time, flux in sectors
-            if np.sum(np.abs(phase_time(time, period, epoch)) > DETRENDING_MASK_DURATIONS * duration)
-            >= DETRENDING_MINIMUM_CADENCES]
+    """Detrend each sector. Leave out a sector that detrend_with_transits_masked cannot detrend."""
+    detrended = [(number, author, exposure, *detrend_with_transits_masked(time, flux, period, epoch, duration))
+                 for number, author, exposure, time, flux in sectors]
+    return [sector_data for sector_data in detrended if len(sector_data[3])]
 
 
 def load_all_sectors(sector, candidate, period, epoch, duration):
