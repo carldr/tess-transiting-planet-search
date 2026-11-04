@@ -98,6 +98,9 @@ DETRENDING_WINDOW_DURATIONS = 3.0
 DETRENDING_MINIMUM_CADENCES = 100
 # The fit uses the cadences within this many transit durations of mid-transit.
 FIT_WINDOW_DURATIONS = 2.5
+# A wider period range lets the fit move to a wrong period, on which the transits of distant sectors fall on other
+# dips. A period range of +/-1% of the search period let the fit of TIC 425809198 move by 0.0068 d.
+PERIOD_PRIOR_DRIFT_DURATIONS = 1.0
 # The prior of the fit keeps log10(a/R*) above this. A median within LOG10_SCALED_SEMI_MAJOR_AXIS_BOUND_MARGIN of it
 # means that the dip is longer than a transit at this period can be.
 MINIMUM_LOG10_SCALED_SEMI_MAJOR_AXIS = 0.2
@@ -301,9 +304,9 @@ class TransitModel:
         return [model.light_curve(parameters) for model in self.models]
 
 
-def log_probability(theta, model, errors, period_guess, epoch_guess):
+def log_probability(theta, model, errors, period_guess, period_half_width, epoch_guess):
     epoch, period, radius_ratio, impact_parameter, log10_a, q1, q2 = theta
-    if not (abs(period - period_guess) < 0.01 * period_guess and abs(epoch - epoch_guess) < 0.2
+    if not (abs(period - period_guess) < period_half_width and abs(epoch - epoch_guess) < 0.2
             and 0 < radius_ratio < 0.5 and 0 <= impact_parameter < 1 + radius_ratio and MINIMUM_LOG10_SCALED_SEMI_MAJOR_AXIS < log10_a < 2.5
             and 0 < q1 < 1 and 0 < q2 < 1):
         return -np.inf
@@ -513,7 +516,12 @@ def verify(sector, candidate, star_row, gaia_source_id, figure_directory):
     model = TransitModel(sectors)
     start = [epoch_guess, period_guess, np.sqrt(float(candidate["depth_ppm"]) * 1e-6), 0.3,
              np.log10(a_guess) if np.isfinite(a_guess) else 1.0, 0.4, 0.4]
-    arguments = (model, errors, period_guess, epoch_guess)
+    # The fit may move the transits at the ends of the data by at most PERIOD_PRIOR_DRIFT_DURATIONS durations from
+    # the search ephemeris. The epoch is in the middle of the data, so each end is half the orbital cycles of the
+    # data away from it.
+    cycles = max((all_times.max() - all_times.min()) / period_guess, 1.0)
+    period_half_width = 2 * PERIOD_PRIOR_DRIFT_DURATIONS * duration / cycles
+    arguments = (model, errors, period_guess, period_half_width, epoch_guess)
     best = minimize(lambda theta: -log_probability(theta, *arguments), start, method="Nelder-Mead",
                     options={"maxiter": 20000, "maxfev": 20000, "xatol": 1e-7, "fatol": 1e-3}).x
     rng = np.random.default_rng(int(candidate["tic_id"]))
