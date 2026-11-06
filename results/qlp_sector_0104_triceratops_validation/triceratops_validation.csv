@@ -1,4 +1,4 @@
 tic_id,period_days,tmag,pixel_verdict,sectors_used,fit_period_days,fit_epoch_btjd,fit_depth_ppm,nearby_scenarios_excluded,fpp_mean,fpp_standard_deviation,nfpp_mean,nfpp_standard_deviation,most_likely_scenario,triceratops_verdict,error,verification_date_utc,code_version
 146282462,1.216728,10.259,on target,104 3 30 97,1.2168048,3967.67360,2982,True,-4.796e-14,6.3e-14,0,0,DTP on TIC 146282462,validated without imaging,,2026-10-17 05:09,4c88517
 123912679,4.252573,11.3001,on target,104 12 66 93 103,4.2490796,3853.17202,2587,True,1,7.4e-05,0.8667,0.13,NEBx2P on TIC 123912703,not validated,,2026-10-17 05:28,4c88517
-61141412,6.52471,10.0191,unresolved,104 13 27 67 94,6.5691047,3136.58438,346,False,0.7799,0.2,0.7799,0.2,NEBx2P on TIC 61141385,not validated,,2026-10-17 06:25,4c88517
+61141412,6.52471,10.0191,unresolved,104 13 27 67 94,6.5285238,3136.45689,1193,False,1,9e-06,0.009666,0.0023,SEBx2P on TIC 61141412,not validated,,2026-11-06 13:07,0b60015
