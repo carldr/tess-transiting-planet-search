@@ -5,14 +5,14 @@
  "signals_with_vetting_error": 0,
  "signals_passing_false_alarm_tests": 420,
  "signals_passing_all_tests": 160,
- "signals_passing_all_tests_and_known": 85,
- "signals_passing_all_tests_and_new": 75,
- "stars_with_new_candidates": 75,
+ "signals_passing_all_tests_and_known": 87,
+ "signals_passing_all_tests_and_new": 73,
+ "stars_with_new_candidates": 73,
  "toi_recovery_by_tfopwg_disposition": {
   "all": {
-   "tois_testable": 199,
-   "found_by_search": 126,
-   "passed_vetting": 64
+   "tois_testable": 203,
+   "found_by_search": 129,
+   "passed_vetting": 66
   },
   "APC": {
    "tois_testable": 15,
@@ -43,6 +43,11 @@
    "tois_testable": 74,
    "found_by_search": 41,
    "passed_vetting": 15
+  },
+  "none": {
+   "tois_testable": 4,
+   "found_by_search": 3,
+   "passed_vetting": 2
   }
  },
  "test_stars": {
@@ -55,7 +60,7 @@
    ]
   }
  },
- "catalogue_download_date": "2026-10-29",
- "verification_date_utc": "2026-10-29 09:07",
- "code_version": "8cec71d"
+ "catalogue_download_date": "2026-11-07",
+ "verification_date_utc": "2026-11-07 14:41",
+ "code_version": "6edf964"
 }
