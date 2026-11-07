@@ -34,11 +34,23 @@ TOI_URL = "https://exofop.ipac.caltech.edu/tess/download_toi.php?sort=toi&output
 CTOI_URL = "https://exofop.ipac.caltech.edu/tess/download_ctoi.php?sort=ctoi&output=csv"
 TCE_INDEX_URL = "https://archive.stsci.edu/tess/bulk_downloads/bulk_downloads_tce.html"
 MAST_ROOT_URL = "https://archive.stsci.edu"
+# ExoFOP sometimes ends a download early. The script tries each file this many times.
+DOWNLOAD_ATTEMPTS = 3
 
 
 def download(url, path):
+    """Download url to path. A failed download leaves the earlier file in place, not a truncated one."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    urllib.request.urlretrieve(url, path)
+    temporary_path = path.with_name(path.name + ".partial")
+    for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
+        try:
+            urllib.request.urlretrieve(url, temporary_path)
+            break
+        except urllib.error.ContentTooShortError:
+            if attempt == DOWNLOAD_ATTEMPTS:
+                temporary_path.unlink(missing_ok=True)
+                raise
+    temporary_path.replace(path)
     print(f"{path.relative_to(REPOSITORY_ROOT)} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)
 
 
