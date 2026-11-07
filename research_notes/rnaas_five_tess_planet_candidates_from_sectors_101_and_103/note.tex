@@ -1,0 +1,106 @@
+\documentclass{aastex701}
+
+\begin{document}
+
+\title{Five Transiting Planet Candidates from the TESS Quick-Look Pipeline Light Curves of Sectors 101 and 103}
+
+\author[0000-0000-0000-0000]{Carl Drinkwater}
+\affiliation{Independent researcher, Shropshire, UK}
+\email{carl@29degrees.co.uk}
+
+\begin{abstract}
+I report five transit signals found in a search of the TESS Quick-Look Pipeline light curves of Sectors 101 and
+103 for stars brighter than $T=11.5$. Each signal repeats in two to six other TESS sectors, falls on the target in
+difference images, shows no secondary eclipse and no significant odd-even depth difference, and matches no TOI,
+CTOI, SPOC threshold crossing event or TESS eclipsing binary. Joint fits of all sectors give radii of 2.6 to
+11 $R_\oplus$ and periods of 0.76 to 3.96 d, with TRICERATOPS false positive probabilities of 0.010 to 0.47. Two are
+ultra-short-period candidates. Three hosts show Gaia radial velocity variability or a high RUWE, which needs
+follow-up.
+\end{abstract}
+
+\section{Search and vetting}
+
+I searched the Quick-Look Pipeline \citep[QLP;][]{huang2020a,huang2020b,kunimoto2021} light curves of TESS
+\citep{ricker2015} Sectors 101 and 103 for the stars brighter than $T=11.5$: 298,298 and 277,524 stars. I removed
+trends with a biweight filter of 0.5 d \citep{hippke2019} and searched 0.5 to 14 d with box least squares
+\citep{kovacs2002}. I kept the signals that pass every flux-level false alarm and false positive test of LEO-vetter
+\citep{kunimoto2025} and match no TOI \citep{guerrero2021}, CTOI, SPOC threshold crossing event or TESS eclipsing
+binary \citep{prsa2022} in the lists of 2026 November 7.
+
+For each signal I searched the TESS-SPOC \citep{caldwell2020} and QLP light curves of the other sectors of the
+star. A joint box least squares search of all sectors at the candidate period had to reach 1.5 times the highest
+SNR at ten null periods of 0.71 to 1.41 times that period. I fitted a point spread function model to the in-transit difference images \citep{bryson2013} of the TESScut
+cutouts \citep{brasseur2019} of each sector, and of all sectors together, to locate the source of the dip among the
+Gaia DR3 \citep{gaia2023} stars. I then fitted one transit model \citep{kreidberg2015} to all sectors with emcee
+\citep{foremanmackey2013}, measured the odd and even depths and the flux at phase 0.5, and ran TRICERATOPS
+\citep{giacalone2021} five times on the folded light curve, with the nearby-star scenarios removed where the
+difference images place the dip on the target. The radii use the TIC stellar radius \citep{stassun2019}.
+
+Table~\ref{tab:candidates} lists the five candidates. For each, the joint search SNR is 18 to 47 against null maxima
+of 5.5 to 15.4, the odd and even depths differ by less than 3$\sigma$, and the flux at phase 0.5 is within
+1$\sigma$ of zero.
+
+\begin{table*}[ht!]
+\centering
+\caption{Transit parameters from the joint fit of all TESS sectors. $T_0$ is in BJD$_\mathrm{TDB} - 2457000$.
+Uncertainties in the last digits are in parentheses. FPP is the mean TRICERATOPS false positive probability.
+\label{tab:candidates}}
+\begin{tabular}{rcllrrrrc}
+\hline
+TIC & $T$ & $P$ (d) & $T_0$ & Depth (ppm) & Dur.\ (h) & $R_p$ ($R_\oplus$) & FPP & Sectors \\
+\hline
+334982989 & 11.23 & 0.7646381(6) & 4069.6852(7) & $707\pm36$ & $1.30\pm0.05$ & $2.65\pm0.19$ & 0.017 & 10, 64, 99--101 \\
+273213461 & 11.15 & 0.8565034(14) & 4069.8242(14) & $554\pm29$ & $2.81\pm0.09$ & $4.54\pm0.35$ & 0.010 & 10, 64, 99--101 \\
+242415665 & 11.05 & 2.9344279(23) & 4104.9671(11) & $1948\pm58$ & $1.95\pm0.07$ & $5.61\pm0.49$ & 0.47 & 11, 38, 65, 101, 102 \\
+437823249 & 9.87 & 3.2223295(66) & 3093.7904(16) & $627\pm26$ & $3.60\pm0.13$ & $8.0\pm0.8$ & 0.030 & 11, 38, 64, 65, 99--101 \\
+28812587 & 11.07 & 3.9634883(25) & 4156.1382(12) & $5807\pm187$ & $2.06\pm0.10$ & $11.2\pm1.1$ & 0.11 & 12, 39, 103 \\
+\hline
+\end{tabular}
+\end{table*}
+
+\section{Notes on individual candidates}
+
+\textbf{TIC 334982989} is an ultra-short-period sub-Neptune candidate around a G dwarf of 0.97 $R_\odot$ at 214 pc.
+The difference images of Sectors 100 and 101 place the dip on the target (joint SNR 11.5). Gaia DR3 gives a RUWE
+of 0.99 and no radial velocity variability in 27 epochs \citep{katz2023}, which limits a companion on the transit
+orbit to below 11 Jupiter masses.
+
+\textbf{TIC 273213461} is an ultra-short-period Neptune-size candidate around an F star of 1.94 $R_\odot$.
+TRICERATOPS gives the lowest FPP of the five, but Gaia DR3 gives a RUWE of 3.01 and radial velocity variability with
+an epoch scatter of 10.3 km\,s$^{-1}$. A close stellar companion is likely; its light would dilute the transit, so
+the true radius can be larger.
+
+\textbf{TIC 242415665} recurs in five sectors with a joint search SNR of 29.7. Its odd and even depths differ by
+2.98$\sigma$ and its FPP is 0.47, so an eclipsing binary at twice the period remains possible. The fitted stellar
+density is 6.7 times the TIC value, which suggests a smaller star and companion than the table gives.
+
+\textbf{TIC 437823249} has a fitted stellar density 14 times the TIC value. The TIC gives a subgiant of
+3.55 $R_\odot$, but the transit fits a dwarf of about 1.5 $R_\odot$, for which the companion would have a radius of
+3 to 4 $R_\oplus$. Gaia DR3 shows radial velocity variability with an epoch scatter of 3.0 km\,s$^{-1}$.
+
+\textbf{TIC 28812587} is a giant planet candidate around a K star at 200 pc. The Sector 103 difference image places
+the dip on the target (SNR 16.1). Gaia DR3 shows radial velocity variability (14 epochs, scatter
+5.5 km\,s$^{-1}$), which limits a companion on the transit orbit to below 0.051 $M_\odot$; a third body or Gaia
+noise can also cause it. The fitted stellar density is 5.0 times the TIC value, and the TIC contamination ratio is
+0.58.
+
+\section{Conclusion}
+
+These five signals are planet candidates, not validated planets. Radial velocities can measure the masses and test
+the three hosts with Gaia radial velocity variability or a high RUWE for stellar companions, and high-resolution
+imaging can test for unresolved neighbours. I will upload the five to ExoFOP as Community TOIs.
+
+\begin{acknowledgments}
+This note uses data from the TESS mission, obtained from MAST. Claude (Anthropic) wrote the analysis code and a draft of
+this note under my direction. The code and results are at https://github.com/carldr/tess-transiting-planet-search.
+\end{acknowledgments}
+
+\facilities{TESS, Gaia}
+
+\software{astropy, astroquery, batman \citep{kreidberg2015}, emcee \citep{foremanmackey2013}, LEO-vetter
+\citep{kunimoto2025}, lightkurve, TRICERATOPS \citep{giacalone2021}, wotan \citep{hippke2019}}
+
+\bibliography{references}{}
+\bibliographystyle{aasjournalv7}
+
+\end{document}
