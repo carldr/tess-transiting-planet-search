@@ -65,7 +65,7 @@ SECTOR_STEPS = [
     {"number": 1, "name": "star list", "output": "data/qlp_sector_{sector:04d}/star_list.csv"},
     {"number": 2, "name": "download", "output": "data/qlp_sector_{sector:04d}/failed_downloads.csv"},
     {"number": 3, "name": "BLS search", "output": "results/qlp_sector_{sector:04d}_bls_search"},
-    {"number": 4, "name": "LEO-Vetter", "output": "results/qlp_sector_{sector:04d}_leo_vetting/vetting.csv"},
+    {"number": 4, "name": "LEO-Vetter", "output": "results/qlp_sector_{sector:04d}_leo_vetting/vetting.csv.gz"},
     {"number": 6, "name": "cross-match", "output": "results/qlp_sector_{sector:04d}_known_catalogue_cross_match/summary.json"},
 ]
 

@@ -35,8 +35,9 @@ Step 10 moves the Gaia background star list that TRICERATOPS writes to `data/tri
 ## Set up
 
 1. Install Git LFS before you clone, with `brew install git-lfs` and `git lfs install`.
-   The repository keeps the step 4 `vetting.csv` and the step 6 `signals_cross_matched.csv` of each sector in Git LFS,
-   because they are larger than GitHub's 50 MB file limit.
+   The repository keeps the step 4 `vetting.csv.gz` and the step 6 `signals_cross_matched.csv.gz` of each sector in
+   Git LFS, because each is about 60 MB before compression, above GitHub's 50 MB file limit.
+   Read them with `gzip -dc <file>`.
 
 1. Create the Python environment:
 
@@ -129,7 +130,8 @@ Commit the output of each step when the step is done. The repository does not ho
    It runs the LEO-Vetter flux-level tests and checks them against the LEO-Vetter default thresholds.
    The false alarm tests reject noise and systematics. The false positive tests reject eclipsing binaries.
    A signal that passes both groups is a planet candidate.
-   The script writes `results/qlp_sector_0098_leo_vetting/vetting.csv`, with the names of the tests that each signal failed.
+   The script writes `results/qlp_sector_0098_leo_vetting/vetting.csv.gz`, with the names of the tests that each signal failed.
+   While it runs, it writes `vetting.csv`, so a stopped run continues where it stopped.
    It does not run the LEO-Vetter pixel-level tests.
    It uses all but two CPU cores. Add `--workers 9` to use 9 processes.
 
@@ -155,7 +157,7 @@ Commit the output of each step when the step is done. The repository does not ho
    | file | content |
    |---|---|
    | `new_candidates.csv` | The signals that pass every vetting test and match no known signal, highest MES first. |
-   | `signals_cross_matched.csv` | Every vetted signal, with the matching TOIs, CTOIs, TCEs and TESS EBs. |
+   | `signals_cross_matched.csv.gz` | Every vetted signal, with the matching TOIs, CTOIs, TCEs and TESS EBs. |
    | `summary.json` | The number of signals at each stage, the TOI recovery, and the rank of TIC 4206066. |
 
    The TOI recovery measures the search: of the TOIs on searched stars, how many the search found and the vetting passed.

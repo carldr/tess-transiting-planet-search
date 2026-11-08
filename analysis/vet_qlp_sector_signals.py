@@ -17,8 +17,9 @@ Run from the repository root, for example for Sector 98:
 --workers sets the number of processes. The script writes each row as soon as it has it. It keeps the rows of an
 earlier run without an error, and vets only the other signals. --restart vets all signals again.
 
-Output: results/qlp_sector_<nnnn>_leo_vetting/vetting.csv, one row per vetted signal, with the search values,
+Output: results/qlp_sector_<nnnn>_leo_vetting/vetting.csv.gz, one row per vetted signal, with the search values,
 the main LEO-Vetter metrics, passes_false_alarm_tests, passes_false_positive_tests and the names of the failed tests.
+While it runs, the script writes vetting.csv, and replaces it with vetting.csv.gz when it finishes.
 """
 
 import argparse
@@ -166,7 +167,8 @@ def main():
           f"and >= {arguments.min_transits} transits, {len(previous_rows)} vetted in an earlier run", flush=True)
 
     status = PipelineStatus(sector, 4, "leo_vetting", "vet_qlp_sector_signals.py", len(signals), "signals")
-    with Pool(arguments.workers) as pool, IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, previous_rows) as writer, \
+    with Pool(arguments.workers) as pool, IncrementalCsvWriter(output_path, OUTPUT_COLUMNS, previous_rows,
+                                                                       compress_when_finished=True) as writer, \
             status:
         status.set_items_done(len(previous_rows))
         for count, row in enumerate(pool.imap_unordered(vet_signal, tasks, chunksize=2), start=len(previous_rows) + 1):

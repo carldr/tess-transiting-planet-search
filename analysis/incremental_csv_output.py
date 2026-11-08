@@ -3,16 +3,33 @@
 IncrementalCsvWriter writes each row to disk as soon as the step has it. A step reads the rows of its earlier run
 with earlier_rows_to_keep, gives them to the writer, and skips their items. --restart makes the step start again.
 --tic-id limits a step to the candidates of the given TIC IDs, and limits --restart to their rows.
+With compress_when_finished, a finished run leaves only a gzip copy of the CSV, and the next run reads its rows.
 """
 
 import csv
+import gzip
 import os
+import shutil
+
+
+def compressed_path(path):
+    """Return the path of the gzip copy that IncrementalCsvWriter leaves of path when compress_when_finished is set."""
+    return path.with_name(path.name + ".gz")
+
+
+def read_csv_rows(path):
+    """Return the rows of a CSV, read through gzip when the name ends in .gz."""
+    with (gzip.open(path, "rt", newline="") if path.suffix == ".gz" else open(path, newline="")) as file:
+        return list(csv.DictReader(file))
 
 
 def complete_csv_rows(path):
-    """Return the rows of an earlier CSV. A stopped run can leave a partial last line, so the function drops it."""
+    """Return the rows of an earlier CSV. A stopped run can leave a partial last line, so the function drops it.
+
+    When path does not exist, the function reads the gzip copy of a finished run, if there is one.
+    """
     if not path.exists():
-        return []
+        return read_csv_rows(compressed_path(path)) if compressed_path(path).exists() else []
     text = path.read_text()
     if not text.endswith("\n"):
         text = text[:text.rfind("\n") + 1]
@@ -41,7 +58,8 @@ class IncrementalCsvWriter:
     thus cannot lose the earlier rows.
     """
 
-    def __init__(self, path, columns, earlier_rows=()):
+    def __init__(self, path, columns, earlier_rows=(), compress_when_finished=False):
+        self.path, self.compress_when_finished = path, compress_when_finished
         temporary_path = path.with_name(path.name + ".partial")
         with open(temporary_path, "w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=columns, extrasaction="ignore")
@@ -65,5 +83,12 @@ class IncrementalCsvWriter:
     def __enter__(self):
         return self
 
-    def __exit__(self, *exception):
+    def __exit__(self, exception_type, exception, traceback):
         self.file.close()
+        # A finished run replaces the CSV with its gzip copy. A stopped run keeps the CSV, so the next run continues.
+        if self.compress_when_finished and exception_type is None:
+            temporary_path = compressed_path(self.path).with_name(compressed_path(self.path).name + ".partial")
+            with open(self.path, "rb") as source, gzip.open(temporary_path, "wb") as target:
+                shutil.copyfileobj(source, target)
+            os.replace(temporary_path, compressed_path(self.path))
+            self.path.unlink()

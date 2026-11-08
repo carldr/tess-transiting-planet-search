@@ -10,7 +10,7 @@ Run from the repository root, after vet_qlp_sector_signals.py and download_known
     .venv/bin/python analysis/cross_match_qlp_sector_signals_with_known_catalogues.py 98
 
 Outputs, in results/qlp_sector_<nnnn>_known_catalogue_cross_match/:
-- signals_cross_matched.csv: every vetted signal, with the matching TOIs, CTOIs, TCEs and TESS EBs;
+- signals_cross_matched.csv.gz: every vetted signal, with the matching TOIs, CTOIs, TCEs and TESS EBs;
 - new_candidates.csv: the signals that pass every vetting test and match no known entry, highest MES first;
 - summary.json: the number of signals at each stage, the TOI recovery, and the rank of each test star.
 The script also starts the verification record of each new candidate, in results/candidate_verification_records/.
@@ -18,6 +18,7 @@ The script also starts the verification record of each new candidate, in results
 
 import argparse
 import csv
+import gzip
 import json
 from collections import defaultdict
 
@@ -25,6 +26,7 @@ import numpy as np
 
 from build_qlp_sector_star_list import REPOSITORY_ROOT, sector_directory
 from candidate_verification_records import append_verification_record_entry, verification_stamp
+from incremental_csv_output import read_csv_rows
 from pipeline_status import PipelineStatus
 from search_qlp_sector import MAXIMUM_PERIOD_DAYS, MINIMUM_PERIOD_DAYS, output_directory as search_output_directory
 from vet_qlp_sector_signals import output_directory as vetting_output_directory
@@ -107,7 +109,7 @@ def main():
 def cross_match(sector):
     known = known_entries_by_tic_id()
     searched = search_signals_by_tic_id(sector)
-    vetted = list(csv.DictReader(open(vetting_output_directory(sector) / "vetting.csv")))
+    vetted = read_csv_rows(vetting_output_directory(sector) / "vetting.csv.gz")
 
     for row in vetted:
         entries = known.get(int(row["tic_id"]), [])
@@ -167,8 +169,9 @@ def cross_match(sector):
     directory = output_directory(sector)
     directory.mkdir(parents=True, exist_ok=True)
     columns = list(vetted[0].keys())
-    for file_name, rows in (("signals_cross_matched.csv", vetted), ("new_candidates.csv", new_candidates)):
-        with open(directory / file_name, "w", newline="") as file:
+    for file_name, rows in (("signals_cross_matched.csv.gz", vetted), ("new_candidates.csv", new_candidates)):
+        with (gzip.open(directory / file_name, "wt", newline="") if file_name.endswith(".gz")
+              else open(directory / file_name, "w", newline="")) as file:
             writer = csv.DictWriter(file, fieldnames=columns)
             writer.writeheader()
             writer.writerows(rows)

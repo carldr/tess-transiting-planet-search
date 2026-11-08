@@ -40,14 +40,9 @@
    "passed_vetting": 5
   },
   "PC": {
-   "tois_testable": 42,
-   "found_by_search": 30,
-   "passed_vetting": 9
-  },
-  "none": {
-   "tois_testable": 1,
-   "found_by_search": 1,
-   "passed_vetting": 1
+   "tois_testable": 43,
+   "found_by_search": 31,
+   "passed_vetting": 10
   }
  },
  "test_stars": {
@@ -56,7 +51,7 @@
    "periods_passed": []
   }
  },
- "catalogue_download_date": "2026-11-07",
- "verification_date_utc": "2026-11-07 14:42",
- "code_version": "6edf964"
+ "catalogue_download_date": "2026-11-08",
+ "verification_date_utc": "2026-11-08 21:28",
+ "code_version": "c2bfc6f-modified"
 }

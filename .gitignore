@@ -9,6 +9,10 @@ data/
 # stop before the move leaves it here.
 *_gaia_background.csv
 
+# Step 4 writes vetting.csv while it runs, and replaces it with vetting.csv.gz when it finishes. A stopped run
+# leaves vetting.csv, which the next run continues.
+results/qlp_sector_*_leo_vetting/vetting.csv
+
 # The live progress of the running steps, for the candidate board.
 results/pipeline_status/
 

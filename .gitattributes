@@ -1,2 +1,2 @@
-results/qlp_sector_*_known_catalogue_cross_match/signals_cross_matched.csv filter=lfs diff=lfs merge=lfs -text
-results/qlp_sector_*_leo_vetting/vetting.csv filter=lfs diff=lfs merge=lfs -text
+results/qlp_sector_*_known_catalogue_cross_match/signals_cross_matched.csv.gz filter=lfs diff=lfs merge=lfs -text
+results/qlp_sector_*_leo_vetting/vetting.csv.gz filter=lfs diff=lfs merge=lfs -text
