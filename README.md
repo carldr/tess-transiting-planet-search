@@ -34,6 +34,10 @@ Step 10 moves the Gaia background star list that TRICERATOPS writes to `data/tri
 
 ## Set up
 
+1. Install Git LFS before you clone, with `brew install git-lfs` and `git lfs install`.
+   The repository keeps the step 4 `vetting.csv` and the step 6 `signals_cross_matched.csv` of each sector in Git LFS,
+   because they are larger than GitHub's 50 MB file limit.
+
 1. Create the Python environment:
 
    ```
