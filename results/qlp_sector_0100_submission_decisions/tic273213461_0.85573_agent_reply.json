@@ -1,0 +1,120 @@
+{
+ "duration_api_ms": 32048,
+ "stop_reason": "tool_use",
+ "session_id": "8f6db00a-085c-484f-9138-dbffb47bc9ec",
+ "total_cost_usd": 0.2947504,
+ "usage": {
+  "input_tokens": 6,
+  "cache_creation_input_tokens": 10439,
+  "cache_read_input_tokens": 9792,
+  "output_tokens": 3143,
+  "output_tokens_details": {
+   "thinking_tokens": 1149
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 10439,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 4,
+    "output_tokens": 2654,
+    "cache_read_input_tokens": 7806,
+    "cache_creation_input_tokens": 4619,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 4619
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "modelUsage": {
+  "claude-fable-5-2": {
+   "inputTokens": 6,
+   "outputTokens": 3143,
+   "cacheReadInputTokens": 9792,
+   "cacheCreationInputTokens": 10439,
+   "webSearchRequests": 0,
+   "costUSD": 0.2947504,
+   "contextWindow": 1000000,
+   "maxOutputTokens": 128000,
+   "thinkingTokens": 1149,
+   "cacheCreationEphemeral5mInputTokens": 0,
+   "cacheCreationEphemeral1hInputTokens": 10439,
+   "canonicalModel": "claude-fable-5-2",
+   "provider": "firstParty",
+   "costBasis": "list"
+  }
+ },
+ "permission_denials": [],
+ "terminal_reason": "completed",
+ "fast_mode_state": "off",
+ "fast_mode_disabled_reason": "sdk_opt_in_required",
+ "subagent_stats": {
+  "spawned": 0,
+  "requested": {
+   "background": 0,
+   "foreground": 0,
+   "unset": 0
+  },
+  "started_in_background": 0,
+  "max_depth": 0,
+  "spawned_by_subagents": 0,
+  "completed": 0,
+  "failed": 0,
+  "killed": {
+   "parent": 0,
+   "user": 0,
+   "system": 0
+  },
+  "refused": {
+   "depth_limit": 0,
+   "concurrency_limit": 0,
+   "budget": 0
+  },
+  "by_type": {}
+ },
+ "safety_stops": 0,
+ "is_error": false,
+ "num_turns": 8,
+ "subtype": "success",
+ "api_error_status": null,
+ "result": "{\"decision\":\"proposed for submission\",\"summary\":\"Transit recovered in all five sectors, joint_search_snr 18.3; submit with RUWE 3.01 caveat.\",\"reasons\":[\"I agree with the mechanical decision (proposed for submission), but not with the weight of the TRICERATOPS verdict 'validated without imaging': this is a candidate with open caveats, not a validated planet.\",\"The signal is real and repeats: other_sector_results show it near the expected SNR in S10, S64, S99 and S101, other_sectors_absent is empty, and joint_search_snr is 18.3 against joint_search_highest_null_snr 5.5.\",\"The depth is stable in the pipeline light curves: depth_ppm_by_sector runs from 473 +/- 53 to 592 +/- 49 with sector_depth_consistency_p_value 0.547, and the all-sector figure shows a flat-bottomed dip in every sector.\",\"No eclipsing-binary sign at this period: odd_even_difference_sigma 0.45, secondary_depth_ppm 24 +/- 23 (below secondary_maximum_planet_depth_ppm 156), ellipsoidal_amplitude_ppm -65 +/- 54, transit_grazing False.\",\"The size and geometry fit a planet on the target: planet_radius_earth_radii 4.57 +/- 0.35 is far below 22.4, fit_impact_parameter is 0.401, stellar_density_fit_to_tic_ratio is 1.2 and fitted_to_expected_scaled_semi_major_axis is 0.86.\",\"The signal is new: exofop_tois, exofop_ctois and published_signal are empty, as are ephemeris_match_likely_sources, vsx_binaries and gaia_neighbour_eclipsing_binaries.\",\"Caution, RUWE: gaia_ruwe 3.01 points to an unresolved companion although gaia_non_single_star is 0. That would dilute the transit and leave open which star hosts it; TRICERATOPS without imaging does not account for this, so fpp_mean 0.009042 is optimistic. High-resolution imaging decides this, not more TESS data.\",\"Caution, Gaia RV: gaia_rv_variable is True with gaia_rv_epoch_range_km_s 48.8 and gaia_rv_chisq_pvalue 0.0, but gaia_vbroad_km_s 60.7 may inflate the scatter. gaia_rv_companion_mass_upper_limit_solar_masses 0.082 argues against a stellar companion at 0.8565 d; a longer-period companion, consistent with the RUWE, is not excluded.\",\"Caution, pixel check: joint_pixel_verdict is 'on target' at joint_difference_image_snr 8.1, but joint_best_source is Gaia DR3 5369078040516638592, the G 19.1 neighbour at 10\\\" that needs a 46% eclipse, not the target. TESS pixels cannot separate the two, and nfpp_mean 1.984e-09 follows from nearby_scenarios_excluded True, so it is not independent evidence. Only S100 reached a verdict alone (SNR 5.9); the other four sectors are 'too faint', and the S100 difference image shows stronger residuals away from the target.\",\"Caution, cutout depths: cutout_sector_depth_consistency_p_value is 0.00568 (S100 r2.0 801 +/- 77 against S101 r2.0 483 +/- 79; S10 rises with aperture from 719 to 872 ppm while S64 falls from 615 to 426 ppm). The trends disagree in direction in a field with gaia_neighbours 64, so I read this as crowding systematics rather than a clear off-target source, but it should be noted in the submission.\",\"Not held: released_tess_sectors_not_in_all_sector_verification is empty, and unreleased sectors 111 112 113 114 would add SNR but cannot resolve the 10\\\" neighbour or the RUWE companion. Those need the imaging and spectroscopy that a CTOI submission prompts.\",\"Note for the submission: use the refined fit_period_days 0.8565034 (joint_search_period_days 0.856515), not the search period_days 0.855734.\"]}",
+ "structured_output": {
+  "decision": "proposed for submission",
+  "summary": "Transit recovered in all five sectors, joint_search_snr 18.3; submit with RUWE 3.01 caveat.",
+  "reasons": [
+   "I agree with the mechanical decision (proposed for submission), but not with the weight of the TRICERATOPS verdict 'validated without imaging': this is a candidate with open caveats, not a validated planet.",
+   "The signal is real and repeats: other_sector_results show it near the expected SNR in S10, S64, S99 and S101, other_sectors_absent is empty, and joint_search_snr is 18.3 against joint_search_highest_null_snr 5.5.",
+   "The depth is stable in the pipeline light curves: depth_ppm_by_sector runs from 473 +/- 53 to 592 +/- 49 with sector_depth_consistency_p_value 0.547, and the all-sector figure shows a flat-bottomed dip in every sector.",
+   "No eclipsing-binary sign at this period: odd_even_difference_sigma 0.45, secondary_depth_ppm 24 +/- 23 (below secondary_maximum_planet_depth_ppm 156), ellipsoidal_amplitude_ppm -65 +/- 54, transit_grazing False.",
+   "The size and geometry fit a planet on the target: planet_radius_earth_radii 4.57 +/- 0.35 is far below 22.4, fit_impact_parameter is 0.401, stellar_density_fit_to_tic_ratio is 1.2 and fitted_to_expected_scaled_semi_major_axis is 0.86.",
+   "The signal is new: exofop_tois, exofop_ctois and published_signal are empty, as are ephemeris_match_likely_sources, vsx_binaries and gaia_neighbour_eclipsing_binaries.",
+   "Caution, RUWE: gaia_ruwe 3.01 points to an unresolved companion although gaia_non_single_star is 0. That would dilute the transit and leave open which star hosts it; TRICERATOPS without imaging does not account for this, so fpp_mean 0.009042 is optimistic. High-resolution imaging decides this, not more TESS data.",
+   "Caution, Gaia RV: gaia_rv_variable is True with gaia_rv_epoch_range_km_s 48.8 and gaia_rv_chisq_pvalue 0.0, but gaia_vbroad_km_s 60.7 may inflate the scatter. gaia_rv_companion_mass_upper_limit_solar_masses 0.082 argues against a stellar companion at 0.8565 d; a longer-period companion, consistent with the RUWE, is not excluded.",
+   "Caution, pixel check: joint_pixel_verdict is 'on target' at joint_difference_image_snr 8.1, but joint_best_source is Gaia DR3 5369078040516638592, the G 19.1 neighbour at 10\" that needs a 46% eclipse, not the target. TESS pixels cannot separate the two, and nfpp_mean 1.984e-09 follows from nearby_scenarios_excluded True, so it is not independent evidence. Only S100 reached a verdict alone (SNR 5.9); the other four sectors are 'too faint', and the S100 difference image shows stronger residuals away from the target.",
+   "Caution, cutout depths: cutout_sector_depth_consistency_p_value is 0.00568 (S100 r2.0 801 +/- 77 against S101 r2.0 483 +/- 79; S10 rises with aperture from 719 to 872 ppm while S64 falls from 615 to 426 ppm). The trends disagree in direction in a field with gaia_neighbours 64, so I read this as crowding systematics rather than a clear off-target source, but it should be noted in the submission.",
+   "Not held: released_tess_sectors_not_in_all_sector_verification is empty, and unreleased sectors 111 112 113 114 would add SNR but cannot resolve the 10\" neighbour or the RUWE companion. Those need the imaging and spectroscopy that a CTOI submission prompts.",
+   "Note for the submission: use the refined fit_period_days 0.8565034 (joint_search_period_days 0.856515), not the search period_days 0.855734."
+  ]
+ },
+ "ttft_ms": 2726,
+ "type": "result",
+ "duration_ms": 32286,
+ "uuid": "793b87ad-382d-4561-962f-80bc3d6bd444",
+ "ttft_stream_ms": 1741,
+ "time_to_request_ms": 224,
+ "first_content_frame_ms": 1741,
+ "queued_turn_count": 0,
+ "result_index": 0,
+ "credential_expires_at": "2026-11-17T03:13:55.709Z"
+}
