@@ -30,8 +30,8 @@
    "passed_vetting": 0
   },
   "FP": {
-   "tois_testable": 33,
-   "found_by_search": 28,
+   "tois_testable": 34,
+   "found_by_search": 29,
    "passed_vetting": 7
   },
   "KP": {
@@ -40,8 +40,8 @@
    "passed_vetting": 9
   },
   "PC": {
-   "tois_testable": 67,
-   "found_by_search": 49,
+   "tois_testable": 66,
+   "found_by_search": 48,
    "passed_vetting": 20
   }
  },
@@ -51,7 +51,7 @@
    "periods_passed": []
   }
  },
- "catalogue_download_date": "2026-11-07",
- "verification_date_utc": "2026-11-07 14:41",
- "code_version": "6edf964"
+ "catalogue_download_date": "2026-11-16",
+ "verification_date_utc": "2026-11-16 12:40",
+ "code_version": "e2b0cc0"
 }
